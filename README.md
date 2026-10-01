@@ -122,6 +122,10 @@ device. It is a hobby project: expect rough edges, and keep a backup of your rig
 - Windows only (10/11) for now
 - MX5 only for now. Pedalboard and Gigboard would possibly work in the future, but I don't own one, so I can't test it
 
+## Disclaimer
+
+This only works with custom firmware. I wouldn't advise installing random stuff from the internet on the MX5, because you can brick those devices with the wrong firmware. That's also why I don't ship any HeadRush firmware myself, the patcher builds it on your PC from the official file, and the whole source code is on GitHub so everyone can check what it does. AI can be of help detecting shitty stuff, but isnt a guarantee.****
+
 ## Credits & licences
 
 - MX5 Bridge and MX5 Editor: [MIT licence](LICENSE).
