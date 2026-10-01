@@ -67,6 +67,7 @@ neither Python nor Linux/WSL. It can also run the NAM mod's own installer for yo
 ## Quick start
 
 Full instructions: **[INSTALL.md](INSTALL.md)**.
+Here is also a Youtube Guide: https://youtu.be/6ivzolrPEZA?si=BKzsChsaO2G2xgYX
 
 1. Download `MX5Bridge_0.7_Patcher.exe` and `MX5Editor_0.9.exe` from the
    [latest release](../../releases/latest). Nothing has to be installed.
