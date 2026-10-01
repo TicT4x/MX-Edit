@@ -165,6 +165,8 @@ def plan(cat, nam_info=None, log=print):
     if nam:
         log('NAM mod found: ' + nam.strip())
         info = nam_info or 'nam_mod_ref=unbekannt\n'
+        if 'nam_instanzen=' not in info:   # z. B. Updater aus der GUI der Mod: aus der Startzeile
+            info += 'nam_instanzen=%d\n' % (4 if 'NAM_HOOK_SLOT_GONK_V2_ADDR=' in nam else 2)
         info += 'startzeile=%s' % nam.strip().replace('systemd-inhibit --what=handle-power-key ', '') + '\n'
         files[NAM_INFO] = (info.encode('ascii'), 0o100644)
     for kind in ('Device', 'Assignments'):

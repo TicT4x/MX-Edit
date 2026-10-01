@@ -226,8 +226,8 @@ def main():
         say('\nTo install:\n'
             '  1. Connect the MX5 to power and USB.\n'
             '  2. On the MX5: Global Settings > ... (more) > Firmware Update.\n'
-            '  3. Run FirmwareUpdater.exe in the folder above and click "Install MX5Bridge %s".\n'
-            '     Do not disconnect until it has finished.' % bridgepatch.VERSION)
+            '  3. Run FirmwareUpdater.exe in the folder above and click "Install MX5Bridge %s%s".\n'
+            '     Do not disconnect until it has finished.' % (bridgepatch.VERSION, ' + NAM' if nam else ''))
         return 0
     except (Fail, bridgepatch.PatchError, ext4.Ext4Error) as e:
         say('\nERROR: %s' % e)
