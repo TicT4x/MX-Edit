@@ -90,6 +90,10 @@ class Editor(tk.Tk):
         U.dpi_aware()
         super().__init__()
         self.title(APP)
+        try:   # Fenster-/Taskleisten-Icon (werkzeuge/exe_bauen.py erzeugt es; fehlt es, bleibt das Tk-Icon)
+            self.iconbitmap(default=os.path.join(HERE, "mx5editor.ico"))
+        except tk.TclError:
+            pass
         self.prefs = settings.load()   # Einstellungen (settings.py), z. B. 'audition'
         self.ui_scale = self.prefs["ui_scale"]   # beim Start gesetzte Groesse (Aenderung gilt ab Neustart)
         U.setup(self, self.ui_scale / 100.0)

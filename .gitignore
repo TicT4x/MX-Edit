@@ -12,3 +12,6 @@ regressionstest_log.txt
 
 Thumbs.db
 desktop.ini
+
+# Editor EXE build output (editor/werkzeuge/exe_bauen.py)
+editor/exe/

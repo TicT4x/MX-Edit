@@ -14,18 +14,15 @@ Settings) and copy the `Rigs`, `Setlists`, `Blocks` and `Impulse Responses` fold
 drive to your computer. (After the bridge is installed, the editor can do this for you:
 *⋯ › Back up everything*.)
 
-## 2. Install Python
+## 2. Install Python (for the firmware patcher)
+
+The firmware patcher is a Python script. The editor itself is a ready-made `.exe` and does not
+need Python.
 
 1. Download Python 3 from <https://www.python.org/downloads/> (3.9 or newer).
 2. In the installer, tick **"Add python.exe to PATH"**, then click *Install Now*.
-3. Open a command prompt (Windows key, type `cmd`, Enter) and install the packages the editor
-   needs:
 
-   ```bat
-   pip install mido python-rtmidi pillow
-   ```
-
-   (If `pip` is not found, use `py -m pip install mido python-rtmidi pillow`.)
+No extra packages are needed for the patcher.
 
 ## 3. Build and install the bridge firmware
 
@@ -65,8 +62,10 @@ three times in a row right after starting with NAM, the bridge switches NAM off 
 
 ## 4. Start the editor
 
-1. Download **`MX5Editor_0.9.zip`** from the release and unzip it anywhere.
-2. Double-click **`MX5Editor_starten.bat`** (or run `python mx5editor.py` in that folder).
+1. Download **`MX5Editor_0.9.exe`** from the release and put it anywhere, for example on the
+   desktop. Nothing has to be installed.
+2. Double-click it. Windows SmartScreen may warn about an unknown publisher, because the file is
+   not code-signed. Click *More info › Run anyway*.
 3. Switch the MX5 on and connect it via USB. About 10 seconds after the device has started, the
    MIDI port **"HeadRush MX5"** appears. The editor connects by itself and reads the current rig.
 
@@ -81,7 +80,21 @@ Tips:
 - Without a device, use *Folder* in the left bar to open a folder of `.rig` files (for example a
   backup) and edit them offline.
 
+### Run the editor from source (optional)
+
+If you prefer Python, or use a system where the `.exe` does not run, download
+`MX5Editor_0.9.zip` instead and install the packages once:
+
+```bat
+pip install mido python-rtmidi pillow
+```
+
+Then double-click `MX5Editor_starten.bat` in the unzipped folder. To build the `.exe` yourself,
+run `pip install pyinstaller` and `python werkzeuge\exe_bauen.py`.
+
 ### Check the bridge without the editor (optional)
+
+This uses the source zip and the packages from the previous section.
 
 ```bat
 cd MX5Editor_0.9\werkzeuge

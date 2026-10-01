@@ -68,12 +68,14 @@ accepts an updater made by the NAM mod's installer, so you can have both.
 
 Full instructions: **[INSTALL.md](INSTALL.md)**.
 
-1. Install [Python 3](https://www.python.org/downloads/) (Windows: tick *Add python.exe to PATH*).
-2. Download both zips from the [latest release](../../releases/latest).
+1. Install [Python 3](https://www.python.org/downloads/) for the firmware patcher (Windows: tick
+   *Add python.exe to PATH*).
+2. Download `MX5Bridge_0.7_Patcher.zip` and `MX5Editor_0.9.exe` from the
+   [latest release](../../releases/latest).
 3. Firmware: unzip `MX5Bridge_0.7_Patcher.zip`, run `Patch_Firmware.bat`, then run the
    `FirmwareUpdater.exe` it creates while the MX5 is in firmware update mode.
-4. Editor: unzip `MX5Editor_0.9.zip`, then run `pip install mido python-rtmidi pillow` once.
-   Start the editor with `MX5Editor_starten.bat`.
+4. Editor: double-click `MX5Editor_0.9.exe`. Nothing to install. The source version
+   (`MX5Editor_0.9.zip`) is there too, if you prefer Python.
 
 ## Requirements
 
@@ -81,7 +83,7 @@ Full instructions: **[INSTALL.md](INSTALL.md)**.
 |---|---|
 | Device | HeadRush **MX5** with firmware **2.7** (other HeadRush models are not supported) |
 | Computer | Windows 10/11. The editor uses Windows-only window code. The patcher itself also runs on Linux/macOS if `7z` or `bsdtar` is installed |
-| Python | 3.9 or newer. Editor: `mido`, `python-rtmidi`, `pillow` |
+| Python | 3.9 or newer, only for the patcher and for running the editor from source (`mido`, `python-rtmidi`, `pillow`) |
 
 ## Repository layout
 
