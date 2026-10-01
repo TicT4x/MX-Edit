@@ -119,6 +119,9 @@ regression test (`editor/werkzeuge/regressionstest.py`, 30 steps) that runs agai
 device. It is a hobby project: expect rough edges, and keep a backup of your rigs
 (*⋯ › Back up everything* in the editor).
 
+- Windows only (10/11) for now
+- MX5 only for now. Pedalboard and Gigboard would possibly work in the future, but I don't own one, so I can't test it
+
 ## Credits & licences
 
 - MX5 Bridge and MX5 Editor: [MIT licence](LICENSE).
