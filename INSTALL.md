@@ -122,8 +122,8 @@ run on your system. Install [Python 3](https://www.python.org/downloads/) (3.9 o
 
 - Patcher: download `MX5Bridge_0.7_Patcher.zip`, unzip it and double-click `Patch_Firmware.bat`
   (the same window). `python patcher.py [updater]` is a console version without the NAM
-  installer step. No extra packages are needed. It also runs on
-  Linux/macOS when `7z` or `bsdtar` is installed. To build the `.exe` yourself from the
+  installer step. No extra packages are needed, and it also runs on
+  Linux/macOS (Python 3 only). To build the `.exe` yourself from the
   repository: `pip install pyinstaller pillow`, then `python firmware\tools\patcher_exe.py`.
 - Editor: see below.
 
@@ -167,7 +167,7 @@ with `action restore`.
 
 | Problem | What to try |
 |---|---|
-| Patcher: *"Could not unpack the updater"* | Windows 10 (1803+) / 11 has `tar.exe` built in. On older systems install [7-Zip](https://www.7-zip.org) and make sure `7z` is on the PATH |
+| Patcher: *"Could not unpack the updater"* | Use patcher v0.9.2 or newer — it unpacks the updater itself (older versions relied on Windows' `tar.exe`, which cannot unpack it on Windows 10). If it still fails, the downloaded file is probably incomplete: delete it next to the patcher and try again |
 | Patcher: download fails | Download the official updater yourself from HeadRush (MX5, firmware 2.7, Windows), tick *Use a firmware file I already have* and choose it |
 | Patcher: *"The NAM mod installer was closed before it built the MX5 updater"* | Click *Build updater* again. In the NAM installer, choose **MX5** and click *Install NAM Mod*, then wait until it is done |
 | Patcher: *"… has unexpected layout"* / *"already patched"* | The input is not the plain official 2.7 updater (or an updater from the NAM mod). Use the official one |

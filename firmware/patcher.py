@@ -9,8 +9,8 @@ Usage:
                                            NAM mod GUI), a folder with Update.img, or Update.img
     python patcher.py <input> --out <dir>  output folder (default: next to this script)
 
-Reines Python 3 (Standardbibliothek); entpackt den 7z-Updater mit dem tar.exe von Windows 10+
-(libarchive kann BCJ2) oder 7z/bsdtar, schreibt das ext4-rootfs mit ext4.py (statt debugfs)
+Reines Python 3 (Standardbibliothek); entpackt den 7z-Updater mit sevenzip.py (Rueckfall: tar.exe
+von Windows, 7z, bsdtar), schreibt das ext4-rootfs mit ext4.py (statt debugfs)
 und komprimiert mit xzblocks.py wie das Original. Was geaendert wird: bridgepatch.py."""
 import argparse, hashlib, json, lzma, os, shutil, subprocess, sys, tempfile, time, urllib.request, zipfile, zlib
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +19,7 @@ sys.path.insert(0, HERE)
 # Entpackordner, der beim Beenden geloescht wird; mod/ und bin/ liest bridgepatch von dort)
 FROZEN = getattr(sys, 'frozen', False)
 BASE = os.path.dirname(os.path.abspath(sys.executable)) if FROZEN else HERE
-import bridgepatch, ext4, fitpatch, xzblocks
+import bridgepatch, ext4, fitpatch, sevenzip, xzblocks
 
 OFFICIAL_URL = ('https://cdn.inmusicbrands.com/HeadRush/FW/Aug24_Firmware_Updates/MX5%20v2.7/'
                 'Windows%20Updater/HeadRush%20MX5%202.7%20Firmware%20Updater%20-%20Win.exe.zip')
@@ -81,6 +81,15 @@ def sfx_archive(exe):
 
 
 def extract_7z(archive, dest):
+    """Zuerst der eigene Entpacker (sevenzip.py); das tar.exe von Windows 10 / aelteren Windows-11-
+    Builds kann kein LZMA (libarchive ohne liblzma) - externe Programme nur noch als Rueckfall."""
+    try:
+        sevenzip.extract(open(archive, 'rb').read(), dest)
+        if os.path.exists(os.path.join(dest, 'Update.img')):
+            return
+        why = ['built-in: no Update.img in the archive']
+    except (sevenzip.Error, lzma.LZMAError, MemoryError) as e:
+        why = ['built-in: %s' % e]
     tools = []
     win_tar = os.path.join(os.environ.get('SystemRoot', r'C:\Windows'), 'System32', 'tar.exe')
     if os.path.exists(win_tar):
@@ -92,11 +101,16 @@ def extract_7z(archive, dest):
         tools.append(['bsdtar', '-xf', archive, '-C', dest])
     flags = 0x08000000 if os.name == 'nt' else 0      # CREATE_NO_WINDOW: kein Konsolenblitz in der GUI
     for cmd in tools:
-        r = subprocess.run(cmd, capture_output=True, creationflags=flags)
+        try:
+            r = subprocess.run(cmd, capture_output=True, creationflags=flags)
+        except OSError as e:
+            why.append('%s: %s' % (os.path.basename(cmd[0]), e))
+            continue
         if r.returncode == 0 and os.path.exists(os.path.join(dest, 'Update.img')):
             return
-    raise Fail('Could not unpack the updater. Windows 10/11 has tar.exe built in; on other systems '
-               'install 7-Zip (7z) or bsdtar.')
+        err = (r.stderr or r.stdout).decode('utf-8', 'replace').strip().splitlines()
+        why.append('%s: %s' % (os.path.basename(cmd[0]), err[-1] if err else 'exit code %d' % r.returncode))
+    raise Fail('Could not unpack the updater:\n  ' + '\n  '.join(why))
 
 
 def unpack(src, work):

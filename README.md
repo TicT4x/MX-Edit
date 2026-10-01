@@ -97,7 +97,7 @@ Then manage your `.nam` models with the **NAM** button in the editor. Details:
 | | |
 |---|---|
 | Device | HeadRush **MX5** with firmware **2.7** (other HeadRush models are not supported) |
-| Computer | Windows 10/11. The editor uses Windows-only window code. The patcher's source version also runs on Linux/macOS if `7z` or `bsdtar` is installed |
+| Computer | Windows 10/11. The editor uses Windows-only window code. The patcher's source version also runs on Linux/macOS (Python 3 only) |
 | Python | not needed for the `.exe` files. For the source versions: 3.9 or newer, editor with `mido`, `python-rtmidi`, `pillow` |
 
 ## Repository layout
