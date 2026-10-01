@@ -15,6 +15,10 @@ und komprimiert mit xzblocks.py wie das Original. Was geaendert wird: bridgepatc
 import argparse, hashlib, json, lzma, os, shutil, subprocess, sys, tempfile, time, urllib.request, zipfile, zlib
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+# Download und Ausgabe neben das Skript bzw. die EXE (in der EXE ist HERE ein temporaerer
+# Entpackordner, der beim Beenden geloescht wird; mod/ und bin/ liest bridgepatch von dort)
+FROZEN = getattr(sys, 'frozen', False)
+BASE = os.path.dirname(os.path.abspath(sys.executable)) if FROZEN else HERE
 import bridgepatch, ext4, fitpatch, xzblocks
 
 OFFICIAL_URL = ('https://cdn.inmusicbrands.com/HeadRush/FW/Aug24_Firmware_Updates/MX5%20v2.7/'
@@ -184,7 +188,7 @@ def main():
     try:
         src = a.input
         if not src:
-            src = os.path.join(HERE, 'HeadRush_MX5_2.7_Updater.zip')
+            src = os.path.join(BASE, 'HeadRush_MX5_2.7_Updater.zip')
             if os.path.exists(src):
                 say('Using the already downloaded %s' % os.path.basename(src))
             else:
@@ -205,7 +209,7 @@ def main():
             nam_info = open(info, encoding='ascii').read()
         new, nam = patch(raw, nam_info)
 
-        out = a.out or os.path.join(HERE, 'MX5Bridge_%s%s_Updater' % (bridgepatch.VERSION, '_NAM' if nam else ''))
+        out = a.out or os.path.join(BASE, 'MX5Bridge_%s%s_Updater' % (bridgepatch.VERSION, '_NAM' if nam else ''))
         os.makedirs(out, exist_ok=True)
         open(os.path.join(out, 'Update.img'), 'wb').write(new)
         open(os.path.join(out, 'Config.json'), 'w', encoding='utf-8', newline='\n').write(config_json(nam))
@@ -233,4 +237,10 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    rc = main()
+    if FROZEN and sys.stdin and sys.stdin.isatty():   # Doppelklick: Fenster nicht sofort schliessen
+        try:
+            input('\nPress Enter to close this window.')
+        except EOFError:
+            pass
+    sys.exit(rc)

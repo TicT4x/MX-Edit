@@ -15,3 +15,4 @@ desktop.ini
 
 # Editor EXE build output (editor/werkzeuge/exe_bauen.py)
 editor/exe/
+firmware/exe/

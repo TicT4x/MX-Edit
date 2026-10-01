@@ -5,7 +5,7 @@ a Windows 10/11 computer.
 
 > ⚠️ **Unofficial firmware, at your own risk.** The patcher only adds files to the official
 > firmware, and the steps below have been tested many times. Still, a firmware update can always
-> fail. Section 5 explains how to get back to the stock firmware. **Back up your rigs first** (step 1).
+> fail. Section 4 explains how to get back to the stock firmware. **Back up your rigs first** (step 1).
 
 ## 1. Back up your rigs
 
@@ -14,28 +14,23 @@ Settings) and copy the `Rigs`, `Setlists`, `Blocks` and `Impulse Responses` fold
 drive to your computer. (After the bridge is installed, the editor can do this for you:
 *⋯ › Back up everything*.)
 
-## 2. Install Python (for the firmware patcher)
+## 2. Build and install the bridge firmware
 
-The firmware patcher is a Python script. The editor itself is a ready-made `.exe` and does not
-need Python.
+You only need two files from the [latest release](../../releases/latest):
+**`MX5Bridge_0.7_Patcher.exe`** (firmware) and **`MX5Editor_0.9.exe`** (editor). Nothing has to
+be installed, and Python is not needed. Both programs are not code-signed, so Windows SmartScreen
+may warn about an unknown publisher. Click *More info › Run anyway*.
 
-1. Download Python 3 from <https://www.python.org/downloads/> (3.9 or newer).
-2. In the installer, tick **"Add python.exe to PATH"**, then click *Install Now*.
-
-No extra packages are needed for the patcher.
-
-## 3. Build and install the bridge firmware
-
-1. Download **`MX5Bridge_0.7_Patcher.zip`** from the
-   [latest release](../../releases/latest) and unzip it.
-2. Double-click **`Patch_Firmware.bat`**. It will:
-   - download the official *HeadRush MX5 2.7 Firmware Updater* (about 60 MB) from
+1. Put **`MX5Bridge_0.7_Patcher.exe`** into an empty folder, for example `Desktop\MX5Bridge`.
+2. Double-click it. A console window opens, and the patcher:
+   - downloads the official *HeadRush MX5 2.7 Firmware Updater* (about 60 MB) from
      `cdn.inmusicbrands.com`;
-   - add the bridge to the firmware and check every file it wrote;
-   - create the folder **`MX5Bridge_0.7_Updater`** next to the script.
+   - adds the bridge to the firmware and checks every file it wrote;
+   - creates the folder **`MX5Bridge_0.7_Updater`** next to the patcher.
 
-   This takes one to two minutes. If you already have the official updater (the `.zip` or the
-   `.exe`), drag it onto `Patch_Firmware.bat` and nothing is downloaded.
+   This takes one to two minutes. Press Enter to close the window afterwards. If you already
+   have the official updater (the `.zip` or the `.exe`), drag it onto the patcher and nothing is
+   downloaded.
 3. Connect the MX5 to its **power supply** and to the computer with **USB**.
 4. On the MX5: **Global Settings › ⋯ (more) › Firmware Update**.
 5. In `MX5Bridge_0.7_Updater`, run **`FirmwareUpdater.exe`**. Its window title must say
@@ -52,7 +47,7 @@ together:
 
 1. Use the NAM mod's installer (`headrush-nam-gui`, from its releases page) and choose **MX5**.
    It creates a patched HeadRush updater (`.exe`). **Do not run it.**
-2. Drag that `.exe` onto `Patch_Firmware.bat`. The patcher detects the NAM mod, keeps it, and
+2. Drag that `.exe` onto `MX5Bridge_0.7_Patcher.exe`. The patcher detects the NAM mod, keeps it, and
    writes `MX5Bridge_0.7_NAM_Updater`.
 3. Install that updater as described above (steps 3–5).
 
@@ -60,12 +55,10 @@ With NAM installed, the editor can turn NAM on and off (*⋯ › Turn NAM off/on
 device app) and manage the NAM models (*NAM* button in the left bar). If the device app crashes
 three times in a row right after starting with NAM, the bridge switches NAM off by itself.
 
-## 4. Start the editor
+## 3. Start the editor
 
-1. Download **`MX5Editor_0.9.exe`** from the release and put it anywhere, for example on the
-   desktop. Nothing has to be installed.
-2. Double-click it. Windows SmartScreen may warn about an unknown publisher, because the file is
-   not code-signed. Click *More info › Run anyway*.
+1. Put **`MX5Editor_0.9.exe`** anywhere, for example on the desktop, and double-click it.
+2. If SmartScreen warns, click *More info › Run anyway* (see above).
 3. Switch the MX5 on and connect it via USB. About 10 seconds after the device has started, the
    MIDI port **"HeadRush MX5"** appears. The editor connects by itself and reads the current rig.
 
@@ -80,10 +73,21 @@ Tips:
 - Without a device, use *Folder* in the left bar to open a folder of `.rig` files (for example a
   backup) and edit them offline.
 
-### Run the editor from source (optional)
+### Run from source (optional)
 
-If you prefer Python, or use a system where the `.exe` does not run, download
-`MX5Editor_0.9.zip` instead and install the packages once:
+Both programs are also available as Python source, if you prefer that or the `.exe` files do not
+run on your system. Install [Python 3](https://www.python.org/downloads/) (3.9 or newer, tick
+*Add python.exe to PATH*).
+
+- Patcher: download `MX5Bridge_0.7_Patcher.zip`, unzip it and double-click `Patch_Firmware.bat`
+  (or run `python patcher.py [updater]`). No extra packages are needed. It also runs on
+  Linux/macOS when `7z` or `bsdtar` is installed. To build the `.exe` yourself from the
+  repository: `pip install pyinstaller pillow`, then `python firmware\tools\patcher_exe.py`.
+- Editor: see below.
+
+#### Editor from source
+
+Download `MX5Editor_0.9.zip`, unzip it and install the packages once:
 
 ```bat
 pip install mido python-rtmidi pillow
@@ -104,7 +108,7 @@ python mx5bridge_test.py --shell
 At the prompt, `ping` must answer `MX5Bridge-0.7`, and `action status` shows the database size,
 the free space and the backup age. `quit` exits.
 
-## 5. Going back to the stock firmware
+## 4. Going back to the stock firmware
 
 - **Normal way:** put the MX5 into firmware update mode (*Global Settings › ⋯ › Firmware
   Update*) and run the **official** HeadRush MX5 2.7 updater.
@@ -122,9 +126,10 @@ with `action restore`.
 | Problem | What to try |
 |---|---|
 | Patcher: *"Could not unpack the updater"* | Windows 10 (1803+) / 11 has `tar.exe` built in. On older systems install [7-Zip](https://www.7-zip.org) and make sure `7z` is on the PATH |
+| Patcher: download fails | Download the official updater yourself from HeadRush (MX5, firmware 2.7, Windows) and drag the `.zip` onto the patcher |
 | Patcher: *"… has unexpected layout"* / *"already patched"* | The input is not the plain official 2.7 updater (or an updater from the NAM mod). Use the official one |
 | Editor: *"No MX5 found"* | Wait ~15 s after the device has started. Check the cable. In *Settings*, set both MIDI ports to *Automatic* |
-| Editor asks for a newer bridge | The device runs an older bridge or the stock firmware. Install the firmware from step 3 |
+| Editor asks for a newer bridge | The device runs an older bridge or the stock firmware. Install the firmware from step 2 |
 | Device shows *"restore last state?"* after an editor action | Some actions restart the device app (creating setlists, uploading IRs, NAM on/off). The editor answers this itself; if it asks you, press **No** |
 
 ## Building the firmware on Linux (developers)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Was die MX5 Bridge am rootfs aendert - gemeinsam fuer build.py (Linux, debugfs) und
-patcher.py (Windows/ueberall, reines Python ueber ext4.py).
+patcher.py (Windows/ueberall, reines Python ueber ext4.py). Meldungen englisch: der Patcher
+zeigt sie Endnutzern.
 
 plan(cat) liest die noetigen Originaldateien ueber cat(pfad) -> bytes (b'' = fehlt) und
 liefert {zielpfad: (inhalt bytes, modus int)}. Die Versionsnummer steht nur hier (VERSION);
@@ -50,11 +51,11 @@ def mod_text(name):
 
 
 def patch_start(text):
-    need(text.count(ENABLE) == 1, 'Startskript hat unerwartetes Layout')
-    need('mx5bridge' not in text, 'Startskript ist schon gepatcht')
-    need('ln -s functions/uac2_az01.otg0 configs/c.1 &&\n' + ENABLE in text, 'Startskript hat unerwartetes Layout')
+    need(text.count(ENABLE) == 1, 'USB start script has an unexpected layout')
+    need('mx5bridge' not in text, 'USB start script is already patched (MX5 Bridge already installed?)')
+    need('ln -s functions/uac2_az01.otg0 configs/c.1 &&\n' + ENABLE in text, 'USB start script has an unexpected layout')
     mp = 'modprobe configfs &&\n'
-    need(text.count(mp) == 1, 'Startskript hat unerwartetes Layout')
+    need(text.count(mp) == 1, 'USB start script has an unexpected layout')
     text = text.replace(mp, '%s evil-begin audio\n' % HOOK + mp)
     return text.replace(ENABLE, MIDI_BLOCK + ENABLE)
 
@@ -64,8 +65,8 @@ def patch_stop(text):
     uac = '    rm /sys/kernel/config/usb_gadget/g1/configs/c.1/uac2_az01.otg0\n'
     cfg = '    rmdir /sys/kernel/config/usb_gadget/g1/configs/c.1\n'
     for s in (first, uac, cfg):
-        need(text.count(s) == 1, 'Stoppskript hat unerwartetes Layout: %r' % s)
-    need(text.endswith(')\n'), 'Stoppskript hat unerwartetes Layout')
+        need(text.count(s) == 1, 'USB stop script has an unexpected layout: %r' % s)
+    need(text.endswith(')\n'), 'USB stop script has an unexpected layout')
     text = text.replace(uac, uac + '    rm /sys/kernel/config/usb_gadget/g1/configs/c.1/midi.mx5bridge 2>/dev/null\n')
     text = text.replace(cfg, cfg + '    rmdir /sys/kernel/config/usb_gadget/g1/functions/midi.mx5bridge 2>/dev/null\n')
     return text + '%s evil-end\n' % HOOK
@@ -73,12 +74,12 @@ def patch_stop(text):
 
 def patch_ms_setup(text):
     dv = '. /usr/Evil/Scripts/def_vars\n'
-    need(text.count(dv) == 1 and 'mx5bridge' not in text, 'setup-mass-storage.sh hat unerwartetes Layout')
+    need(text.count(dv) == 1 and 'mx5bridge' not in text, 'setup-mass-storage.sh has an unexpected layout')
     return text.replace(dv, dv + '\n%s evil-begin storage\n' % HOOK)
 
 
 def patch_ms_remove(text):
-    need('mx5bridge' not in text and text.endswith('fi\n'), 'remove-mass-storage.sh hat unerwartetes Layout')
+    need('mx5bridge' not in text and text.endswith('fi\n'), 'remove-mass-storage.sh has an unexpected layout')
     return text + '%s evil-end\n' % HOOK
 
 
@@ -98,14 +99,14 @@ def patch_evil(text):
     """Startschleife: prestart, postexit, Neustart-Marker. Mit NAM-Mod startet die App nur mit
     der NAM-Zeile der Mod, wenn 'mx5bridge-db.sh nam' ja sagt, sonst wie im Original.
     Liefert (Text, NAM-Startzeile oder None)."""
-    need('mx5bridge' not in text, 'evil-Skript ist schon gepatcht (MX5 Bridge ist bereits installiert?)')
+    need('mx5bridge' not in text, 'start script "evil" is already patched (MX5 Bridge already installed?)')
     runs = list(EVIL_RUN.finditer(text))
     code = [l for l in text.split('\n') if not l.lstrip().startswith('#')]   # der NAM-Block erwaehnt es
-    need(len(runs) == 1 and sum('systemd-inhibit' in l for l in code) == 1, 'evil-Skript hat unerwartetes Layout')
+    need(len(runs) == 1 and sum('systemd-inhibit' in l for l in code) == 1, 'start script "evil" has an unexpected layout')
     m = runs[0]
-    need(text[:m.start()].endswith('while [ 1 ]\ndo\n'), 'evil-Skript hat unerwartetes Layout')
+    need(text[:m.start()].endswith('while [ 1 ]\ndo\n'), 'start script "evil" has an unexpected layout')
     nam = m.group(0).split('\n')[0] + '\n' if m.group(1) else None
-    need(bool(nam) == (NAM_BLOCK in text), 'NAM-Startzeile und NAM-Kommentarblock passen nicht zusammen')
+    need(bool(nam) == (NAM_BLOCK in text), 'NAM start line and NAM comment block do not match')
     start = EVIL_START
     if nam:
         start = ('\t### NAM-Mod (github.com/lolgab/headrush-nam-mod) nur, wenn eingeschaltet\n'
@@ -126,15 +127,15 @@ def patch_evil(text):
 
 def patch_runevil(text):
     anchor = 'log info "Starting application ..."\n'
-    need(text.count(anchor) == 1 and 'mx5bridge' not in text, 'runevil hat unerwartetes Layout')
+    need(text.count(anchor) == 1 and 'mx5bridge' not in text, 'runevil has an unexpected layout')
     return text.replace(anchor, DAEMON + anchor)
 
 
 def sqlite_binary():
     p = os.path.join(BIN, 'sqlite3')
-    need(os.path.exists(p), 'bin/sqlite3 fehlt - erst tools/build-sqlite3.sh ausfuehren')
+    need(os.path.exists(p), 'bin/sqlite3 is missing - run tools/build-sqlite3.sh first')
     data = open(p, 'rb').read()
-    need(data[:4] == b'\x7fELF' and data[4] == 1 and data[18] == 0x28, 'bin/sqlite3 ist kein 32-Bit-ARM-Binary')
+    need(data[:4] == b'\x7fELF' and data[4] == 1 and data[18] == 0x28, 'bin/sqlite3 is not a 32-bit ARM binary')
     return data
 
 
@@ -160,9 +161,9 @@ def plan(cat, nam_info=None, log=print):
     # NAM-Mod: nur wenn die Eingabe sie schon enthaelt (tools/nam-mod.sh oder GUI der Mod)
     libs = [len(cat(p)) for p in NAM_LIBS]
     need(all(libs) == bool(nam) and any(libs) == bool(nam),
-         'NAM-Bibliotheken und NAM-Startzeile passen nicht zusammen: %s' % libs)
+         'NAM libraries and NAM start line do not match: %s' % libs)
     if nam:
-        log('NAM-Mod erkannt: ' + nam.strip())
+        log('NAM mod found: ' + nam.strip())
         info = nam_info or 'nam_mod_ref=unbekannt\n'
         info += 'startzeile=%s' % nam.strip().replace('systemd-inhibit --what=handle-power-key ', '') + '\n'
         files[NAM_INFO] = (info.encode('ascii'), 0o100644)
@@ -176,5 +177,5 @@ def plan(cat, nam_info=None, log=print):
         if target.endswith(('.sh', '.qml')) or target.endswith(('runevil', '/evil')):
             need(b'\r' not in data, 'CRLF in ' + target)
         if target in (DBHOOK, SQLITE_TARGET, NAM_INFO) or '/Assignments/' in target:
-            need(cat(target) == b'', 'existiert bereits: ' + target)
+            need(cat(target) == b'', 'already exists: ' + target)
     return files, nam

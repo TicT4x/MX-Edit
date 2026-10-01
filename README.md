@@ -61,29 +61,28 @@ installer:
 2. It adds the bridge files to that firmware **on your computer**.
 3. It writes a ready-to-run updater folder that uses HeadRush's own `FirmwareUpdater.exe`.
 
-The patcher is plain Python with no extra packages. It does not need Linux or WSL. It also
-accepts an updater made by the NAM mod's installer, so you can have both.
+The patcher is a single Windows program (`MX5Bridge_0.7_Patcher.exe`). It needs neither Python
+nor Linux/WSL. It also accepts an updater made by the NAM mod's installer, so you can have both.
 
 ## Quick start
 
 Full instructions: **[INSTALL.md](INSTALL.md)**.
 
-1. Install [Python 3](https://www.python.org/downloads/) for the firmware patcher (Windows: tick
-   *Add python.exe to PATH*).
-2. Download `MX5Bridge_0.7_Patcher.zip` and `MX5Editor_0.9.exe` from the
-   [latest release](../../releases/latest).
-3. Firmware: unzip `MX5Bridge_0.7_Patcher.zip`, run `Patch_Firmware.bat`, then run the
-   `FirmwareUpdater.exe` it creates while the MX5 is in firmware update mode.
-4. Editor: double-click `MX5Editor_0.9.exe`. Nothing to install. The source version
-   (`MX5Editor_0.9.zip`) is there too, if you prefer Python.
+1. Download `MX5Bridge_0.7_Patcher.exe` and `MX5Editor_0.9.exe` from the
+   [latest release](../../releases/latest). Nothing has to be installed.
+2. Firmware: double-click `MX5Bridge_0.7_Patcher.exe`, then run the `FirmwareUpdater.exe` it
+   creates while the MX5 is in firmware update mode.
+3. Editor: double-click `MX5Editor_0.9.exe`.
+
+Both are also available as Python source (`…_Patcher.zip`, `MX5Editor_0.9.zip`).
 
 ## Requirements
 
 | | |
 |---|---|
 | Device | HeadRush **MX5** with firmware **2.7** (other HeadRush models are not supported) |
-| Computer | Windows 10/11. The editor uses Windows-only window code. The patcher itself also runs on Linux/macOS if `7z` or `bsdtar` is installed |
-| Python | 3.9 or newer, only for the patcher and for running the editor from source (`mido`, `python-rtmidi`, `pillow`) |
+| Computer | Windows 10/11. The editor uses Windows-only window code. The patcher's source version also runs on Linux/macOS if `7z` or `bsdtar` is installed |
+| Python | not needed for the `.exe` files. For the source versions: 3.9 or newer, editor with `mido`, `python-rtmidi`, `pillow` |
 
 ## Repository layout
 
