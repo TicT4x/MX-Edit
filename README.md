@@ -76,6 +76,21 @@ Full instructions: **[INSTALL.md](INSTALL.md)**.
 
 Both are also available as Python source (`…_Patcher.zip`, `MX5Editor_0.9.zip`).
 
+### With the NAM mod
+
+To get [NAM](https://github.com/lolgab/headrush-nam-mod) (Neural Amp Modeler) and the bridge
+together:
+
+1. Run the NAM mod's installer (`headrush-nam-gui`), choose **MX5**, and click
+   **Install NAM Mod**. **Do not run** the `HeadRush MX5 Firmware Updater (NAM mod).exe` it
+   creates.
+2. Drag that file onto `MX5Bridge_0.7_Patcher.exe`. It keeps the NAM mod and creates
+   `MX5Bridge_0.7_NAM_Updater`.
+3. Run `FirmwareUpdater.exe` from that folder and click **Install MX5Bridge 0.7 + NAM**.
+
+Then manage your `.nam` models with the **NAM** button in the editor. Details:
+[INSTALL.md › with the NAM mod](INSTALL.md#optional-with-the-nam-mod-neural-amp-modeler).
+
 ## Requirements
 
 | | |

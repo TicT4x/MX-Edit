@@ -40,20 +40,56 @@ may warn about an unknown publisher. Click *More info › Run anyway*.
 Your rigs, setlists, presets and IRs stay on the device. The update only replaces the system
 part, just like an official update.
 
-### Optional: with the NAM mod
+### Optional: with the NAM mod (Neural Amp Modeler)
 
-The [HeadRush NAM mod](https://github.com/lolgab/headrush-nam-mod) and the bridge can be used
-together:
+The [HeadRush NAM mod by lolgab](https://github.com/lolgab/headrush-nam-mod) turns the
+*Anxiety OD* block into a [Neural Amp Modeler](https://www.neuralampmodeler.com) block that plays
+`.nam` captures of real amps and pedals. The bridge and the NAM mod can be installed together.
+The NAM mod is a separate project and is not included here. Its installer builds its part, and
+the bridge patcher adds the bridge on top.
 
-1. Use the NAM mod's installer (`headrush-nam-gui`, from its releases page) and choose **MX5**.
-   It creates a patched HeadRush updater (`.exe`). **Do not run it.**
-2. Drag that `.exe` onto `MX5Bridge_0.7_Patcher.exe`. The patcher detects the NAM mod, keeps it, and
-   writes `MX5Bridge_0.7_NAM_Updater`.
-3. Install that updater as described above (steps 3–5).
+Instead of steps 1–2 above:
 
-With NAM installed, the editor can turn NAM on and off (*⋯ › Turn NAM off/on*; this restarts the
-device app) and manage the NAM models (*NAM* button in the left bar). If the device app crashes
-three times in a row right after starting with NAM, the bridge switches NAM off by itself.
+1. Download the NAM mod's installer for Windows (`headrush-nam-gui`, a `.zip`) from its
+   [releases page](https://github.com/lolgab/headrush-nam-mod/releases). Unzip it and keep the
+   `.exe` together with its `.dll` files.
+2. Start it, select **MX5** and the number of NAM instances:
+   - **2 instances**: *Anxiety OD* and *Anxiety OD 2* become NAM blocks.
+   - **up to 4 instances**: *Anxiety OD V2* and *Anxiety OD V2 2* as well. This uses more of the
+     device's processing power.
+
+   Click **Install NAM Mod**. It downloads the official updater and writes two files into its
+   folder: **`HeadRush MX5 Firmware Updater (NAM mod).exe`** and
+   `HeadRush MX5 Firmware Updater (stock).exe`.
+3. **Do not run the "(NAM mod)" updater.** Drag it onto **`MX5Bridge_0.7_Patcher.exe`** instead.
+   The patcher shows *"NAM mod found"* and creates the folder
+   **`MX5Bridge_0.7_NAM_Updater`**.
+4. Continue with steps 3–5 above, using `FirmwareUpdater.exe` from `MX5Bridge_0.7_NAM_Updater`.
+   The button is called **"Install MX5Bridge 0.7 + NAM"**.
+
+Keep the "(stock)" updater. It is the unmodified official updater for getting back to the stock
+firmware (section 4).
+
+**Using NAM with the editor:**
+
+- **Models:** click **NAM** in the editor's left bar to upload `.nam` files, and to rename,
+  reorder or delete them. They are stored in the `NAM` folder of the MX5's drive. The device app
+  restarts when you close the dialog (about 15 s), because the NAM mod reads its models only at
+  start-up.
+- **Choosing a model:** in a rig, NAM blocks appear as amps called *NAM* (*NAM 2*, *NAM V2*, …).
+  The model picker lists them under *Amp*. In a NAM block, *Model* selects the capture. On the
+  device this is the Drive knob: Drive = position in the model list, so up to 101 models.
+  *Input* and *Output* are the Tone and Level knobs. When you reorder or delete models, the
+  editor updates every rig and NAM preset that uses them.
+- **On/off:** *⋯ › Turn NAM off/on* switches NAM without reflashing (the device app restarts).
+  With NAM off, the Anxiety OD sounds like the stock pedal again.
+- **Safety:** if the device app crashes three times in a row right after starting with NAM, the
+  bridge switches NAM off by itself, and the editor tells you. Problems with the NAM mod itself
+  belong in [its issue tracker](https://github.com/lolgab/headrush-nam-mod/issues).
+
+Already have NAM installed and want to add the bridge? Do the same: the NAM mod's installer
+creates a new "(NAM mod)" updater each time. Drag that onto the bridge patcher and install the
+result.
 
 ## 3. Start the editor
 
