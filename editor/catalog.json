@@ -1,0 +1,9749 @@
+{
+ "modules": {
+  "Amp": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "TremSync",
+    "Doubling",
+    "DoubleStates",
+    "On",
+    "Colour",
+    "Type",
+    "Bright",
+    "Treble",
+    "Mid",
+    "MidFreq",
+    "Bass",
+    "Presence",
+    "GainA",
+    "GainB",
+    "TremSpeed",
+    "TremDepth",
+    "Master",
+    "Tremolo",
+    "Type2",
+    "Bright2",
+    "Treble2",
+    "Mid2",
+    "MidFreq2",
+    "Bass2",
+    "Presence2",
+    "GainA2",
+    "GainB2",
+    "TremSpeed2",
+    "TremDepth2",
+    "Master2",
+    "Bottom",
+    "MidBoost",
+    "Intensity",
+    "Level",
+    "ChorusMode",
+    "StereoAmp",
+    "Resonance",
+    "GainSwitch",
+    "JCDistortion",
+    "Bottom2",
+    "MidBoost2",
+    "Intensity2",
+    "Level2",
+    "ChorusMode2",
+    "StereoAmp2",
+    "Resonance2",
+    "GainSwitch2",
+    "JCDistortion2"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 0,
+     "max": 89,
+     "values": [],
+     "n": 682
+    },
+    "Bass2": {
+     "type": "number",
+     "min": 9,
+     "max": 73,
+     "values": [],
+     "n": 585
+    },
+    "Bright": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 682
+    },
+    "Bright2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 585
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Orange",
+      "Pink",
+      "Red",
+      "Yellow"
+     ],
+     "n": 585
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 682
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 585
+    },
+    "GainA": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 682
+    },
+    "GainA2": {
+     "type": "number",
+     "min": 38,
+     "max": 100,
+     "values": [],
+     "n": 585
+    },
+    "GainB": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 682
+    },
+    "GainB2": {
+     "type": "number",
+     "min": 10,
+     "max": 88,
+     "values": [],
+     "n": 585
+    },
+    "Master": {
+     "type": "number",
+     "min": 30,
+     "max": 100,
+     "values": [],
+     "n": 682
+    },
+    "Master2": {
+     "type": "number",
+     "min": 40,
+     "max": 93,
+     "values": [],
+     "n": 585
+    },
+    "Mid": {
+     "type": "number",
+     "min": 25,
+     "max": 100,
+     "values": [],
+     "n": 682
+    },
+    "Mid2": {
+     "type": "number",
+     "min": 25,
+     "max": 78,
+     "values": [],
+     "n": 585
+    },
+    "MidFreq": {
+     "type": "number",
+     "min": 800,
+     "max": 2227,
+     "values": [],
+     "n": 682
+    },
+    "MidFreq2": {
+     "type": "number",
+     "min": 1610,
+     "max": 1610,
+     "values": [],
+     "n": 585
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 585
+    },
+    "Presence": {
+     "type": "number",
+     "min": 0,
+     "max": 94,
+     "values": [],
+     "n": 682
+    },
+    "Presence2": {
+     "type": "number",
+     "min": 16,
+     "max": 94,
+     "values": [],
+     "n": 585
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 585
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 585
+    },
+    "Treble": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 682
+    },
+    "Treble2": {
+     "type": "number",
+     "min": 32,
+     "max": 93,
+     "values": [],
+     "n": 585
+    },
+    "TremDepth": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 682
+    },
+    "TremDepth2": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 585
+    },
+    "TremSpeed": {
+     "type": "number",
+     "min": 0.409999996423721,
+     "max": 7,
+     "values": [],
+     "n": 682
+    },
+    "TremSpeed2": {
+     "type": "number",
+     "min": 0.25,
+     "max": 7,
+     "values": [],
+     "n": 585
+    },
+    "TremSync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 682
+    },
+    "Tremolo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 682
+    },
+    "Type": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "05 Tangerine 30 Ch1",
+      "05 Tangerine 30 Ch2",
+      "11 EPB II Clean",
+      "11 EPB II Crunch",
+      "11 EPB II Hi-Lead",
+      "11 EPB II Lo-Lead",
+      "17 Trace Elliot Elf",
+      "59 Deluxe Gain Mod",
+      "59 Tweed Bass",
+      "59 Tweed Deluxe",
+      "59 Tweed Prince",
+      "64 Black Lux Norm",
+      "64 Black Lux Vib",
+      "64 Black Vib",
+      "65 Black Mini",
+      "65 Black Prince",
+      "65 Black Prince Rev",
+      "65 Black SR",
+      "65 J45",
+      "66 AC Hi Boost",
+      "66 AC Hi Boost Mod",
+      "66 Flip Bass",
+      "67 Black Duo",
+      "67 Black Shimmer",
+      "67 Plexiglas Vari",
+      "68 Plexi EL84 Mod",
+      "68 Plexiglas 50W",
+      "69 Blue Line Bass",
+      "69 Blue Line Scoop",
+      "69 Plexiglas 100W",
+      "82 LEAD 800 Bright",
+      "82 Lead 800 100W",
+      "82 Lead 800 50W",
+      "82 Lead 800 Bass Mod",
+      "82 Lead 800 TS Mod",
+      "83 400R",
+      "84 J-120H",
+      "85 M-2 Lead",
+      "85 M-2 Lead Cap Mod",
+      "89 SL-100 Clean",
+      "89 SL-100 Crunch",
+      "89 SL-100 Drive",
+      "89 SL-100 Ext Range",
+      "92 Treadplate Modern",
+      "92 Treadplate Raw",
+      "92 Treadplate Vintage",
+      "93 MS30",
+      "97 RB-01b Blue",
+      "97 RB-01b Green",
+      "97 RB-01b Red",
+      "99 PV51 II Clean",
+      "99 PV51 II Crunch",
+      "99 PV51 II Lead"
+     ],
+     "n": 682
+    },
+    "Type2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "05 Tangerine 30 Ch2",
+      "11 EPB II Hi-Lead",
+      "59 Deluxe Gain Mod",
+      "59 Tweed Deluxe",
+      "64 Black Lux Norm",
+      "64 Black Vib",
+      "65 J45",
+      "66 AC Hi Boost",
+      "67 Plexiglas Vari",
+      "68 Plexiglas 50W",
+      "85 M-2 Lead",
+      "89 SL-100 Crunch",
+      "92 Treadplate Modern",
+      "92 Treadplate Vintage",
+      "97 RB-01b Green"
+     ],
+     "n": 585
+    },
+    "Bottom": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 77
+    },
+    "Bottom2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 60
+    },
+    "ChorusMode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Fixed",
+      "Manual"
+     ],
+     "n": 73
+    },
+    "ChorusMode2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Fixed"
+     ],
+     "n": 60
+    },
+    "GainSwitch": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 73
+    },
+    "GainSwitch2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 60
+    },
+    "Intensity": {
+     "type": "number",
+     "min": 30,
+     "max": 50,
+     "values": [],
+     "n": 73
+    },
+    "Intensity2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 60
+    },
+    "JCDistortion": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 72
+    },
+    "JCDistortion2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 60
+    },
+    "Level": {
+     "type": "number",
+     "min": 20,
+     "max": 50,
+     "values": [],
+     "n": 73
+    },
+    "Level2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 60
+    },
+    "MidBoost": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 77
+    },
+    "MidBoost2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 60
+    },
+    "Resonance": {
+     "type": "number",
+     "min": 0,
+     "max": 65,
+     "values": [],
+     "n": 77
+    },
+    "Resonance2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 60
+    },
+    "StereoAmp": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 73
+    },
+    "StereoAmp2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 60
+    }
+   }
+  },
+  "Cab": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "CabType",
+    "CabType2",
+    "Doubling",
+    "DoubleStates",
+    "On",
+    "Colour",
+    "MicType",
+    "MicType2",
+    "OnAxis",
+    "OnAxis2",
+    "Breakup",
+    "Breakup2",
+    "OutGain",
+    "OutGain2",
+    "AmpCompGain"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "AmpCompGain": {
+     "type": "number",
+     "min": -3.60000014305115,
+     "max": 11.699999809265137,
+     "values": [],
+     "n": 563
+    },
+    "Breakup": {
+     "type": "number",
+     "min": 0,
+     "max": 85,
+     "values": [],
+     "n": 563
+    },
+    "Breakup2": {
+     "type": "number",
+     "min": 0,
+     "max": 64,
+     "values": [],
+     "n": 533
+    },
+    "CabType": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1x12 Black Panel Lux",
+      "1x12 Tweed Lux",
+      "1x15 Open Back",
+      "1x8 Custom",
+      "2x12 AC Blue",
+      "2x12 B30",
+      "2x12 Black Panel Duo",
+      "2x12 Silver Cone",
+      "4x10 Black SR",
+      "4x10 Tweed Bass",
+      "4x12 65W",
+      "4x12 Classic 30W",
+      "4x12 Green 20W",
+      "4x12 Green 25W",
+      "8x10 Blue Line"
+     ],
+     "n": 563
+    },
+    "CabType2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1x12 Black Panel Lux",
+      "1x12 Tweed Lux",
+      "1x15 Open Back",
+      "1x8 Custom",
+      "2x12 AC Blue",
+      "2x12 B30",
+      "2x12 Black Panel Duo",
+      "2x12 Silver Cone",
+      "4x10 Black SR",
+      "4x10 Tweed Bass",
+      "4x12 65W",
+      "4x12 Classic 30W",
+      "4x12 Green 20W",
+      "4x12 Green 25W",
+      "8x10 Blue Line"
+     ],
+     "n": 533
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Green",
+      "Light Blue",
+      "Orange"
+     ],
+     "n": 533
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 563
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 533
+    },
+    "MicType": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Cond 414",
+      "Cond 67",
+      "Cond 87",
+      "Dyn 12",
+      "Dyn 20",
+      "Dyn 409",
+      "Dyn 421",
+      "Dyn 57",
+      "Dyn 7",
+      "Ribbon 121"
+     ],
+     "n": 563
+    },
+    "MicType2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Cond 414",
+      "Cond 67",
+      "Cond 87",
+      "Dyn 20",
+      "Dyn 409",
+      "Dyn 421",
+      "Dyn 57",
+      "Dyn 7",
+      "Ribbon 121"
+     ],
+     "n": 533
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 533
+    },
+    "OnAxis": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 563
+    },
+    "OnAxis2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 533
+    },
+    "OutGain": {
+     "type": "number",
+     "min": -1.10000002384186,
+     "max": 7.599999904632568,
+     "values": [],
+     "n": 563
+    },
+    "OutGain2": {
+     "type": "number",
+     "min": -1,
+     "max": 7.599999904632568,
+     "values": [],
+     "n": 533
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 533
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 533
+    }
+   }
+  },
+  "Chain": {
+   "order": [
+    "Routing",
+    "Tails",
+    "ModuleType1",
+    "ModuleType2",
+    "ModuleType3",
+    "ModuleType4",
+    "ModuleType5",
+    "ModuleType6",
+    "ModuleType7",
+    "ModuleType8",
+    "ModuleType9",
+    "ModuleType10",
+    "ModuleType11",
+    "Para1Level",
+    "Para2Level",
+    "Para1Pan",
+    "Para2Pan",
+    "ParaDelay"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "ModuleType1": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Reverb",
+      "Amp",
+      "Amp 2",
+      "BBD Delay",
+      "Black Wah",
+      "Chorus",
+      "DC Distort",
+      "Drop Tune",
+      "DynIII Comp",
+      "Empty Slot",
+      "Gate",
+      "Graphic EQ",
+      "Gray Comp",
+      "Green JRC-OD",
+      "K Drive",
+      "Para EQ",
+      "Para EQ 2",
+      "Rotary",
+      "Shine Wah",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Tape Echo",
+      "Tri Fuzz",
+      "Vibrato",
+      "Volume",
+      "Wham",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "ModuleType10": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Reverb",
+      "Amp",
+      "BBD Delay",
+      "Cab",
+      "Cab 2",
+      "Dyn Delay",
+      "DynIII Comp",
+      "Eleven Reverb",
+      "Empty Slot",
+      "Graphic EQ",
+      "Multi Chorus",
+      "Para EQ",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Stereo Doubler 2",
+      "Tape Echo",
+      "Volume",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "ModuleType11": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Filter",
+      "AIR Reverb",
+      "Black Wah",
+      "Cab",
+      "Dyn Delay",
+      "DynIII Comp",
+      "DynIII Comp 2",
+      "Eleven Reverb",
+      "Empty Slot",
+      "Graphic EQ",
+      "Para EQ 2",
+      "Stereo Doubler",
+      "Volume"
+     ],
+     "n": 596
+    },
+    "ModuleType2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "8-Bit Crush",
+      "AIR Filter",
+      "AIR Flanger",
+      "AIR Reverb",
+      "Amp",
+      "Anxiety OD V2",
+      "B2 Drive",
+      "BBD Delay",
+      "Bass EQ",
+      "Black OP",
+      "Black Wah",
+      "Cab",
+      "Cab 2",
+      "Chorus",
+      "DC Distort",
+      "Drop Tune",
+      "DynIII Comp",
+      "Empty Slot",
+      "Graphic EQ",
+      "Gray Comp",
+      "Green JRC-OD",
+      "Green JRC-OD 2",
+      "K Drive",
+      "Multi Chorus",
+      "Octaves",
+      "Para EQ",
+      "Round Fuzz",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Tape Echo",
+      "Tri Fuzz",
+      "Vibe Phaser",
+      "Vibrato",
+      "Volume",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "ModuleType3": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Reverb 2",
+      "Amp",
+      "BBD Delay",
+      "Bass EQ",
+      "Black OP",
+      "Black Wah",
+      "Cab",
+      "Chorus",
+      "DC Distort",
+      "DynIII Comp",
+      "Empty Slot",
+      "Env Filter",
+      "Graphic EQ",
+      "Gray Comp",
+      "Green JRC-OD",
+      "K Drive",
+      "MX Dist",
+      "Octaves",
+      "Orange Phaser",
+      "Para EQ",
+      "Rotary",
+      "Shine Wah",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Stone Phaser",
+      "Tape Echo 2",
+      "Tri Fuzz",
+      "Vibe Phaser",
+      "Vibrato",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "ModuleType4": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "8-Bit Crush",
+      "AIR Reverb",
+      "AIR Vibrato",
+      "Acoustic Pre",
+      "Amp",
+      "Amp 2",
+      "Black OP",
+      "Black Wah",
+      "Cab",
+      "Cab 2",
+      "Chorus",
+      "DC Distort",
+      "DynIII Comp",
+      "DynIII Comp 2",
+      "Empty Slot",
+      "Flanger",
+      "Graphic EQ",
+      "Graphic EQ 2",
+      "Gray Comp",
+      "Green JRC-OD",
+      "Green JRC-OD 2",
+      "IR",
+      "IR (1024)",
+      "Multi Chorus",
+      "Octaves",
+      "Octaves Up",
+      "Orange Phaser",
+      "Para EQ",
+      "Rotary",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Stone Phaser",
+      "Tremolo",
+      "Tri Fuzz",
+      "Tron Phaser",
+      "Volume",
+      "White Boost",
+      "White Boost 2"
+     ],
+     "n": 596
+    },
+    "ModuleType5": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Filter",
+      "AIR Reverb",
+      "Acoust Sim",
+      "Acoustic Pre",
+      "Amp",
+      "Amp 2",
+      "Black OP",
+      "Black Wah",
+      "Cab",
+      "Chorus",
+      "DC Distort",
+      "DynIII Comp",
+      "Empty Slot",
+      "Flanger",
+      "Graphic EQ",
+      "Graphic EQ 2",
+      "Gray Comp",
+      "Green JRC-OD",
+      "Green JRC-OD 2",
+      "Harm",
+      "IR (1024)",
+      "K Drive",
+      "Multi Chorus",
+      "Oct Fuzz",
+      "Para EQ",
+      "Rotary",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Stone Phaser",
+      "Tremolo",
+      "Vibe Phaser",
+      "Volume",
+      "Volume 2",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "ModuleType6": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Acoustic Pre",
+      "Amp",
+      "Amp 2",
+      "BBD Delay",
+      "Cab",
+      "Chorus",
+      "Drop Tune",
+      "Dyn Delay",
+      "DynIII Comp",
+      "DynIII Comp 2",
+      "Empty Slot",
+      "Flanger",
+      "Graphic EQ",
+      "Graphic EQ 2",
+      "Gray Comp",
+      "IR",
+      "IR (1024)",
+      "Octaves",
+      "Spring Reverb",
+      "Stereo Doubler 2",
+      "Tape Echo",
+      "Tri Fuzz",
+      "Tron Phaser"
+     ],
+     "n": 596
+    },
+    "ModuleType7": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Reverb",
+      "Acoust Sim",
+      "Amp",
+      "Amp 2",
+      "Cab",
+      "Cab 2",
+      "Chorus",
+      "DC Distort 2",
+      "Dim Chorus",
+      "Dyn Delay",
+      "DynIII Comp",
+      "Empty Slot",
+      "Graphic EQ",
+      "Green JRC-OD",
+      "Harm",
+      "IR (1024)",
+      "Oct Fuzz",
+      "Para EQ",
+      "Rotary",
+      "Stereo Doubler",
+      "Tape Echo",
+      "Tremolo",
+      "Volume",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "ModuleType8": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Delay",
+      "AIR Filter",
+      "AIR Reverb",
+      "Amp",
+      "Amp 2",
+      "BBD Delay",
+      "Cab",
+      "Cab 2",
+      "Chorus",
+      "Dyn Delay",
+      "Dyn Delay 2",
+      "DynIII Comp",
+      "DynIII Comp 2",
+      "Eleven Reverb",
+      "Empty Slot",
+      "Flanger",
+      "Graphic EQ",
+      "Graphic EQ 2",
+      "Gray Comp",
+      "IR (1024)",
+      "IR (1024) 2",
+      "Multi Chorus",
+      "Orange Phaser",
+      "Para EQ",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Stereo Doubler 2",
+      "Tape Echo",
+      "Vibrato",
+      "Volume"
+     ],
+     "n": 596
+    },
+    "ModuleType9": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "AIR Reverb",
+      "Amp",
+      "Amp 2",
+      "BBD Delay",
+      "Bass EQ",
+      "Cab",
+      "Cab 2",
+      "Chorus",
+      "Chorus 2",
+      "Dyn Delay",
+      "DynIII Comp",
+      "DynIII Comp 2",
+      "Eleven Reverb",
+      "Empty Slot",
+      "Graphic EQ",
+      "Graphic EQ 2",
+      "Gray Comp",
+      "Multi Chorus",
+      "Para EQ",
+      "Para EQ 2",
+      "Spring Reverb",
+      "Stereo Doubler",
+      "Stereo Doubler 2",
+      "Tape Echo",
+      "Tremolo",
+      "Volume",
+      "White Boost"
+     ],
+     "n": 596
+    },
+    "Para1Level": {
+     "type": "number",
+     "min": -15.5,
+     "max": 2.5,
+     "values": [],
+     "n": 596
+    },
+    "Para1Pan": {
+     "type": "number",
+     "min": -100,
+     "max": 2,
+     "values": [],
+     "n": 596
+    },
+    "Para2Level": {
+     "type": "number",
+     "min": -23.3999996185303,
+     "max": 12,
+     "values": [],
+     "n": 596
+    },
+    "Para2Pan": {
+     "type": "number",
+     "min": -2,
+     "max": 100,
+     "values": [],
+     "n": 596
+    },
+    "ParaDelay": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 596
+    },
+    "Routing": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "PS-1",
+      "S",
+      "SPS-1"
+     ],
+     "n": 596
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 596
+    }
+   }
+  },
+  "Chorus": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Feedback",
+    "Mix"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 60
+    },
+    "Depth": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 88
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 88
+    },
+    "Mix": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 88
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 60
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 60
+    },
+    "Rate": {
+     "type": "number",
+     "min": 0.100000001490116,
+     "max": 5,
+     "values": [],
+     "n": 88
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 88
+    }
+   }
+  },
+  "Input": {
+   "order": [
+    "PresetName",
+    "InputGain",
+    "GateThresh",
+    "GateRelease",
+    "FilterThreshold",
+    "RigInput"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "GateRelease": {
+     "type": "number",
+     "min": 11,
+     "max": 816,
+     "values": [],
+     "n": 603
+    },
+    "GateThresh": {
+     "type": "number",
+     "min": -120,
+     "max": -35,
+     "values": [],
+     "n": 603
+    },
+    "InputGain": {
+     "type": "number",
+     "min": -6.70000028610229,
+     "max": 12,
+     "values": [],
+     "n": 603
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 596
+    },
+    "FilterThreshold": {
+     "type": "number",
+     "min": -120,
+     "max": -70.5,
+     "values": [],
+     "n": 328
+    },
+    "RigInput": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 70
+    }
+   }
+  },
+  "Output": {
+   "order": [
+    "PresetName",
+    "RigVolume",
+    "RigWidth",
+    "ToAmpGain"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 596
+    },
+    "RigVolume": {
+     "type": "number",
+     "min": -21.5,
+     "max": 20.1000003814697,
+     "values": [],
+     "n": 601
+    },
+    "RigWidth": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 601
+    },
+    "ToAmpGain": {
+     "type": "number",
+     "min": -3.20000004768372,
+     "max": 2.10000014305115,
+     "values": [],
+     "n": 537
+    }
+   }
+  },
+  "Rig": {
+   "order": [
+    "PresetName",
+    "Tempo",
+    "TempoFromMaster",
+    "RigCurPedalAB"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 596
+    },
+    "Tempo": {
+     "type": "number",
+     "min": 59,
+     "max": 212,
+     "values": [],
+     "n": 596
+    },
+    "TempoFromMaster": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 596
+    },
+    "RigCurPedalAB": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 63
+    }
+   }
+  },
+  "White Boost": {
+   "order": [
+    "PresetName",
+    "Gain",
+    "Treble",
+    "Bass",
+    "Volume",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 0,
+     "max": 71,
+     "values": [],
+     "n": 147
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Light Blue",
+      "Orange",
+      "Red",
+      "Yellow"
+     ],
+     "n": 131
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 147
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 131
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 131
+    },
+    "Treble": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 147
+    },
+    "Volume": {
+     "type": "number",
+     "min": 3,
+     "max": 65,
+     "values": [],
+     "n": 147
+    }
+   }
+  },
+  "AIR Reverb": {
+   "order": [
+    "PresetName",
+    "Mode",
+    "Time",
+    "Size",
+    "Mix",
+    "On",
+    "Color",
+    "Colour",
+    "Tails"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Color": {
+     "type": "number",
+     "min": 275,
+     "max": 20000,
+     "values": [],
+     "n": 165
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Dark Green",
+      "Green",
+      "Pink"
+     ],
+     "n": 148
+    },
+    "Mix": {
+     "type": "number",
+     "min": 4,
+     "max": 50,
+     "values": [],
+     "n": 165
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Ambient",
+      "Chamber",
+      "Church",
+      "Dense",
+      "Hall",
+      "NonLinear",
+      "Room",
+      "Studio"
+     ],
+     "n": 165
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 148
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 148
+    },
+    "Size": {
+     "type": "number",
+     "min": 8,
+     "max": 100,
+     "values": [],
+     "n": 165
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 101
+    },
+    "Time": {
+     "type": "number",
+     "min": 0.5,
+     "max": 6.80000019073486,
+     "values": [],
+     "n": 165
+    }
+   }
+  },
+  "Graphic EQ": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "LoGain",
+    "LoMidGain",
+    "MidGain",
+    "HiMidGain",
+    "HiGain",
+    "Gain"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Light Blue",
+      "Orange",
+      "Red",
+      "Yellow"
+     ],
+     "n": 148
+    },
+    "Gain": {
+     "type": "number",
+     "min": -9,
+     "max": 6,
+     "values": [],
+     "n": 171
+    },
+    "HiGain": {
+     "type": "number",
+     "min": -12,
+     "max": 12,
+     "values": [],
+     "n": 171
+    },
+    "HiMidGain": {
+     "type": "number",
+     "min": -6.5,
+     "max": 6,
+     "values": [],
+     "n": 171
+    },
+    "LoGain": {
+     "type": "number",
+     "min": -12,
+     "max": 6.09999990463257,
+     "values": [],
+     "n": 171
+    },
+    "LoMidGain": {
+     "type": "number",
+     "min": -18,
+     "max": 5,
+     "values": [],
+     "n": 171
+    },
+    "MidGain": {
+     "type": "number",
+     "min": -12.3000001907349,
+     "max": 6.900000095367432,
+     "values": [],
+     "n": 171
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 148
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 148
+    }
+   }
+  },
+  "Gray Comp": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Sustain",
+    "Level"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Dark Green",
+      "Light Blue",
+      "Red"
+     ],
+     "n": 90
+    },
+    "Level": {
+     "type": "number",
+     "min": 24,
+     "max": 100,
+     "values": [],
+     "n": 98
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 90
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 90
+    },
+    "Sustain": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 98
+    }
+   }
+  },
+  "Mix": {
+   "order": [
+    "Para1Level",
+    "Para2Level",
+    "Para1Pan",
+    "Para2Pan",
+    "ParaDelay",
+    "PresetName"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Para1Level": {
+     "type": "number",
+     "min": -9.90000057220459,
+     "max": -3,
+     "values": [],
+     "n": 73
+    },
+    "Para1Pan": {
+     "type": "number",
+     "min": -100,
+     "max": 0,
+     "values": [],
+     "n": 73
+    },
+    "Para2Level": {
+     "type": "number",
+     "min": -6,
+     "max": 12,
+     "values": [],
+     "n": 73
+    },
+    "Para2Pan": {
+     "type": "number",
+     "min": -2,
+     "max": 100,
+     "values": [],
+     "n": 73
+    },
+    "ParaDelay": {
+     "type": "number",
+     "min": 0,
+     "max": 25010,
+     "values": [],
+     "n": 73
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 63
+    }
+   }
+  },
+  "DynIII Comp": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Threshold",
+    "Attack",
+    "Release",
+    "Ratio",
+    "Knee",
+    "Gain"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 0.00999999977648258,
+     "max": 33.4500007629395,
+     "values": [],
+     "n": 211
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange",
+      "Pink",
+      "Purple",
+      "Red"
+     ],
+     "n": 199
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 29.3000011444092,
+     "values": [],
+     "n": 211
+    },
+    "Knee": {
+     "type": "number",
+     "min": 2.79999995231628,
+     "max": 30,
+     "values": [],
+     "n": 211
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 199
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 199
+    },
+    "Ratio": {
+     "type": "number",
+     "min": 1.100000023841858,
+     "max": 100,
+     "values": [],
+     "n": 211
+    },
+    "Release": {
+     "type": "number",
+     "min": 10,
+     "max": 668,
+     "values": [],
+     "n": 211
+    },
+    "Threshold": {
+     "type": "number",
+     "min": -55.7000007629395,
+     "max": 0,
+     "values": [],
+     "n": 211
+    }
+   }
+  },
+  "Green JRC-OD": {
+   "order": [
+    "PresetName",
+    "Drive",
+    "Tone",
+    "Level",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Dark Green",
+      "Green",
+      "Red",
+      "Yellow"
+     ],
+     "n": 162
+    },
+    "Drive": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 175
+    },
+    "Level": {
+     "type": "number",
+     "min": 20,
+     "max": 100,
+     "values": [],
+     "n": 175
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 162
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 162
+    },
+    "Tone": {
+     "type": "number",
+     "min": 4,
+     "max": 100,
+     "values": [],
+     "n": 175
+    }
+   }
+  },
+  "Volume": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Volume",
+    "MinVolume",
+    "Linear"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Red",
+      "Yellow"
+     ],
+     "n": 381
+    },
+    "Linear": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 387
+    },
+    "MinVolume": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 387
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 381
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 381
+    },
+    "Volume": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 387
+    }
+   }
+  },
+  "Para EQ": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Type1",
+    "Type4",
+    "Gain1",
+    "Gain2",
+    "Gain3",
+    "Gain4",
+    "Freq1",
+    "Freq2",
+    "Freq3",
+    "Freq4",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "In-Bus"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Dark Green",
+      "Orange",
+      "Pink",
+      "Yellow"
+     ],
+     "n": 88
+    },
+    "Freq1": {
+     "type": "number",
+     "min": 30,
+     "max": 431.5,
+     "values": [],
+     "n": 120
+    },
+    "Freq2": {
+     "type": "number",
+     "min": 100,
+     "max": 4013,
+     "values": [],
+     "n": 120
+    },
+    "Freq3": {
+     "type": "number",
+     "min": 200,
+     "max": 4574,
+     "values": [],
+     "n": 120
+    },
+    "Freq4": {
+     "type": "number",
+     "min": 200,
+     "max": 20000,
+     "values": [],
+     "n": 120
+    },
+    "Gain1": {
+     "type": "number",
+     "min": -24,
+     "max": 12,
+     "values": [],
+     "n": 120
+    },
+    "Gain2": {
+     "type": "number",
+     "min": -9,
+     "max": 10,
+     "values": [],
+     "n": 120
+    },
+    "Gain3": {
+     "type": "number",
+     "min": -11.9000005722046,
+     "max": 6.300000190734863,
+     "values": [],
+     "n": 120
+    },
+    "Gain4": {
+     "type": "number",
+     "min": -24,
+     "max": 9,
+     "values": [],
+     "n": 120
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 88
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 88
+    },
+    "Q1": {
+     "type": "number",
+     "min": 0.200000002980232,
+     "max": 10,
+     "values": [],
+     "n": 120
+    },
+    "Q2": {
+     "type": "number",
+     "min": 0.30000001192092896,
+     "max": 4.40000009536743,
+     "values": [],
+     "n": 120
+    },
+    "Q3": {
+     "type": "number",
+     "min": 0.200000002980232,
+     "max": 9.199999809265137,
+     "values": [],
+     "n": 120
+    },
+    "Q4": {
+     "type": "number",
+     "min": 0.200000002980232,
+     "max": 10,
+     "values": [],
+     "n": 120
+    },
+    "Type1": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "12dB",
+      "Notch",
+      "Shelf"
+     ],
+     "n": 120
+    },
+    "Type4": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "12dB",
+      "Peak",
+      "Shelf"
+     ],
+     "n": 120
+    },
+    "In-Bus": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Both"
+     ],
+     "n": 32
+    }
+   }
+  },
+  "Dyn Delay": {
+   "order": [
+    "Colour",
+    "Delay",
+    "EnvFbk",
+    "EnvMix",
+    "EnvRate",
+    "Feedback",
+    "HiCut",
+    "LoCut",
+    "Mix",
+    "On",
+    "PresetName",
+    "Ratio",
+    "Stereo",
+    "Sync",
+    "Tails",
+    "Width"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green"
+     ],
+     "n": 114
+    },
+    "Delay": {
+     "type": "number",
+     "min": 65,
+     "max": 870,
+     "values": [],
+     "n": 142
+    },
+    "EnvFbk": {
+     "type": "number",
+     "min": -25,
+     "max": 60,
+     "values": [],
+     "n": 142
+    },
+    "EnvMix": {
+     "type": "number",
+     "min": -80,
+     "max": 100,
+     "values": [],
+     "n": 142
+    },
+    "EnvRate": {
+     "type": "number",
+     "min": 0.00999999977648258,
+     "max": 0.75,
+     "values": [],
+     "n": 142
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 80,
+     "values": [],
+     "n": 142
+    },
+    "HiCut": {
+     "type": "number",
+     "min": 1065,
+     "max": 20000,
+     "values": [],
+     "n": 142
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 20,
+     "max": 650,
+     "values": [],
+     "n": 142
+    },
+    "Mix": {
+     "type": "number",
+     "min": 2,
+     "max": 100,
+     "values": [],
+     "n": 142
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 114
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 114
+    },
+    "Ratio": {
+     "type": "number",
+     "min": -69,
+     "max": 100,
+     "values": [],
+     "n": 142
+    },
+    "Stereo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 142
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 142
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 77
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 142
+    }
+   }
+  },
+  "Orange Phaser": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Stereo"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 10
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 10
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 10
+    },
+    "Rate": {
+     "type": "number",
+     "min": 0.600000023841858,
+     "max": 2.10000014305115,
+     "values": [],
+     "n": 16
+    },
+    "Stereo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 16
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 16
+    }
+   }
+  },
+  "Eleven Reverb": {
+   "order": [
+    "PresetName",
+    "Mode",
+    "Decay",
+    "Tone",
+    "Pre-Delay",
+    "Mix",
+    "On",
+    "Colour",
+    "Tails"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Dark Green",
+      "Pink",
+      "Purple"
+     ],
+     "n": 180
+    },
+    "Decay": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 232
+    },
+    "Mix": {
+     "type": "number",
+     "min": 1,
+     "max": 60,
+     "values": [],
+     "n": 232
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Arena",
+      "Big Theater",
+      "Bright Hall",
+      "Cathedral",
+      "Church",
+      "Concert Hall",
+      "Early Reflection 1",
+      "Early Reflection 2",
+      "Echo Room Short",
+      "Extra Long 1",
+      "Extra Long 2",
+      "Garage",
+      "Jazz Club",
+      "Long Plate",
+      "Medium Plate",
+      "Medium Room",
+      "Medium Theater",
+      "Medium Tiled Room",
+      "Medium Wood Room",
+      "Rich Hall",
+      "Small Music Club",
+      "Small Plate",
+      "Small Room",
+      "Small Theater",
+      "Studio"
+     ],
+     "n": 232
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 180
+    },
+    "Pre-Delay": {
+     "type": "number",
+     "min": 0,
+     "max": 73,
+     "values": [],
+     "n": 232
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 180
+    },
+    "Tone": {
+     "type": "number",
+     "min": 11,
+     "max": 100,
+     "values": [],
+     "n": 232
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 90
+    }
+   }
+  },
+  "Black Wah": {
+   "order": [
+    "PresetName",
+    "Level",
+    "MakeUp",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Orange"
+     ],
+     "n": 43
+    },
+    "Level": {
+     "type": "number",
+     "min": 2,
+     "max": 100,
+     "values": [],
+     "n": 49
+    },
+    "MakeUp": {
+     "type": "number",
+     "min": -3,
+     "max": 6,
+     "values": [],
+     "n": 49
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 43
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 43
+    }
+   }
+  },
+  "DC Distort": {
+   "order": [
+    "PresetName",
+    "Gain",
+    "Treble",
+    "Bass",
+    "Volume",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 0,
+     "max": 64,
+     "values": [],
+     "n": 45
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange",
+      "Yellow"
+     ],
+     "n": 33
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 45
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 33
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 33
+    },
+    "Treble": {
+     "type": "number",
+     "min": 20,
+     "max": 100,
+     "values": [],
+     "n": 45
+    },
+    "Volume": {
+     "type": "number",
+     "min": 15,
+     "max": 65,
+     "values": [],
+     "n": 45
+    }
+   }
+  },
+  "Spring Reverb": {
+   "order": [
+    "PresetName",
+    "Decay",
+    "Tone",
+    "Mix",
+    "DiffusionOn",
+    "Width",
+    "On",
+    "Colour",
+    "Tails"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Green"
+     ],
+     "n": 140
+    },
+    "Decay": {
+     "type": "number",
+     "min": 1,
+     "max": 5.40000009536743,
+     "values": [],
+     "n": 162
+    },
+    "DiffusionOn": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 162
+    },
+    "Mix": {
+     "type": "number",
+     "min": 5,
+     "max": 51,
+     "values": [],
+     "n": 162
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 140
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 140
+    },
+    "Tone": {
+     "type": "number",
+     "min": 3.20000004768372,
+     "max": 17,
+     "values": [],
+     "n": 162
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 162
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 71
+    }
+   }
+  },
+  "BBD Delay": {
+   "order": [
+    "Colour",
+    "Delay",
+    "Feedback",
+    "Hiss",
+    "InputGain",
+    "LFODepth",
+    "LFOSpeed",
+    "Mix",
+    "On",
+    "PresetName",
+    "Sync",
+    "Tails"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green",
+      "Light Blue"
+     ],
+     "n": 34
+    },
+    "Delay": {
+     "type": "number",
+     "min": 50,
+     "max": 389,
+     "values": [],
+     "n": 54
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 82,
+     "values": [],
+     "n": 54
+    },
+    "Hiss": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 54
+    },
+    "InputGain": {
+     "type": "number",
+     "min": 49,
+     "max": 64,
+     "values": [],
+     "n": 54
+    },
+    "LFODepth": {
+     "type": "number",
+     "min": 0,
+     "max": 55,
+     "values": [],
+     "n": 54
+    },
+    "LFOSpeed": {
+     "type": "number",
+     "min": 0.719999969005585,
+     "max": 5,
+     "values": [],
+     "n": 54
+    },
+    "Mix": {
+     "type": "number",
+     "min": 9,
+     "max": 50,
+     "values": [],
+     "n": 54
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 34
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 34
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 54
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 17
+    }
+   }
+  },
+  "Stereo Doubler": {
+   "order": [
+    "PresetName",
+    "Intensity",
+    "Separation",
+    "Width",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Light Blue",
+      "Orange",
+      "Red"
+     ],
+     "n": 66
+    },
+    "Intensity": {
+     "type": "number",
+     "min": 6,
+     "max": 100,
+     "values": [],
+     "n": 78
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 66
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 66
+    },
+    "Separation": {
+     "type": "number",
+     "min": 5,
+     "max": 66,
+     "values": [],
+     "n": 78
+    },
+    "Width": {
+     "type": "number",
+     "min": 10,
+     "max": 100,
+     "values": [],
+     "n": 78
+    }
+   }
+  },
+  "Amp 2": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "TremSync",
+    "Doubling",
+    "DoubleStates",
+    "On",
+    "Colour",
+    "Type",
+    "Bright",
+    "Treble",
+    "Mid",
+    "MidFreq",
+    "Bass",
+    "Presence",
+    "GainA",
+    "GainB",
+    "TremSpeed",
+    "TremDepth",
+    "Master",
+    "Tremolo",
+    "Type2",
+    "Bright2",
+    "Treble2",
+    "Mid2",
+    "MidFreq2",
+    "Bass2",
+    "Presence2",
+    "GainA2",
+    "GainB2",
+    "TremSpeed2",
+    "TremDepth2",
+    "Master2",
+    "Bottom",
+    "MidBoost",
+    "Intensity",
+    "Level",
+    "ChorusMode",
+    "StereoAmp",
+    "Resonance",
+    "GainSwitch",
+    "JCDistortion",
+    "Bottom2",
+    "MidBoost2",
+    "Intensity2",
+    "Level2",
+    "ChorusMode2",
+    "StereoAmp2",
+    "Resonance2",
+    "GainSwitch2",
+    "JCDistortion2"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 25,
+     "max": 75,
+     "values": [],
+     "n": 34
+    },
+    "Bass2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "Bright": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 34
+    },
+    "Bright2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 34
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Red",
+      "Yellow"
+     ],
+     "n": 34
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 34
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 34
+    },
+    "GainA": {
+     "type": "number",
+     "min": 31,
+     "max": 100,
+     "values": [],
+     "n": 34
+    },
+    "GainA2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "GainB": {
+     "type": "number",
+     "min": 40,
+     "max": 98,
+     "values": [],
+     "n": 34
+    },
+    "GainB2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "Master": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 34
+    },
+    "Master2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "Mid": {
+     "type": "number",
+     "min": 45,
+     "max": 77,
+     "values": [],
+     "n": 34
+    },
+    "Mid2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "MidFreq": {
+     "type": "number",
+     "min": 1610,
+     "max": 1610,
+     "values": [],
+     "n": 34
+    },
+    "MidFreq2": {
+     "type": "number",
+     "min": 1610,
+     "max": 1610,
+     "values": [],
+     "n": 34
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 34
+    },
+    "Presence": {
+     "type": "number",
+     "min": 0,
+     "max": 70,
+     "values": [],
+     "n": 34
+    },
+    "Presence2": {
+     "type": "number",
+     "min": 30,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 34
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 34
+    },
+    "Treble": {
+     "type": "number",
+     "min": 14,
+     "max": 83,
+     "values": [],
+     "n": 34
+    },
+    "Treble2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 34
+    },
+    "TremDepth": {
+     "type": "number",
+     "min": 0,
+     "max": 85,
+     "values": [],
+     "n": 34
+    },
+    "TremDepth2": {
+     "type": "number",
+     "min": 0,
+     "max": 60,
+     "values": [],
+     "n": 34
+    },
+    "TremSpeed": {
+     "type": "number",
+     "min": 0.409999996423721,
+     "max": 7,
+     "values": [],
+     "n": 34
+    },
+    "TremSpeed2": {
+     "type": "number",
+     "min": 0.25,
+     "max": 5.19000005722046,
+     "values": [],
+     "n": 34
+    },
+    "TremSync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 34
+    },
+    "Tremolo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 34
+    },
+    "Type": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "59 Tweed Bass",
+      "64 Black Lux Norm",
+      "65 Black SR",
+      "66 AC Hi Boost",
+      "66 AC Hi Boost Mod",
+      "67 Black Duo",
+      "67 Plexiglas Vari",
+      "68 Plexiglas 50W",
+      "69 Blue Line Scoop",
+      "85 M-2 Lead",
+      "89 SL-100 Clean",
+      "89 SL-100 Crunch",
+      "89 SL-100 Drive",
+      "92 Treadplate Modern",
+      "97 RB-01b Red"
+     ],
+     "n": 34
+    },
+    "Type2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "59 Deluxe Gain Mod",
+      "59 Tweed Deluxe",
+      "92 Treadplate Modern"
+     ],
+     "n": 34
+    },
+    "Bottom": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "Bottom2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "ChorusMode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Fixed"
+     ],
+     "n": 2
+    },
+    "ChorusMode2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Fixed"
+     ],
+     "n": 2
+    },
+    "GainSwitch": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "GainSwitch2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "Intensity": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "Intensity2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "JCDistortion": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "JCDistortion2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "Level": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "Level2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "MidBoost": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "MidBoost2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "Resonance": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "Resonance2": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "StereoAmp": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "StereoAmp2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    }
+   }
+  },
+  "Cab 2": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "CabType",
+    "CabType2",
+    "Doubling",
+    "DoubleStates",
+    "On",
+    "Colour",
+    "MicType",
+    "MicType2",
+    "OnAxis",
+    "OnAxis2",
+    "Breakup",
+    "Breakup2",
+    "OutGain",
+    "OutGain2",
+    "AmpCompGain"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "AmpCompGain": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 37
+    },
+    "Breakup": {
+     "type": "number",
+     "min": 0,
+     "max": 69,
+     "values": [],
+     "n": 37
+    },
+    "Breakup2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 37
+    },
+    "CabType": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1x12 Black Panel Lux",
+      "2x12 B30",
+      "2x12 Silver Cone",
+      "4x10 Tweed Bass",
+      "4x12 65W",
+      "4x12 Classic 30W",
+      "4x12 Green 25W",
+      "8x10 Blue Line"
+     ],
+     "n": 37
+    },
+    "CabType2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1x12 Black Panel Lux",
+      "2x12 B30",
+      "2x12 Silver Cone",
+      "4x12 65W"
+     ],
+     "n": 37
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green",
+      "Light Blue",
+      "Yellow"
+     ],
+     "n": 37
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 37
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 37
+    },
+    "MicType": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Cond 414",
+      "Dyn 20",
+      "Dyn 409",
+      "Dyn 421",
+      "Dyn 57",
+      "Dyn 7",
+      "Ribbon 121"
+     ],
+     "n": 37
+    },
+    "MicType2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Dyn 421",
+      "Dyn 7"
+     ],
+     "n": 37
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 37
+    },
+    "OnAxis": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 37
+    },
+    "OnAxis2": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 37
+    },
+    "OutGain": {
+     "type": "number",
+     "min": -3,
+     "max": 0,
+     "values": [],
+     "n": 37
+    },
+    "OutGain2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 37
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 37
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 37
+    }
+   }
+  },
+  "Para EQ 2": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Type1",
+    "Type4",
+    "Gain1",
+    "Gain2",
+    "Gain3",
+    "Gain4",
+    "Freq1",
+    "Freq2",
+    "Freq3",
+    "Freq4",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 6
+    },
+    "Freq1": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 6
+    },
+    "Freq2": {
+     "type": "number",
+     "min": 500,
+     "max": 500,
+     "values": [],
+     "n": 6
+    },
+    "Freq3": {
+     "type": "number",
+     "min": 2000,
+     "max": 4574,
+     "values": [],
+     "n": 6
+    },
+    "Freq4": {
+     "type": "number",
+     "min": 4208,
+     "max": 4962.89990234375,
+     "values": [],
+     "n": 6
+    },
+    "Gain1": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 6
+    },
+    "Gain2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 6
+    },
+    "Gain3": {
+     "type": "number",
+     "min": 0,
+     "max": 2,
+     "values": [],
+     "n": 6
+    },
+    "Gain4": {
+     "type": "number",
+     "min": 4.40000009536743,
+     "max": 12,
+     "values": [],
+     "n": 6
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 6
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 6
+    },
+    "Q1": {
+     "type": "number",
+     "min": 0.699999988079071,
+     "max": 0.699999988079071,
+     "values": [],
+     "n": 6
+    },
+    "Q2": {
+     "type": "number",
+     "min": 0.699999988079071,
+     "max": 0.699999988079071,
+     "values": [],
+     "n": 6
+    },
+    "Q3": {
+     "type": "number",
+     "min": 0.699999988079071,
+     "max": 1.39999997615814,
+     "values": [],
+     "n": 6
+    },
+    "Q4": {
+     "type": "number",
+     "min": 0.200000002980232,
+     "max": 0.699999988079071,
+     "values": [],
+     "n": 6
+    },
+    "Type1": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Shelf"
+     ],
+     "n": 6
+    },
+    "Type4": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Shelf"
+     ],
+     "n": 6
+    }
+   }
+  },
+  "Tri Fuzz": {
+   "order": [
+    "PresetName",
+    "Volume",
+    "Sustain",
+    "Tone",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 32
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 32
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 32
+    },
+    "Sustain": {
+     "type": "number",
+     "min": 1,
+     "max": 100,
+     "values": [],
+     "n": 46
+    },
+    "Tone": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 46
+    },
+    "Volume": {
+     "type": "number",
+     "min": 6,
+     "max": 100,
+     "values": [],
+     "n": 46
+    }
+   }
+  },
+  "Tron Phaser": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Feedback",
+    "Stereo",
+    "Mix"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 4
+    },
+    "Depth": {
+     "type": "number",
+     "min": 40,
+     "max": 100,
+     "values": [],
+     "n": 12
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 75,
+     "values": [],
+     "n": 12
+    },
+    "Mix": {
+     "type": "number",
+     "min": 40,
+     "max": 50,
+     "values": [],
+     "n": 12
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 4
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 4
+    },
+    "Rate": {
+     "type": "number",
+     "min": 0.200000002980232,
+     "max": 0.900000035762787,
+     "values": [],
+     "n": 12
+    },
+    "Stereo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 12
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 12
+    }
+   }
+  },
+  "Tape Echo": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Delay",
+    "Feedback",
+    "RecordLevel",
+    "Mix",
+    "HeadTilt",
+    "Wow",
+    "Hiss",
+    "Tails"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green",
+      "Pink"
+     ],
+     "n": 70
+    },
+    "Delay": {
+     "type": "enum",
+     "min": 20,
+     "max": 658,
+     "values": [
+      "1/16",
+      "1/2",
+      "1/4",
+      "1/8",
+      "1/8T",
+      "3/16",
+      "Bar"
+     ],
+     "n": 94
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 79,
+     "values": [],
+     "n": 94
+    },
+    "HeadTilt": {
+     "type": "number",
+     "min": 0,
+     "max": 85,
+     "values": [],
+     "n": 94
+    },
+    "Hiss": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 94
+    },
+    "Mix": {
+     "type": "number",
+     "min": 17,
+     "max": 100,
+     "values": [],
+     "n": 94
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 70
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 70
+    },
+    "RecordLevel": {
+     "type": "number",
+     "min": 0,
+     "max": 80,
+     "values": [],
+     "n": 94
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 94
+    },
+    "Wow": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 94
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 37
+    }
+   }
+  },
+  "Multi Chorus": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Mix",
+    "Width",
+    "PreDelay",
+    "Voices",
+    "LoCut",
+    "LFOShape"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 30
+    },
+    "Depth": {
+     "type": "number",
+     "min": 4,
+     "max": 100,
+     "values": [],
+     "n": 78
+    },
+    "LFOShape": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Sine",
+      "Tri"
+     ],
+     "n": 78
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 36,
+     "max": 270,
+     "values": [],
+     "n": 78
+    },
+    "Mix": {
+     "type": "number",
+     "min": 20,
+     "max": 100,
+     "values": [],
+     "n": 78
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 30
+    },
+    "PreDelay": {
+     "type": "number",
+     "min": 15,
+     "max": 75,
+     "values": [],
+     "n": 78
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 30
+    },
+    "Rate": {
+     "type": "number",
+     "min": 0.100000001490116,
+     "max": 1.70000004768372,
+     "values": [],
+     "n": 78
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 78
+    },
+    "Voices": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "3",
+      "4",
+      "6"
+     ],
+     "n": 78
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 78
+    }
+   }
+  },
+  "Bass EQ": {
+   "order": [
+    "PresetName",
+    "Level",
+    "Frequency",
+    "Q",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange",
+      "Yellow"
+     ],
+     "n": 11
+    },
+    "Frequency": {
+     "type": "number",
+     "min": 4,
+     "max": 9.90000057220459,
+     "values": [],
+     "n": 21
+    },
+    "Level": {
+     "type": "number",
+     "min": -4.20000028610229,
+     "max": 4.80000019073486,
+     "values": [],
+     "n": 21
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 11
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 11
+    },
+    "Q": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Deep",
+      "Shallow"
+     ],
+     "n": 21
+    }
+   }
+  },
+  "Flanger": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Feedback",
+    "PreDelay",
+    "Stereo"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange",
+      "Pink"
+     ],
+     "n": 18
+    },
+    "Depth": {
+     "type": "number",
+     "min": 26,
+     "max": 96,
+     "values": [],
+     "n": 42
+    },
+    "Feedback": {
+     "type": "number",
+     "min": -100,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 18
+    },
+    "PreDelay": {
+     "type": "number",
+     "min": 0,
+     "max": 10,
+     "values": [],
+     "n": 42
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 18
+    },
+    "Rate": {
+     "type": "number",
+     "min": 0,
+     "max": 8.60000038146973,
+     "values": [],
+     "n": 42
+    },
+    "Stereo": {
+     "type": "number",
+     "min": 0,
+     "max": 180,
+     "values": [],
+     "n": 42
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 42
+    }
+   }
+  },
+  "AIR Filter": {
+   "order": [
+    "PresetName",
+    "LFOSync",
+    "On",
+    "Colour",
+    "Freq",
+    "Reso",
+    "Fat",
+    "Mode",
+    "LFORate",
+    "LFODepth",
+    "Mix",
+    "Gain"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Dark Green",
+      "Yellow"
+     ],
+     "n": 8
+    },
+    "Fat": {
+     "type": "number",
+     "min": 40,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "Freq": {
+     "type": "number",
+     "min": 20,
+     "max": 20000,
+     "values": [],
+     "n": 42
+    },
+    "Gain": {
+     "type": "number",
+     "min": -6.80000019073486,
+     "max": 0,
+     "values": [],
+     "n": 42
+    },
+    "LFODepth": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "LFORate": {
+     "type": "number",
+     "min": 0.100000001490116,
+     "max": 4.20000028610229,
+     "values": [],
+     "n": 42
+    },
+    "LFOSync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 42
+    },
+    "Mix": {
+     "type": "number",
+     "min": 50,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "12dB",
+      "18dB",
+      "24dB",
+      "BP",
+      "HP"
+     ],
+     "n": 42
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 8
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 8
+    },
+    "Reso": {
+     "type": "number",
+     "min": 0,
+     "max": 85,
+     "values": [],
+     "n": 42
+    }
+   }
+  },
+  "Tremolo": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Shape",
+    "Depth",
+    "Offset"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue",
+      "Orange",
+      "Purple",
+      "Yellow"
+     ],
+     "n": 10
+    },
+    "Depth": {
+     "type": "number",
+     "min": 50,
+     "max": 100,
+     "values": [],
+     "n": 46
+    },
+    "Offset": {
+     "type": "number",
+     "min": 0,
+     "max": 270,
+     "values": [],
+     "n": 46
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 10
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 10
+    },
+    "Rate": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1/16",
+      "1/2",
+      "1/4",
+      "1/4T",
+      "1/8",
+      "Bar"
+     ],
+     "n": 46
+    },
+    "Shape": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 46
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 46
+    }
+   }
+  },
+  "Black OP": {
+   "order": [
+    "PresetName",
+    "Distortion",
+    "Cutoff",
+    "Volume",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Light Blue",
+      "Red",
+      "Yellow"
+     ],
+     "n": 26
+    },
+    "Cutoff": {
+     "type": "number",
+     "min": 0,
+     "max": 98,
+     "values": [],
+     "n": 38
+    },
+    "Distortion": {
+     "type": "number",
+     "min": 13,
+     "max": 100,
+     "values": [],
+     "n": 38
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 26
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 26
+    },
+    "Volume": {
+     "type": "number",
+     "min": 30,
+     "max": 80,
+     "values": [],
+     "n": 38
+    }
+   }
+  },
+  "Rotary": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Cabinet",
+    "Move",
+    "Speed",
+    "Balance",
+    "Mix"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Balance": {
+     "type": "number",
+     "min": -60,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "Cabinet": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "120",
+      "122",
+      "21H",
+      "Foam Drum",
+      "Memphis",
+      "Rover",
+      "Watery",
+      "Wolf"
+     ],
+     "n": 42
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 22
+    },
+    "Mix": {
+     "type": "number",
+     "min": 34,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "Move": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 42
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 22
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 22
+    },
+    "Speed": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 42
+    }
+   }
+  },
+  "Harm": {
+   "order": [
+    "PresetName",
+    "Mode",
+    "Pitch",
+    "Mix",
+    "Offset",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue"
+     ],
+     "n": 6
+    },
+    "Mix": {
+     "type": "number",
+     "min": 10,
+     "max": 100,
+     "values": [],
+     "n": 24
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "+ 2nd / 3rd",
+      "+ 3rd / 4th",
+      "+ 3rd minor / major",
+      "+ 4th / 5th",
+      "+ 5th / 6th",
+      "+ 5th / 7th",
+      "+/- Oct",
+      "- 4th / 3rd",
+      "- 5th / 4th"
+     ],
+     "n": 24
+    },
+    "Offset": {
+     "type": "number",
+     "min": 0,
+     "max": 25,
+     "values": [],
+     "n": 24
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 6
+    },
+    "Pitch": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 24
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 6
+    }
+   }
+  },
+  "Stereo Doubler 2": {
+   "order": [
+    "PresetName",
+    "Intensity",
+    "Separation",
+    "Width",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Red"
+     ],
+     "n": 8
+    },
+    "Intensity": {
+     "type": "number",
+     "min": 10,
+     "max": 100,
+     "values": [],
+     "n": 8
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 8
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 8
+    },
+    "Separation": {
+     "type": "number",
+     "min": 30,
+     "max": 84,
+     "values": [],
+     "n": 8
+    },
+    "Width": {
+     "type": "number",
+     "min": 97,
+     "max": 100,
+     "values": [],
+     "n": 8
+    }
+   }
+  },
+  "Acoust Sim": {
+   "order": [
+    "PresetName",
+    "Level",
+    "Body",
+    "Tone",
+    "Mode",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Body": {
+     "type": "number",
+     "min": 50,
+     "max": 78,
+     "values": [],
+     "n": 9
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 2
+    },
+    "Level": {
+     "type": "number",
+     "min": 30,
+     "max": 100,
+     "values": [],
+     "n": 9
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Enhance",
+      "Jumbo",
+      "Piezo",
+      "Standard"
+     ],
+     "n": 9
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Tone": {
+     "type": "number",
+     "min": 37,
+     "max": 100,
+     "values": [],
+     "n": 9
+    }
+   }
+  },
+  "IR": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "Doubling",
+    "DoubleStates",
+    "IR",
+    "Gain",
+    "HiCut",
+    "LoCut",
+    "Mix",
+    "IR2",
+    "Gain2",
+    "HiCut2",
+    "LoCut2",
+    "Mix2",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green"
+     ],
+     "n": 8
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 8
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 8
+    },
+    "Gain": {
+     "type": "number",
+     "min": -11,
+     "max": 2.9000000953674316,
+     "values": [],
+     "n": 10
+    },
+    "Gain2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 8
+    },
+    "HiCut": {
+     "type": "number",
+     "min": 12591,
+     "max": 20000,
+     "values": [],
+     "n": 10
+    },
+    "HiCut2": {
+     "type": "number",
+     "min": 20000,
+     "max": 20000,
+     "values": [],
+     "n": 8
+    },
+    "IR": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 10
+    },
+    "IR2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 8
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 20,
+     "max": 130,
+     "values": [],
+     "n": 10
+    },
+    "LoCut2": {
+     "type": "number",
+     "min": 20,
+     "max": 20,
+     "values": [],
+     "n": 8
+    },
+    "Mix": {
+     "type": "number",
+     "min": 80,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Mix2": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 8
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 8
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 8
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 8
+    }
+   }
+  },
+  "DC Distort 2": {
+   "order": [
+    "PresetName",
+    "Gain",
+    "Treble",
+    "Bass",
+    "Volume",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 32,
+     "max": 32,
+     "values": [],
+     "n": 2
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 2
+    },
+    "Gain": {
+     "type": "number",
+     "min": 59,
+     "max": 59,
+     "values": [],
+     "n": 2
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Treble": {
+     "type": "number",
+     "min": 66,
+     "max": 66,
+     "values": [],
+     "n": 2
+    },
+    "Volume": {
+     "type": "number",
+     "min": 34,
+     "max": 34,
+     "values": [],
+     "n": 2
+    }
+   }
+  },
+  "Stone Phaser": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Feedback",
+    "Stereo",
+    "Mix"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 14
+    },
+    "Depth": {
+     "type": "number",
+     "min": 10,
+     "max": 50,
+     "values": [],
+     "n": 22
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 22
+    },
+    "Mix": {
+     "type": "number",
+     "min": 21,
+     "max": 53,
+     "values": [],
+     "n": 22
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 14
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 14
+    },
+    "Rate": {
+     "type": "enum",
+     "min": 0.200000002980232,
+     "max": 1.60000002384186,
+     "values": [
+      "1/2",
+      "1/4T",
+      "3/4",
+      "Bar"
+     ],
+     "n": 22
+    },
+    "Stereo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 22
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 22
+    }
+   }
+  },
+  "Wham": {
+   "order": [
+    "PresetName",
+    "Mode",
+    "Pitch",
+    "Offset",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 4
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "+ 1 Oct",
+      "+ 2 Oct",
+      "+ 4th",
+      "+ 5th",
+      "- 1 Oct",
+      "- 2 Oct",
+      "- 2nd",
+      "- 4th",
+      "- 5th",
+      "Dive"
+     ],
+     "n": 24
+    },
+    "Offset": {
+     "type": "number",
+     "min": 0,
+     "max": 25,
+     "values": [],
+     "n": 24
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 4
+    },
+    "Pitch": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 24
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 4
+    }
+   }
+  },
+  "Graphic EQ 2": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "LoGain",
+    "LoMidGain",
+    "MidGain",
+    "HiMidGain",
+    "HiGain",
+    "Gain"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 20
+    },
+    "Gain": {
+     "type": "number",
+     "min": -12.300000190734863,
+     "max": 0,
+     "values": [],
+     "n": 20
+    },
+    "HiGain": {
+     "type": "number",
+     "min": -4.800000190734863,
+     "max": 2.6000001430511475,
+     "values": [],
+     "n": 20
+    },
+    "HiMidGain": {
+     "type": "number",
+     "min": -6.5,
+     "max": 2.60000014305115,
+     "values": [],
+     "n": 20
+    },
+    "LoGain": {
+     "type": "number",
+     "min": -0.699999988079071,
+     "max": 4.099999904632568,
+     "values": [],
+     "n": 20
+    },
+    "LoMidGain": {
+     "type": "number",
+     "min": -3.40000009536743,
+     "max": 3,
+     "values": [],
+     "n": 20
+    },
+    "MidGain": {
+     "type": "number",
+     "min": -6.90000009536743,
+     "max": 0,
+     "values": [],
+     "n": 20
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 20
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 20
+    }
+   }
+  },
+  "K Drive": {
+   "order": [
+    "PresetName",
+    "Level",
+    "Drive",
+    "Tone",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 4
+    },
+    "Drive": {
+     "type": "number",
+     "min": 10,
+     "max": 73,
+     "values": [],
+     "n": 8
+    },
+    "Level": {
+     "type": "number",
+     "min": 50,
+     "max": 60,
+     "values": [],
+     "n": 8
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 4
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 4
+    },
+    "Tone": {
+     "type": "number",
+     "min": 45,
+     "max": 70,
+     "values": [],
+     "n": 8
+    }
+   }
+  },
+  "Vibrato": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Width"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Pink",
+      "Purple"
+     ],
+     "n": 13
+    },
+    "Depth": {
+     "type": "number",
+     "min": 11,
+     "max": 100,
+     "values": [],
+     "n": 29
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 13
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 13
+    },
+    "Rate": {
+     "type": "number",
+     "min": 3.20000004768372,
+     "max": 12,
+     "values": [],
+     "n": 29
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 29
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 29
+    }
+   }
+  },
+  "DynIII Comp 2": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Threshold",
+    "Attack",
+    "Release",
+    "Ratio",
+    "Knee",
+    "Gain"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 0.620000004768372,
+     "max": 33.4500007629395,
+     "values": [],
+     "n": 21
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Red"
+     ],
+     "n": 21
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 14,
+     "values": [],
+     "n": 21
+    },
+    "Knee": {
+     "type": "number",
+     "min": 13.4000005722046,
+     "max": 20.6000003814697,
+     "values": [],
+     "n": 21
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 21
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 21
+    },
+    "Ratio": {
+     "type": "number",
+     "min": 1.10000002384186,
+     "max": 7.40000009536743,
+     "values": [],
+     "n": 21
+    },
+    "Release": {
+     "type": "number",
+     "min": 10,
+     "max": 141,
+     "values": [],
+     "n": 21
+    },
+    "Threshold": {
+     "type": "number",
+     "min": -50.2000007629395,
+     "max": -15.6000003814697,
+     "values": [],
+     "n": 21
+    }
+   }
+  },
+  "IR (1024)": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "Doubling",
+    "DoubleStates",
+    "IR",
+    "Gain",
+    "HiCut",
+    "LoCut",
+    "Mix",
+    "IR2",
+    "Gain2",
+    "HiCut2",
+    "LoCut2",
+    "Mix2",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green"
+     ],
+     "n": 38
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 39
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 37
+    },
+    "Gain": {
+     "type": "number",
+     "min": -17.200000762939453,
+     "max": 7,
+     "values": [],
+     "n": 42
+    },
+    "Gain2": {
+     "type": "number",
+     "min": -17.200000762939453,
+     "max": 3.6000001430511475,
+     "values": [],
+     "n": 37
+    },
+    "HiCut": {
+     "type": "number",
+     "min": 9210,
+     "max": 20000,
+     "values": [],
+     "n": 42
+    },
+    "HiCut2": {
+     "type": "number",
+     "min": 17047,
+     "max": 20000,
+     "values": [],
+     "n": 37
+    },
+    "IR": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 42
+    },
+    "IR2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 37
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 20,
+     "max": 88,
+     "values": [],
+     "n": 42
+    },
+    "LoCut2": {
+     "type": "number",
+     "min": 20,
+     "max": 88,
+     "values": [],
+     "n": 37
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 42
+    },
+    "Mix2": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 37
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 38
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 38
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 37
+    }
+   }
+  },
+  "Shine Wah": {
+   "order": [
+    "PresetName",
+    "Level",
+    "MakeUp",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 21
+    },
+    "Level": {
+     "type": "number",
+     "min": 90,
+     "max": 100,
+     "values": [],
+     "n": 27
+    },
+    "MakeUp": {
+     "type": "number",
+     "min": 0,
+     "max": 5,
+     "values": [],
+     "n": 27
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 21
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 21
+    }
+   }
+  },
+  "Vibe Phaser": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Volume",
+    "Depth",
+    "Mode"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange",
+      "Pink"
+     ],
+     "n": 10
+    },
+    "Depth": {
+     "type": "number",
+     "min": 20,
+     "max": 100,
+     "values": [],
+     "n": 22
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Chorus",
+      "Vibrato"
+     ],
+     "n": 22
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 10
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 10
+    },
+    "Rate": {
+     "type": "number",
+     "min": 1,
+     "max": 3,
+     "values": [],
+     "n": 22
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 22
+    },
+    "Volume": {
+     "type": "number",
+     "min": 68,
+     "max": 100,
+     "values": [],
+     "n": 22
+    }
+   }
+  },
+  "Acoustic Pre": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Low",
+    "Mid",
+    "High",
+    "Phase",
+    "In-Bus"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 3
+    },
+    "High": {
+     "type": "number",
+     "min": -12,
+     "max": 5.700000286102295,
+     "values": [],
+     "n": 12
+    },
+    "Low": {
+     "type": "number",
+     "min": -12,
+     "max": 8.699999809265137,
+     "values": [],
+     "n": 12
+    },
+    "Mid": {
+     "type": "number",
+     "min": -6,
+     "max": 3.700000047683716,
+     "values": [],
+     "n": 12
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 3
+    },
+    "Phase": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 12
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 3
+    },
+    "In-Bus": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Both"
+     ],
+     "n": 9
+    }
+   }
+  },
+  "Oct Fuzz": {
+   "order": [
+    "PresetName",
+    "Volume",
+    "Drive",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 2
+    },
+    "Drive": {
+     "type": "number",
+     "min": 5,
+     "max": 100,
+     "values": [],
+     "n": 6
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Volume": {
+     "type": "number",
+     "min": 44,
+     "max": 85,
+     "values": [],
+     "n": 6
+    }
+   }
+  },
+  "White Boost 2": {
+   "order": [
+    "PresetName",
+    "Gain",
+    "Treble",
+    "Bass",
+    "Volume",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 3
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 3
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 10,
+     "values": [],
+     "n": 3
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 3
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 3
+    },
+    "Treble": {
+     "type": "number",
+     "min": 57,
+     "max": 57,
+     "values": [],
+     "n": 3
+    },
+    "Volume": {
+     "type": "number",
+     "min": 32,
+     "max": 39,
+     "values": [],
+     "n": 3
+    }
+   }
+  },
+  "8-Bit Crush": {
+   "order": [
+    "PresetName",
+    "Freq",
+    "Q",
+    "Drive",
+    "FXOut",
+    "Mix",
+    "ThresholdExp",
+    "ThresholdComp",
+    "Resampling",
+    "AntiAliasing",
+    "Mode",
+    "BitGainScale",
+    "Bit1",
+    "Bit2",
+    "Bit3",
+    "Bit4",
+    "Bit5",
+    "Bit6",
+    "Bit7",
+    "Bit8",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "AntiAliasing": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 32
+    },
+    "Bit1": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "Bit2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Posi",
+      "Thru"
+     ],
+     "n": 4
+    },
+    "Bit3": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Inv",
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "Bit4": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "Bit5": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "Bit6": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Inv",
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "Bit7": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Inv",
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "Bit8": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Posi",
+      "Thru"
+     ],
+     "n": 32
+    },
+    "BitGainScale": {
+     "type": "number",
+     "min": 18,
+     "max": 100,
+     "values": [],
+     "n": 32
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 4
+    },
+    "Drive": {
+     "type": "number",
+     "min": 0,
+     "max": 12,
+     "values": [],
+     "n": 32
+    },
+    "FXOut": {
+     "type": "number",
+     "min": -17.8999996185303,
+     "max": 0,
+     "values": [],
+     "n": 32
+    },
+    "Freq": {
+     "type": "number",
+     "min": 1554,
+     "max": 20000,
+     "values": [],
+     "n": 32
+    },
+    "Mix": {
+     "type": "number",
+     "min": 10,
+     "max": 100,
+     "values": [],
+     "n": 32
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "A",
+      "B",
+      "C",
+      "Cust",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "Rect"
+     ],
+     "n": 32
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 4
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 4
+    },
+    "Q": {
+     "type": "number",
+     "min": 0,
+     "max": 30,
+     "values": [],
+     "n": 32
+    },
+    "Resampling": {
+     "type": "number",
+     "min": 0.270000010728836,
+     "max": 1,
+     "values": [],
+     "n": 32
+    },
+    "ThresholdComp": {
+     "type": "number",
+     "min": -30,
+     "max": 0,
+     "values": [],
+     "n": 32
+    },
+    "ThresholdExp": {
+     "type": "number",
+     "min": -60,
+     "max": -24,
+     "values": [],
+     "n": 32
+    }
+   }
+  },
+  "Tape Echo 2": {
+   "order": [
+    "Colour",
+    "Delay",
+    "Feedback",
+    "HeadTilt",
+    "Hiss",
+    "Mix",
+    "On",
+    "PresetName",
+    "RecordLevel",
+    "Sync",
+    "Tails",
+    "Wow"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 2
+    },
+    "Delay": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1/4"
+     ],
+     "n": 2
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 79,
+     "max": 79,
+     "values": [],
+     "n": 2
+    },
+    "HeadTilt": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "Hiss": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "Mix": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "RecordLevel": {
+     "type": "number",
+     "min": 6,
+     "max": 6,
+     "values": [],
+     "n": 2
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "Wow": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 2
+    }
+   }
+  },
+  "AIR Reverb 2": {
+   "order": [
+    "PresetName",
+    "Mode",
+    "Time",
+    "Size",
+    "Mix",
+    "On",
+    "Color",
+    "Colour",
+    "Tails"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Color": {
+     "type": "number",
+     "min": 5884,
+     "max": 5884,
+     "values": [],
+     "n": 2
+    },
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue"
+     ],
+     "n": 2
+    },
+    "Mix": {
+     "type": "number",
+     "min": 6,
+     "max": 6,
+     "values": [],
+     "n": 2
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Chamber"
+     ],
+     "n": 2
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Size": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 2
+    },
+    "Time": {
+     "type": "number",
+     "min": 0.600000023841858,
+     "max": 0.600000023841858,
+     "values": [],
+     "n": 2
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    }
+   }
+  },
+  "AIR Flanger": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Feedback",
+    "Mix",
+    "Width"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 2
+    },
+    "Depth": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 24
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 30,
+     "max": 90,
+     "values": [],
+     "n": 24
+    },
+    "Mix": {
+     "type": "number",
+     "min": 30,
+     "max": 100,
+     "values": [],
+     "n": 24
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Rate": {
+     "type": "number",
+     "min": 0.100000001490116,
+     "max": 10,
+     "values": [],
+     "n": 24
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 24
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 24
+    }
+   }
+  },
+  "Volume 2": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "Volume",
+    "MinVolume",
+    "Linear"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Red"
+     ],
+     "n": 2
+    },
+    "Linear": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "MinVolume": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Volume": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 2
+    }
+   }
+  },
+  "Drop Tune": {
+   "order": [
+    "PresetName",
+    "Mode",
+    "Mix",
+    "Level",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 7
+    },
+    "Level": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 15
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 15
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Down 1",
+      "Down 2",
+      "Down 3",
+      "Down 4",
+      "Down 5",
+      "Down 6",
+      "Down 7",
+      "Down 8"
+     ],
+     "n": 15
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 7
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 7
+    }
+   }
+  },
+  "Octaves": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "OctaveA",
+    "OctaveB",
+    "Mix"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue"
+     ],
+     "n": 4
+    },
+    "Mix": {
+     "type": "number",
+     "min": 17,
+     "max": 72,
+     "values": [],
+     "n": 7
+    },
+    "OctaveA": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 7
+    },
+    "OctaveB": {
+     "type": "number",
+     "min": 0,
+     "max": 50,
+     "values": [],
+     "n": 7
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 4
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 4
+    }
+   }
+  },
+  "IR (1024) 2": {
+   "order": [
+    "PresetName",
+    "PresetName2",
+    "Doubling",
+    "DoubleStates",
+    "IR",
+    "Gain",
+    "HiCut",
+    "LoCut",
+    "Mix",
+    "IR2",
+    "Gain2",
+    "HiCut2",
+    "LoCut2",
+    "Mix2",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green"
+     ],
+     "n": 1
+    },
+    "DoubleStates": {
+     "type": "bool3",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "Doubling": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "Gain": {
+     "type": "number",
+     "min": -20.600000381469727,
+     "max": -20.600000381469727,
+     "values": [],
+     "n": 1
+    },
+    "Gain2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 1
+    },
+    "HiCut": {
+     "type": "number",
+     "min": 20000,
+     "max": 20000,
+     "values": [],
+     "n": 1
+    },
+    "HiCut2": {
+     "type": "number",
+     "min": 20000,
+     "max": 20000,
+     "values": [],
+     "n": 1
+    },
+    "IR": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "IR2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 78,
+     "max": 78,
+     "values": [],
+     "n": 1
+    },
+    "LoCut2": {
+     "type": "number",
+     "min": 20,
+     "max": 20,
+     "values": [],
+     "n": 1
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 1
+    },
+    "Mix2": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 1
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "PresetName2": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    }
+   }
+  },
+  "Dyn Delay 2": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Delay",
+    "Feedback",
+    "Ratio",
+    "Width",
+    "Stereo",
+    "EnvFbk",
+    "EnvMix",
+    "EnvRate",
+    "LoCut",
+    "HiCut",
+    "Mix",
+    "Tails"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green"
+     ],
+     "n": 2
+    },
+    "Delay": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1/8"
+     ],
+     "n": 2
+    },
+    "EnvFbk": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "EnvMix": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "EnvRate": {
+     "type": "number",
+     "min": 0.5,
+     "max": 0.5,
+     "values": [],
+     "n": 2
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 10,
+     "max": 25,
+     "values": [],
+     "n": 2
+    },
+    "HiCut": {
+     "type": "number",
+     "min": 5495,
+     "max": 5495,
+     "values": [],
+     "n": 2
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 2
+    },
+    "Mix": {
+     "type": "number",
+     "min": 40,
+     "max": 40,
+     "values": [],
+     "n": 2
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Ratio": {
+     "type": "number",
+     "min": -50,
+     "max": -13,
+     "values": [],
+     "n": 2
+    },
+    "Stereo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "Width": {
+     "type": "number",
+     "min": 77,
+     "max": 79,
+     "values": [],
+     "n": 2
+    }
+   }
+  },
+  "Chorus 2": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Depth",
+    "Feedback",
+    "Mix"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 2
+    },
+    "Depth": {
+     "type": "number",
+     "min": 20,
+     "max": 20,
+     "values": [],
+     "n": 2
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "Mix": {
+     "type": "number",
+     "min": 53,
+     "max": 53,
+     "values": [],
+     "n": 2
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Rate": {
+     "type": "number",
+     "min": 1.10000002384186,
+     "max": 1.10000002384186,
+     "values": [],
+     "n": 2
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    }
+   }
+  },
+  "Gate": {
+   "order": [
+    "PresetName",
+    "Threshold",
+    "Release",
+    "FilterThreshhold",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Red"
+     ],
+     "n": 3
+    },
+    "FilterThreshhold": {
+     "type": "number",
+     "min": -120,
+     "max": -80,
+     "values": [],
+     "n": 9
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 3
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 3
+    },
+    "Release": {
+     "type": "number",
+     "min": 11,
+     "max": 50,
+     "values": [],
+     "n": 9
+    },
+    "Threshold": {
+     "type": "number",
+     "min": -120,
+     "max": -60,
+     "values": [],
+     "n": 9
+    }
+   }
+  },
+  "B2 Drive": {
+   "order": [
+    "PresetName",
+    "Level",
+    "Gain",
+    "Tone",
+    "On",
+    "Colour",
+    "In-Bus"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 1
+    },
+    "Gain": {
+     "type": "number",
+     "min": 5,
+     "max": 75,
+     "values": [],
+     "n": 5
+    },
+    "Level": {
+     "type": "number",
+     "min": 27,
+     "max": 85,
+     "values": [],
+     "n": 5
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "Tone": {
+     "type": "number",
+     "min": 35,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "In-Bus": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Both"
+     ],
+     "n": 4
+    }
+   }
+  },
+  "Green JRC-OD 2": {
+   "order": [
+    "PresetName",
+    "Drive",
+    "Tone",
+    "Level",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Dark Green",
+      "Yellow"
+     ],
+     "n": 5
+    },
+    "Drive": {
+     "type": "number",
+     "min": 8,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "Level": {
+     "type": "number",
+     "min": 35,
+     "max": 75,
+     "values": [],
+     "n": 5
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 5
+    },
+    "Tone": {
+     "type": "number",
+     "min": 45,
+     "max": 73,
+     "values": [],
+     "n": 5
+    }
+   }
+  },
+  "Round Fuzz": {
+   "order": [
+    "PresetName",
+    "Volume",
+    "Fuzz",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 2
+    },
+    "Fuzz": {
+     "type": "number",
+     "min": 10,
+     "max": 100,
+     "values": [],
+     "n": 6
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 2
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 2
+    },
+    "Volume": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 6
+    }
+   }
+  },
+  "Anxiety OD V2": {
+   "order": [
+    "PresetName",
+    "Level",
+    "Drive",
+    "Tone",
+    "Hi-Lo",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 1
+    },
+    "Drive": {
+     "type": "number",
+     "min": 8,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "Hi-Lo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "Level": {
+     "type": "number",
+     "min": 21,
+     "max": 80,
+     "values": [],
+     "n": 5
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "Tone": {
+     "type": "number",
+     "min": 20,
+     "max": 90,
+     "values": [],
+     "n": 5
+    }
+   }
+  },
+  "Env Filter": {
+   "order": [
+    "PresetName",
+    "Range",
+    "Sensitivity",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 1
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "Range": {
+     "type": "number",
+     "min": 25,
+     "max": 85,
+     "values": [],
+     "n": 7
+    },
+    "Sensitivity": {
+     "type": "number",
+     "min": 15,
+     "max": 80,
+     "values": [],
+     "n": 7
+    }
+   }
+  },
+  "Octaves Up": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "OctaveA",
+    "OctaveB",
+    "Mix"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Blue"
+     ],
+     "n": 1
+    },
+    "Mix": {
+     "type": "number",
+     "min": 35,
+     "max": 50,
+     "values": [],
+     "n": 5
+    },
+    "OctaveA": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "OctaveB": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    }
+   }
+  },
+  "AIR Delay": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Delay",
+    "Feedback",
+    "Ratio",
+    "Width",
+    "FdbkHighCut",
+    "FdbkResoFreq",
+    "FdbkReso",
+    "LoCut",
+    "Mix",
+    "Tails"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Green"
+     ],
+     "n": 1
+    },
+    "Delay": {
+     "type": "enum",
+     "min": 130,
+     "max": 600,
+     "values": [
+      "1/2",
+      "1/4",
+      "1/8",
+      "Bar"
+     ],
+     "n": 20
+    },
+    "FdbkHighCut": {
+     "type": "number",
+     "min": 2890,
+     "max": 16342,
+     "values": [],
+     "n": 20
+    },
+    "FdbkReso": {
+     "type": "number",
+     "min": 44,
+     "max": 98,
+     "values": [],
+     "n": 20
+    },
+    "FdbkResoFreq": {
+     "type": "number",
+     "min": 1008,
+     "max": 2759,
+     "values": [],
+     "n": 20
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 40,
+     "values": [],
+     "n": 20
+    },
+    "LoCut": {
+     "type": "number",
+     "min": 108,
+     "max": 750,
+     "values": [],
+     "n": 20
+    },
+    "Mix": {
+     "type": "number",
+     "min": 10,
+     "max": 70,
+     "values": [],
+     "n": 20
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "Ratio": {
+     "type": "number",
+     "min": -100,
+     "max": 66,
+     "values": [],
+     "n": 20
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 20
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 20
+    },
+    "Width": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 20
+    }
+   }
+  },
+  "AIR Vibrato": {
+   "order": [
+    "PresetName",
+    "Sync",
+    "On",
+    "Colour",
+    "Rate",
+    "Shape",
+    "Depth",
+    "Offset"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Orange"
+     ],
+     "n": 1
+    },
+    "Depth": {
+     "type": "number",
+     "min": 8,
+     "max": 35,
+     "values": [],
+     "n": 19
+    },
+    "Offset": {
+     "type": "number",
+     "min": 0,
+     "max": 270,
+     "values": [],
+     "n": 19
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "Rate": {
+     "type": "enum",
+     "min": 0.100000001490116,
+     "max": 4.5,
+     "values": [
+      "1/16",
+      "1/4",
+      "1/8"
+     ],
+     "n": 19
+    },
+    "Shape": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 19
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 19
+    }
+   }
+  },
+  "Dim Chorus": {
+   "order": [
+    "PresetName",
+    "On",
+    "Colour",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Mode",
+    "Width",
+    "Mix",
+    "In-Bus"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Purple"
+     ],
+     "n": 1
+    },
+    "Four": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "Mix": {
+     "type": "number",
+     "min": 67,
+     "max": 72,
+     "values": [],
+     "n": 5
+    },
+    "Mode": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 1
+    },
+    "One": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    },
+    "Three": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "Two": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 5
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "In-Bus": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Both"
+     ],
+     "n": 4
+    }
+   }
+  },
+  "MX Dist": {
+   "order": [
+    "PresetName",
+    "Output",
+    "Dist",
+    "On",
+    "Colour"
+   ],
+   "sources": [
+    "block",
+    "rig"
+   ],
+   "params": {
+    "Colour": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Yellow"
+     ],
+     "n": 1
+    },
+    "Dist": {
+     "type": "number",
+     "min": 35,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "On": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 1
+    },
+    "Output": {
+     "type": "number",
+     "min": 50,
+     "max": 100,
+     "values": [],
+     "n": 5
+    },
+    "PresetName": {
+     "type": "text",
+     "min": null,
+     "max": null,
+     "values": [],
+     "n": 1
+    }
+   }
+  },
+  "Panner": {
+   "order": [
+    "Sync",
+    "Pan",
+    "Delay",
+    "Rate",
+    "Shape",
+    "Depth"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "number",
+     "min": 0,
+     "max": 4340,
+     "values": [],
+     "n": 10
+    },
+    "Depth": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Pan": {
+     "type": "number",
+     "min": 0,
+     "max": 34,
+     "values": [],
+     "n": 10
+    },
+    "Rate": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1/128",
+      "1/4",
+      "1/8"
+     ],
+     "n": 10
+    },
+    "Shape": {
+     "type": "number",
+     "min": 0,
+     "max": 46,
+     "values": [],
+     "n": 10
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 10
+    }
+   }
+  },
+  "Ambi Verb": {
+   "order": [
+    "Attack",
+    "Release",
+    "Tone",
+    "Mod",
+    "Mix",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 0,
+     "max": 20,
+     "values": [],
+     "n": 7
+    },
+    "Mix": {
+     "type": "number",
+     "min": 20,
+     "max": 40,
+     "values": [],
+     "n": 7
+    },
+    "Mod": {
+     "type": "number",
+     "min": 0,
+     "max": 70,
+     "values": [],
+     "n": 7
+    },
+    "Release": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 7
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 7
+    },
+    "Tone": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 7
+    }
+   }
+  },
+  "FX-Loop": {
+   "order": [
+    "Mix",
+    "Send",
+    "Return",
+    "Delay"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 2
+    },
+    "Return": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    },
+    "Send": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    }
+   }
+  },
+  "Ring Mod": {
+   "order": [
+    "Rate",
+    "Mix",
+    "Tone"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Mix": {
+     "type": "number",
+     "min": 20,
+     "max": 75,
+     "values": [],
+     "n": 5
+    },
+    "Rate": {
+     "type": "number",
+     "min": 200,
+     "max": 1428,
+     "values": [],
+     "n": 5
+    },
+    "Tone": {
+     "type": "number",
+     "min": 30,
+     "max": 100,
+     "values": [],
+     "n": 5
+    }
+   }
+  },
+  "S1 Drive": {
+   "order": [
+    "Level",
+    "Drive",
+    "Tone"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Drive": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 8
+    },
+    "Level": {
+     "type": "number",
+     "min": 45,
+     "max": 70,
+     "values": [],
+     "n": 8
+    },
+    "Tone": {
+     "type": "number",
+     "min": 25,
+     "max": 66,
+     "values": [],
+     "n": 8
+    }
+   }
+  },
+  "Side Comp": {
+   "order": [
+    "Threshold",
+    "Attack",
+    "Release",
+    "Ratio",
+    "Knee",
+    "Gain"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 0.00999999977648258,
+     "max": 6.28999996185303,
+     "values": [],
+     "n": 8
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 8
+    },
+    "Knee": {
+     "type": "number",
+     "min": 15,
+     "max": 30,
+     "values": [],
+     "n": 8
+    },
+    "Ratio": {
+     "type": "number",
+     "min": 4,
+     "max": 40,
+     "values": [],
+     "n": 8
+    },
+    "Release": {
+     "type": "number",
+     "min": 35,
+     "max": 200,
+     "values": [],
+     "n": 8
+    },
+    "Threshold": {
+     "type": "number",
+     "min": -57.9000015258789,
+     "max": -20.6000003814697,
+     "values": [],
+     "n": 8
+    }
+   }
+  },
+  "Reverse Delay": {
+   "order": [
+    "Sync",
+    "Delay",
+    "Feedback",
+    "LowCut",
+    "HighCut",
+    "Mix",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "enum",
+     "min": 300,
+     "max": 4009,
+     "values": [
+      "1/4",
+      "3/8",
+      "Bar"
+     ],
+     "n": 8
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 88,
+     "values": [],
+     "n": 8
+    },
+    "HighCut": {
+     "type": "number",
+     "min": 1998,
+     "max": 20000,
+     "values": [],
+     "n": 8
+    },
+    "LowCut": {
+     "type": "number",
+     "min": 20,
+     "max": 500,
+     "values": [],
+     "n": 8
+    },
+    "Mix": {
+     "type": "number",
+     "min": 30,
+     "max": 50,
+     "values": [],
+     "n": 8
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 8
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 8
+    }
+   }
+  },
+  "D1 Dist": {
+   "order": [
+    "Level",
+    "Dist",
+    "Tone"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Dist": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 4
+    },
+    "Level": {
+     "type": "number",
+     "min": 40,
+     "max": 100,
+     "values": [],
+     "n": 4
+    },
+    "Tone": {
+     "type": "number",
+     "min": 0,
+     "max": 61,
+     "values": [],
+     "n": 4
+    }
+   }
+  },
+  "Reso Delay": {
+   "order": [
+    "Threshold",
+    "Attack",
+    "Range",
+    "Feedback",
+    "Mix",
+    "LPFreq",
+    "Width",
+    "Tails",
+    "Scale",
+    "Key"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 15,
+     "max": 20,
+     "values": [],
+     "n": 5
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 17,
+     "max": 85,
+     "values": [],
+     "n": 5
+    },
+    "Key": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "E"
+     ],
+     "n": 5
+    },
+    "LPFreq": {
+     "type": "number",
+     "min": 1298,
+     "max": 20000,
+     "values": [],
+     "n": 5
+    },
+    "Mix": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 5
+    },
+    "Range": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Bass",
+      "High",
+      "Low",
+      "Mid"
+     ],
+     "n": 5
+    },
+    "Scale": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Maj",
+      "Min"
+     ],
+     "n": 5
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 5
+    },
+    "Threshold": {
+     "type": "number",
+     "min": 50,
+     "max": 80,
+     "values": [],
+     "n": 5
+    },
+    "Width": {
+     "type": "number",
+     "min": 43,
+     "max": 80,
+     "values": [],
+     "n": 5
+    }
+   }
+  },
+  "Noise Filter": {
+   "order": [
+    "Hi_Thresh",
+    "Lo_Thresh",
+    "Attack",
+    "Release"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 0.9899999499320984,
+     "max": 1,
+     "values": [],
+     "n": 3
+    },
+    "Hi_Thresh": {
+     "type": "number",
+     "min": -40,
+     "max": -10,
+     "values": [],
+     "n": 3
+    },
+    "Lo_Thresh": {
+     "type": "number",
+     "min": -40,
+     "max": -10,
+     "values": [],
+     "n": 3
+    },
+    "Release": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 3
+    }
+   }
+  },
+  "Auto Swell": {
+   "order": [
+    "Threshold",
+    "Attack",
+    "Mode"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 61,
+     "max": 1000,
+     "values": [],
+     "n": 5
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Fast",
+      "Slow"
+     ],
+     "n": 5
+    },
+    "Threshold": {
+     "type": "number",
+     "min": 30,
+     "max": 80,
+     "values": [],
+     "n": 5
+    }
+   }
+  },
+  "Tron Filter": {
+   "order": [
+    "Freq",
+    "Reso",
+    "Fat",
+    "Mode",
+    "LFODepth",
+    "Mix",
+    "Gain"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Fat": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 7
+    },
+    "Freq": {
+     "type": "number",
+     "min": 100,
+     "max": 450,
+     "values": [],
+     "n": 7
+    },
+    "Gain": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 7
+    },
+    "LFODepth": {
+     "type": "number",
+     "min": 28,
+     "max": 100,
+     "values": [],
+     "n": 7
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 7
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "12dB",
+      "24dB",
+      "BP",
+      "HP"
+     ],
+     "n": 7
+    },
+    "Reso": {
+     "type": "number",
+     "min": 65,
+     "max": 86,
+     "values": [],
+     "n": 7
+    }
+   }
+  },
+  "Time Warp": {
+   "order": [
+    "Sync",
+    "Delay",
+    "Feedback",
+    "Mix",
+    "Warp",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "number",
+     "min": 2400,
+     "max": 2400,
+     "values": [],
+     "n": 1
+    },
+    "Feedback": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 1
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 1
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 1
+    },
+    "Warp": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 1
+    }
+   }
+  },
+  "More Wah": {
+   "order": [
+    "Level",
+    "MakeUp"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Level": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 2
+    },
+    "MakeUp": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 2
+    }
+   }
+  },
+  "Smart Harm": {
+   "order": [
+    "Scale",
+    "Pitch1",
+    "Pitch2",
+    "Key",
+    "Detune1",
+    "Detune2",
+    "Mix",
+    "Pitch2Vol",
+    "Glide",
+    "Delay1",
+    "Delay2",
+    "Sync",
+    "Learn"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay1": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 20
+    },
+    "Delay2": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 20
+    },
+    "Detune1": {
+     "type": "number",
+     "min": 0,
+     "max": 20,
+     "values": [],
+     "n": 20
+    },
+    "Detune2": {
+     "type": "number",
+     "min": -15,
+     "max": 10,
+     "values": [],
+     "n": 20
+    },
+    "Glide": {
+     "type": "number",
+     "min": 0,
+     "max": 500,
+     "values": [],
+     "n": 20
+    },
+    "Key": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "E"
+     ],
+     "n": 20
+    },
+    "Learn": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 20
+    },
+    "Mix": {
+     "type": "number",
+     "min": 40,
+     "max": 50,
+     "values": [],
+     "n": 20
+    },
+    "Pitch1": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "3rd",
+      "5th",
+      "5th Low",
+      "Oct",
+      "Oct Down"
+     ],
+     "n": 20
+    },
+    "Pitch2": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "3rd",
+      "4th",
+      "5th",
+      "5th Low",
+      "7th",
+      "Oct",
+      "Oct Down"
+     ],
+     "n": 20
+    },
+    "Pitch2Vol": {
+     "type": "number",
+     "min": -60,
+     "max": 0,
+     "values": [],
+     "n": 20
+    },
+    "Scale": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Maj"
+     ],
+     "n": 20
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 20
+    }
+   }
+  },
+  "Feedback": {
+   "order": [
+    "Mode",
+    "Volume",
+    "Mix",
+    "Range",
+    "Attack",
+    "Release"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "number",
+     "min": 1700,
+     "max": 1700,
+     "values": [],
+     "n": 4
+    },
+    "Mix": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 4
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "4th",
+      "5th",
+      "Octave",
+      "Unity"
+     ],
+     "n": 4
+    },
+    "Range": {
+     "type": "number",
+     "min": 353,
+     "max": 353,
+     "values": [],
+     "n": 4
+    },
+    "Release": {
+     "type": "number",
+     "min": 2200,
+     "max": 2200,
+     "values": [],
+     "n": 4
+    },
+    "Volume": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 4
+    }
+   }
+  },
+  "Shimmer": {
+   "order": [
+    "Interval",
+    "Delay",
+    "ReverbTime",
+    "Mix",
+    "Tone",
+    "Width",
+    "HighCut",
+    "Sync",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "number",
+     "min": 0,
+     "max": 50,
+     "values": [],
+     "n": 8
+    },
+    "HighCut": {
+     "type": "number",
+     "min": 800,
+     "max": 1500,
+     "values": [],
+     "n": 8
+    },
+    "Interval": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "+ 1 Oct",
+      "+ 2 Oct",
+      "- 1 Oct",
+      "- 2 Oct"
+     ],
+     "n": 8
+    },
+    "Mix": {
+     "type": "number",
+     "min": 15,
+     "max": 100,
+     "values": [],
+     "n": 8
+    },
+    "ReverbTime": {
+     "type": "number",
+     "min": 50,
+     "max": 90,
+     "values": [],
+     "n": 8
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 8
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 8
+    },
+    "Tone": {
+     "type": "number",
+     "min": 15,
+     "max": 73,
+     "values": [],
+     "n": 8
+    },
+    "Width": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 8
+    }
+   }
+  },
+  "Chord Wham": {
+   "order": [
+    "Sync",
+    "Mode",
+    "Pitch",
+    "Offset",
+    "Mix",
+    "Delay",
+    "Fdbk",
+    "FdbkHighCut",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 10
+    },
+    "Fdbk": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 10
+    },
+    "FdbkHighCut": {
+     "type": "number",
+     "min": 6000,
+     "max": 6000,
+     "values": [],
+     "n": 10
+    },
+    "Mix": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "+ 1 Oct",
+      "+ 2 Oct",
+      "+ 4th",
+      "+ 5th",
+      "- 1 Oct",
+      "- 2 Oct",
+      "- 2nd",
+      "- 4th",
+      "- 5th",
+      "Dive"
+     ],
+     "n": 10
+    },
+    "Offset": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 10
+    },
+    "Pitch": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 10
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 10
+    }
+   }
+  },
+  "Party Verb": {
+   "order": [
+    "Time",
+    "Mode",
+    "Gain",
+    "Width",
+    "Damp",
+    "Mix",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Damp": {
+     "type": "number",
+     "min": 0,
+     "max": 90,
+     "values": [],
+     "n": 12
+    },
+    "Gain": {
+     "type": "number",
+     "min": 38,
+     "max": 90,
+     "values": [],
+     "n": 12
+    },
+    "Mix": {
+     "type": "number",
+     "min": 25,
+     "max": 100,
+     "values": [],
+     "n": 12
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Asgard",
+      "Fifth",
+      "Octave Down",
+      "Octave Up",
+      "Ominous",
+      "Power Chord",
+      "Power Slow",
+      "Pure Verb",
+      "Random 3",
+      "Sparkle",
+      "Triad"
+     ],
+     "n": 12
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 12
+    },
+    "Time": {
+     "type": "number",
+     "min": 8,
+     "max": 90,
+     "values": [],
+     "n": 12
+    },
+    "Width": {
+     "type": "number",
+     "min": 12,
+     "max": 100,
+     "values": [],
+     "n": 12
+    }
+   }
+  },
+  "Anxiety OD": {
+   "order": [
+    "Level",
+    "Drive",
+    "Tone",
+    "Hi-Lo"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Drive": {
+     "type": "number",
+     "min": 25,
+     "max": 100,
+     "values": [],
+     "n": 4
+    },
+    "Hi-Lo": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false,
+      true
+     ],
+     "n": 4
+    },
+    "Level": {
+     "type": "number",
+     "min": 50,
+     "max": 80,
+     "values": [],
+     "n": 4
+    },
+    "Tone": {
+     "type": "number",
+     "min": 20,
+     "max": 90,
+     "values": [],
+     "n": 4
+    }
+   }
+  },
+  "Pitch Delay": {
+   "order": [
+    "Sync",
+    "Mode",
+    "Detune",
+    "Mix",
+    "Delay",
+    "Fdbk",
+    "LowCut",
+    "HighCut",
+    "Level",
+    "Width",
+    "Tails"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "1/4"
+     ],
+     "n": 7
+    },
+    "Detune": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 7
+    },
+    "Fdbk": {
+     "type": "number",
+     "min": 0,
+     "max": 65,
+     "values": [],
+     "n": 7
+    },
+    "HighCut": {
+     "type": "number",
+     "min": 3598,
+     "max": 3888,
+     "values": [],
+     "n": 7
+    },
+    "Level": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 7
+    },
+    "LowCut": {
+     "type": "number",
+     "min": 219,
+     "max": 219,
+     "values": [],
+     "n": 7
+    },
+    "Mix": {
+     "type": "number",
+     "min": 30,
+     "max": 50,
+     "values": [],
+     "n": 7
+    },
+    "Mode": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "+1 Semi",
+      "+12 Semi",
+      "+5 Semi",
+      "-1 Semi",
+      "-12 Semi",
+      "-5 Semi"
+     ],
+     "n": 7
+    },
+    "Sync": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      true
+     ],
+     "n": 7
+    },
+    "Tails": {
+     "type": "bool",
+     "min": null,
+     "max": null,
+     "values": [
+      false
+     ],
+     "n": 7
+    },
+    "Width": {
+     "type": "number",
+     "min": 100,
+     "max": 100,
+     "values": [],
+     "n": 7
+    }
+   }
+  },
+  "D250 Drive": {
+   "order": [
+    "Level",
+    "Gain"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Gain": {
+     "type": "number",
+     "min": 3,
+     "max": 100,
+     "values": [],
+     "n": 7
+    },
+    "Level": {
+     "type": "number",
+     "min": 53,
+     "max": 65,
+     "values": [],
+     "n": 7
+    }
+   }
+  },
+  "B Dist 7000": {
+   "order": [
+    "DistLev",
+    "Drive",
+    "Blend",
+    "Master",
+    "Bass",
+    "LoMids",
+    "HiMids",
+    "Treble",
+    "LoMidFreq",
+    "HiMidFreq",
+    "Bite",
+    "Growl"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Bass": {
+     "type": "number",
+     "min": 0,
+     "max": 4.5,
+     "values": [],
+     "n": 10
+    },
+    "Bite": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "De-Emph",
+      "Emph",
+      "Flat"
+     ],
+     "n": 10
+    },
+    "Blend": {
+     "type": "number",
+     "min": 20,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "DistLev": {
+     "type": "number",
+     "min": 50,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Drive": {
+     "type": "number",
+     "min": 8,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Growl": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Flat",
+      "Hi-Emph",
+      "Lo-Emph"
+     ],
+     "n": 10
+    },
+    "HiMidFreq": {
+     "type": "number",
+     "min": 1500,
+     "max": 3000,
+     "values": [],
+     "n": 10
+    },
+    "HiMids": {
+     "type": "number",
+     "min": -5,
+     "max": 2.1000001430511475,
+     "values": [],
+     "n": 10
+    },
+    "LoMidFreq": {
+     "type": "number",
+     "min": 250,
+     "max": 1000,
+     "values": [],
+     "n": 10
+    },
+    "LoMids": {
+     "type": "number",
+     "min": -1,
+     "max": 3,
+     "values": [],
+     "n": 10
+    },
+    "Master": {
+     "type": "number",
+     "min": 19,
+     "max": 100,
+     "values": [],
+     "n": 10
+    },
+    "Treble": {
+     "type": "number",
+     "min": -8.600000381469727,
+     "max": 0,
+     "values": [],
+     "n": 10
+    }
+   }
+  },
+  "Detune": {
+   "order": [
+    "Detune1",
+    "Detune2",
+    "Mix",
+    "Delay1",
+    "Delay2",
+    "LowCut",
+    "HighCut",
+    "Level",
+    "Width",
+    "Voices"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Delay1": {
+     "type": "number",
+     "min": 1,
+     "max": 147,
+     "values": [],
+     "n": 9
+    },
+    "Delay2": {
+     "type": "number",
+     "min": 1,
+     "max": 145,
+     "values": [],
+     "n": 9
+    },
+    "Detune1": {
+     "type": "number",
+     "min": -50,
+     "max": -5,
+     "values": [],
+     "n": 9
+    },
+    "Detune2": {
+     "type": "number",
+     "min": 5,
+     "max": 50,
+     "values": [],
+     "n": 9
+    },
+    "HighCut": {
+     "type": "number",
+     "min": 900,
+     "max": 12111,
+     "values": [],
+     "n": 9
+    },
+    "Level": {
+     "type": "number",
+     "min": 0,
+     "max": 6,
+     "values": [],
+     "n": 9
+    },
+    "LowCut": {
+     "type": "number",
+     "min": 20,
+     "max": 249,
+     "values": [],
+     "n": 9
+    },
+    "Mix": {
+     "type": "number",
+     "min": 30,
+     "max": 100,
+     "values": [],
+     "n": 9
+    },
+    "Voices": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "Two"
+     ],
+     "n": 9
+    },
+    "Width": {
+     "type": "number",
+     "min": 0,
+     "max": 100,
+     "values": [],
+     "n": 9
+    }
+   }
+  },
+  "Hold": {
+   "order": [
+    "Mix",
+    "Level",
+    "Attack",
+    "Release"
+   ],
+   "sources": [
+    "block"
+   ],
+   "params": {
+    "Attack": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "200 mS",
+      "400 mS",
+      "800 ms"
+     ],
+     "n": 4
+    },
+    "Level": {
+     "type": "number",
+     "min": 0,
+     "max": 0,
+     "values": [],
+     "n": 4
+    },
+    "Mix": {
+     "type": "number",
+     "min": 50,
+     "max": 50,
+     "values": [],
+     "n": 4
+    },
+    "Release": {
+     "type": "enum",
+     "min": null,
+     "max": null,
+     "values": [
+      "0 mS",
+      "1.0 S",
+      "3.2 S",
+      "400 mS"
+     ],
+     "n": 4
+    }
+   }
+  }
+ },
+ "chain_usage": {
+  "Chorus": 60,
+  "Empty Slot": 2878,
+  "White Boost": 131,
+  "Amp": 585,
+  "Cab": 533,
+  "Gray Comp": 90,
+  "AIR Reverb": 148,
+  "Graphic EQ": 148,
+  "DynIII Comp": 199,
+  "Volume": 381,
+  "Green JRC-OD": 162,
+  "Para EQ": 88,
+  "Orange Phaser": 10,
+  "Dyn Delay": 114,
+  "Eleven Reverb": 180,
+  "Black Wah": 43,
+  "DC Distort": 33,
+  "Spring Reverb": 140,
+  "Stereo Doubler": 66,
+  "BBD Delay": 34,
+  "Amp 2": 34,
+  "Para EQ 2": 6,
+  "Cab 2": 37,
+  "Tri Fuzz": 32,
+  "Tron Phaser": 4,
+  "Tape Echo": 70,
+  "Multi Chorus": 30,
+  "Bass EQ": 11,
+  "Flanger": 18,
+  "Tremolo": 10,
+  "AIR Filter": 8,
+  "Black OP": 26,
+  "Rotary": 22,
+  "Harm": 6,
+  "Stereo Doubler 2": 8,
+  "Acoust Sim": 2,
+  "IR": 8,
+  "DC Distort 2": 2,
+  "Stone Phaser": 14,
+  "Wham": 4,
+  "K Drive": 4,
+  "Graphic EQ 2": 20,
+  "Vibrato": 13,
+  "DynIII Comp 2": 21,
+  "IR (1024)": 38,
+  "Shine Wah": 21,
+  "Vibe Phaser": 10,
+  "Acoustic Pre": 3,
+  "White Boost 2": 3,
+  "Oct Fuzz": 2,
+  "8-Bit Crush": 4,
+  "Tape Echo 2": 2,
+  "AIR Reverb 2": 2,
+  "AIR Flanger": 2,
+  "Volume 2": 2,
+  "Drop Tune": 7,
+  "Octaves": 4,
+  "IR (1024) 2": 1,
+  "Dyn Delay 2": 2,
+  "Chorus 2": 2,
+  "Gate": 3,
+  "B2 Drive": 1,
+  "Green JRC-OD 2": 5,
+  "Round Fuzz": 2,
+  "Anxiety OD V2": 1,
+  "Env Filter": 1,
+  "Octaves Up": 1,
+  "AIR Vibrato": 1,
+  "AIR Delay": 1,
+  "Dim Chorus": 1,
+  "MX Dist": 1
+ }
+}

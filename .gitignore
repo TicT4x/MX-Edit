@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+
+# Patcher: downloaded official updater and generated updater folders
+firmware/HeadRush_MX5_*_Updater.zip
+firmware/MX5Bridge_*_Updater/
+firmware/tools/work/
+
+# Test logs (appended in the current folder)
+mx5bridge_testlog.txt
+regressionstest_log.txt
+
+Thumbs.db
+desktop.ini

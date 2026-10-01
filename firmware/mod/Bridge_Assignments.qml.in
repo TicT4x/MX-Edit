@@ -1,0 +1,12 @@
+import airAssignments 1.0
+import InputAssignment 0.1
+import OutputAssignment 0.1
+import QtQuick 2.2
+
+// MX5 Bridge @VERSION@ (inoffiziell). Keine Zuordnungen, nur Marker.
+MidiAssignment {
+	id: assignment
+	objectName: "MX5 Bridge @NAME@"
+
+	Component.onCompleted: { console.warn("MX5Bridge[@NAME@]: Assignments-Datei geladen") }
+}

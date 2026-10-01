@@ -1,0 +1,322 @@
+import airAssignments 1.0
+import InputAssignment 0.1
+import OutputAssignment 0.1
+import Device 0.1
+
+import QtQuick 2.0
+
+// MX5 Bridge @VERSION@ (inoffiziell)
+// Anfrage: F0 7D 48 52 <seq> <cmd> <ASCII-Nutzdaten> F7
+// Antwort: F0 7D 48 52 <seq> <cmd|0x40> <teil> <teile> <ASCII-Nutzdaten> F7
+//   Langer Kopf (ab 0.6): setzt der PC in <cmd> das Bit 0x20, kommt die Antwort als
+//   ... <cmd|0x40> <teil hi> <teil lo> <teile hi> <teile lo> ... (je 7 Bit, bis 16383 Teile
+//   = ca. 6 MB statt 127 Teile = ca. 48 KB). Ohne das Bit wie bis 0.5 - aeltere PC-Programme
+//   laufen unveraendert.
+//   0x01 PING                              -> "<Version> <Dateiname>"
+//   0x02 GET      "<pfad>"                 -> "<pfad>\t<json>"
+//   0x03 SET      "<pfad>\t<feld>\t<wert>" -> "<pfad>\t<json>"
+//                 Felder: value, unnormalized, state, index, string, user (=Auswahl wie am Display)
+//   0x04 ENTRIES  "<pfad>"                 -> "<pfad>\t<json-liste>"
+//   0x05 GETMANY  "<pfad>\n<pfad>..."      -> "<json-objekt pfad:info>"
+//   0x07 EVAL     "<js-funktionsrumpf>"    -> "<ergebnis>"   (Entwicklerfunktion)
+//   0x08 SQL      "<sql>"                  -> "{ok, rows, err}"  nur lesend, ueber mx5bridge-db.sh
+//                 (Antwort kommt asynchron, sobald der Datenbankdienst geantwortet hat; ab 0.6
+//                 sqlite3 -safe: kein Schreiben in Dateien, keine Shell)
+//   0x09 SQLWRITE "<sql-anweisungen>"      -> "{ok, rows, err}"  schreibend, als eine Transaktion;
+//                 rows = [{changes}]; vor dem ersten Schreiben sichert der Dienst die Datenbank
+//   0x0A ACTION   "status|backup|restore|restart|diag" -> "{ok, rows, err}"  (restore/restart
+//                 beenden die App, die Startschleife startet sie neu - Bridge ca. 15 s weg)
+//   0x0B SHELL    "<shell-skript>"         -> "{ok, rows: [{rc, out}], err}"  als root, Zeitlimit
+//                 60 s (ab 0.6; bis 0.5 lief das ueber .system im SQL-Lesekanal)
+//   Fehler                                 -> 0x7F "<text>"
+//   (0x06 RIG gab es bis 0.4 - App.apiRigs ist in diesem Kontext nicht erreichbar)
+// Zeichen (ab 0.5): SysEx traegt nur 7 Bit. Jedes Zeichen ausser Tab, Zeilenumbruch und
+// 0x20..0x7E geht in beide Richtungen als 0x7F + vier Hex-Ziffern (UTF-16-Einheit, Grossbuchstaben)
+// ueber die Leitung, z. B. U+00FC (ue) -> 7F "00FC"; Zeichen ausserhalb der BMP als zwei Einheiten
+// (Surrogatpaar). 0x7F kommt in normalem Text nicht vor, das Escape ist also eindeutig.
+// Bis 0.4 wurde jedes solche Zeichen zu '?'.
+Device {
+	id: device
+
+	property string bridgeVersion: "MX5Bridge-@VERSION@"
+	property string deviceFileName: "@NAME@"
+	property string sqlDir: "/tmp/mx5bridge"
+	property int sqlTimeoutMs: 90000
+	property int chunkSize: 380
+	property int rxCount: 0
+	property int errCount: 0
+	property int sqlCount: 0
+	property var sqlPending: ({})   // id -> { seq, base, cmd, long, deadline }
+
+	// Datenbankdienst: Anfrage als Datei ablegen, auf den Marker <base>.rdy warten und die
+	// Antwort aus den Dateinamen von <base>.r lesen (App.entryList). Bis 0.5 wurde eine
+	// JS-Datei importiert - jeder Import liess den Speicher der App um ~2,5 KB wachsen.
+	// Als Property, nicht als Kindobjekt: Device legt Kinder nicht an (id waere undefiniert).
+	property Timer sqlTimer: Timer {
+		interval: 25
+		repeat: true
+		running: false
+		onTriggered: device.pollSql()
+	}
+
+	// kind: "q" lesen (0x08), "w" schreiben (0x09), "a" Aktion (0x0A), "s" Shell (0x0B) - der
+	// Dienst erkennt die Art am Dateinamen; replyCmd ist der Antwortbefehl (cmd|0x40)
+	function sqlRequest(seq, sql, kind, replyCmd, longHdr)
+	{
+		sqlCount++;
+		var id = sqlCount;
+		var base = sqlDir + "/" + kind + id;
+		App.writeToFile(sql, base + ".sql");
+		App.writeToFile("go\n", base + ".go");
+		sqlPending[id] = { seq: seq, base: base, cmd: replyCmd, long: longHdr,
+		                   deadline: Date.now() + sqlTimeoutMs };
+		sqlTimer.running = true;
+	}
+
+	// Antwort des Dienstes: Dateinamen "<nummer>_<stueck>" sortieren, Stuecke (base64url)
+	// zusammensetzen; Qt.atob liefert den Text schon als Unicode (UTF-8 dekodiert)
+	function readReply(base)
+	{
+		var dir = base + ".r";
+		var pre = dir + "/";
+		var list = App.entryList("file://" + dir, ["*"], false);
+		var parts = [];
+		for (var i = 0; i < list.length; i++) {
+			var e = String(list[i]);
+			if (e.indexOf(pre) === 0 && e.length > pre.length)
+				parts.push(e.substr(pre.length));
+		}
+		parts.sort();
+		var s = "";
+		for (var k = 0; k < parts.length; k++)
+			s += parts[k].substr(parts[k].indexOf("_") + 1);
+		var text = Qt.atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+		JSON.parse(text);   // pruefen (z. B. zwei Ergebnismengen einer Abfrage -> kein JSON)
+		return text;
+	}
+
+	function pollSql()
+	{
+		var open = false;
+		for (var id in sqlPending) {
+			var p = sqlPending[id];
+			if (App.isFileExist(p.base + ".rdy")) {
+				var text;
+				try {
+					text = readReply(p.base);
+				} catch (e) {
+					text = JSON.stringify({ ok: false, rows: [], err: "Antwort nicht lesbar: " + e });
+				}
+				App.writeToFile("done\n", p.base + ".done");
+				delete sqlPending[id];
+				try { reply(p.seq, p.cmd, text, p.long); } catch (e) { errCount++; reply(p.seq, 0x7F, "" + e, p.long); }
+			} else if (Date.now() > p.deadline) {
+				delete sqlPending[id];
+				reply(p.seq, 0x7F, "SQL: keine Antwort vom Datenbankdienst (mx5bridge-db.sh)", p.long);
+			} else {
+				open = true;
+			}
+		}
+		sqlTimer.running = open;
+	}
+
+	// nur ins Journal (bis 0.5 zusaetzlich eine Statusdatei auf dem USB-Laufwerk)
+	function logStatus(msg)
+	{
+		console.warn("MX5Bridge[" + deviceFileName + "]: " + msg);
+	}
+
+	Component.onCompleted: { logStatus(bridgeVersion + " geladen"); }
+
+	function hex2(n)
+	{
+		var s = (n & 0x7F).toString(16).toUpperCase();
+		return s.length < 2 ? "0" + s : s;
+	}
+
+	// Text -> 7-Bit-Text: Zeichen ausserhalb von Tab/LF/0x20..0x7E als 0x7F + 4 Hex-Ziffern
+	function escapeText(text)
+	{
+		return text.replace(/[^\t\n\x20-\x7E]/g, function (ch) {
+			var h = ch.charCodeAt(0).toString(16).toUpperCase();
+			return String.fromCharCode(0x7F) + "0000".substr(h.length) + h;
+		});
+	}
+
+	function unescapeText(text)
+	{
+		return text.replace(/\x7F([0-9A-Fa-f]{4})/g, function (m, h) {
+			return String.fromCharCode(parseInt(h, 16));
+		});
+	}
+
+	function textToHex(text)
+	{
+		var out = [];
+		for (var i = 0; i < text.length; i++)
+			out.push(hex2(text.charCodeAt(i)));
+		return out.join(" ");
+	}
+
+	// longHdr: Teilnummer und Teilezahl mit je 14 Bit (zwei Bytes) statt 7 Bit
+	function reply(seq, cmd, text, longHdr)
+	{
+		text = escapeText(String(text));
+		var total = Math.max(1, Math.ceil(text.length / chunkSize));
+		if (total > (longHdr ? 16383 : 127))
+			throw "Antwort zu gross (" + text.length + " Zeichen)";
+		for (var part = 0; part < total; part++) {
+			var chunk = text.substr(part * chunkSize, chunkSize);
+			var msg = "F0 7D 48 52 " + hex2(seq) + " " + hex2(cmd) + " ";
+			if (longHdr)
+				msg += hex2(part >> 7) + " " + hex2(part) + " " + hex2(total >> 7) + " " + hex2(total);
+			else
+				msg += hex2(part) + " " + hex2(total);
+			if (chunk.length > 0)
+				msg += " " + textToHex(chunk);
+			Midi.sendSysEx(msg + " F7");
+		}
+	}
+
+	function translatorOf(path)
+	{
+		var p = App.getProperty(path);
+		if (!p || !p.translator)
+			throw "keine Eigenschaft: " + path;
+		return p.translator;
+	}
+
+	function infoOf(path)
+	{
+		var t;
+		try { t = translatorOf(path); } catch (e) { return { ok: false, err: "" + e }; }
+		var r = { ok: true };
+		var fields = ["value", "unnormalized", "state", "index", "string",
+		              "numEntries", "maximum", "defaultValue", "valueType", "editable"];
+		for (var i = 0; i < fields.length; i++) {
+			try {
+				var v = t[fields[i]];
+				var ty = typeof v;
+				if (ty === "number" || ty === "boolean" || ty === "string")
+					r[fields[i]] = v;
+			} catch (e) { }
+		}
+		return r;
+	}
+
+	function writeProp(path, field, text)
+	{
+		var t = translatorOf(path);
+		if (field === "state")
+			t.state = (text === "1" || text === "true");
+		else if (field === "index")
+			t.index = parseInt(text, 10);
+		else if (field === "user")
+			t.setCurrentIdxByUser(parseInt(text, 10));
+		else if (field === "value")
+			t.value = parseFloat(text);
+		else if (field === "unnormalized")
+			t.unnormalized = parseFloat(text);
+		else if (field === "string")
+			t.string = text;
+		else
+			throw "unbekanntes Feld: " + field;
+	}
+
+	function entriesOf(path)
+	{
+		var t = translatorOf(path);
+		var n = t.numEntries;
+		var list = t.entries;
+		if (!list)
+			throw "keine Eintragsliste: " + path;
+		var out = [];
+		for (var i = 0; i < n; i++)
+			out.push(list[i] === undefined ? null : String(list[i]));
+		return out;
+	}
+
+	function toText(v)
+	{
+		if (v === undefined)
+			return "undefined";
+		if (v === null || typeof v !== "object")
+			return String(v);
+		try { return JSON.stringify(v); } catch (e) { return String(v); }
+	}
+
+	function sysEx(sysExString)
+	{
+		var parts = String(sysExString).replace(/^\s+|\s+$/g, "").split(/\s+/);
+		if (parts.length < 6)
+			return;
+		var b = [];
+		for (var i = 0; i < parts.length; i++)
+			b.push(parseInt(parts[i], 16));
+
+		// Nur eigene Nachrichten: F0 7D 48 52 ...
+		if (b[0] !== 0xF0 || b[1] !== 0x7D || b[2] !== 0x48 || b[3] !== 0x52)
+			return;
+
+		rxCount++;
+		var seq = b[4];
+		var longHdr = (b[5] & 0x20) !== 0;   // Antwort mit 14-Bit-Teilezaehler (ab 0.6)
+		var cmd = b[5] & 0x1F;
+		var end = b[b.length - 1] === 0xF7 ? b.length - 1 : b.length;
+		var payload = "";
+		for (var j = 6; j < end; j++)
+			payload += String.fromCharCode(b[j] & 0x7F);
+		payload = unescapeText(payload);
+
+		try {
+			if (cmd === 0x01) {
+				reply(seq, 0x41, bridgeVersion + " " + deviceFileName, longHdr);
+			} else if (cmd === 0x02) {
+				reply(seq, 0x42, payload + "\t" + JSON.stringify(infoOf(payload)), longHdr);
+			} else if (cmd === 0x03) {
+				var f = payload.split("\t");
+				if (f.length < 3)
+					throw "SET erwartet pfad<TAB>feld<TAB>wert";
+				writeProp(f[0], f[1], f.slice(2).join("\t"));
+				reply(seq, 0x43, f[0] + "\t" + JSON.stringify(infoOf(f[0])), longHdr);
+			} else if (cmd === 0x04) {
+				reply(seq, 0x44, payload + "\t" + JSON.stringify(entriesOf(payload)), longHdr);
+			} else if (cmd === 0x05) {
+				var paths = payload.split("\n");
+				var res = {};
+				for (var k = 0; k < paths.length; k++)
+					if (paths[k].length)
+						res[paths[k]] = infoOf(paths[k]);
+				reply(seq, 0x45, JSON.stringify(res), longHdr);
+			} else if (cmd === 0x07) {
+				var fn = new Function("App", "Midi", "device", payload);
+				reply(seq, 0x47, toText(fn(App, Midi, device)), longHdr);
+			} else if (cmd === 0x08) {
+				if (!payload.length)
+					throw "SQL erwartet eine Abfrage";
+				sqlRequest(seq, payload, "q", 0x48, longHdr);
+			} else if (cmd === 0x09) {
+				if (!payload.length)
+					throw "SQLWRITE erwartet Anweisungen";
+				sqlRequest(seq, payload, "w", 0x49, longHdr);
+			} else if (cmd === 0x0A) {
+				if (!payload.length)
+					throw "ACTION erwartet einen Namen";
+				sqlRequest(seq, payload, "a", 0x4A, longHdr);
+			} else if (cmd === 0x0B) {
+				if (!payload.length)
+					throw "SHELL erwartet ein Skript";
+				sqlRequest(seq, payload, "s", 0x4B, longHdr);
+			} else {
+				throw "unbekannter Befehl " + cmd;
+			}
+		} catch (e) {
+			errCount++;
+			reply(seq, 0x7F, "" + e, longHdr);
+			if (errCount < 20)
+				logStatus("Fehler: " + e);
+		}
+	}
+
+	Component.onDestruction: { console.warn("MX5Bridge[" + deviceFileName + "]: entladen"); }
+}
