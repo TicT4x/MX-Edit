@@ -1,4 +1,4 @@
-# MX5 Bridge + MX5 Editor
+# MX5 Bridge + MX5 Editor (with NAM-Mod Support)
 
 **Unofficial** tooling for the **HeadRush MX5** guitar processor:
 
