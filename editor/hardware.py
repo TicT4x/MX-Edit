@@ -55,7 +55,7 @@ def scene_summary(slots):
         parts.append("%d off" % off)
     if pre:
         parts.append("%d Preset%s" % (pre, "" if pre == 1 else "s"))
-    return " · ".join(parts) or "schaltet nichts"
+    return " · ".join(parts) or "switches nothing"
 
 
 def state_name(d, state):

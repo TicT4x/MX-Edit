@@ -97,14 +97,15 @@ def run(exe, workdir, log, cancelled):
         if cancelled():
             raise NamError('Cancelled.')
         made = glob.glob(os.path.join(workdir, OUT_GLOB))
-        mx5 = [p for p in made if os.path.basename(p) == MX5_NAME]
+        # der Installer schreibt den Modellnamen klein ("HeadRush mx5 ...") - ohne Gross/Klein vergleichen
+        mx5 = [p for p in made if os.path.basename(p).lower() == MX5_NAME.lower()]
         for p in made:
             if p not in mx5 and p not in told_other:
                 told_other.add(p)
                 log('The NAM installer built "%s" - that is not the MX5. Choose MX5 and click '
                     '"Install NAM Mod" again.' % os.path.basename(p))
         if mx5 and _stable(mx5[0]):
-            stock = os.path.join(workdir, MX5_NAME.replace('(NAM mod)', '(stock)'))
+            stock = mx5[0].replace('(NAM mod)', '(stock)')
             # die Stock-Kopie schreibt der Installer direkt danach - kurz darauf warten
             for _ in range(20):
                 if os.path.exists(stock) and _stable(stock, 0.5):

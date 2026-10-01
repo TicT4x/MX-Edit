@@ -116,8 +116,10 @@ class NAMDialog(U.Overlay):
             self.build()
         nam = data["nam"]
         state = "on" if nam.get("active") else ("switched off automatically" if nam.get("auto_off") else "off")
-        self.lbl_info.configure(text="NAM mod %s  ·  %s  ·  %d instance(s)  ·  %d of %d possible models"
-                                % (nam.get("ref", "?"), state, nam.get("instances", 2), len(self.models), L.NAM_STEPS))
+        ref = nam.get("ref") or ""
+        ref = "" if ref == "unbekannt" else " " + ref   # Patcher ohne Herkunftsangabe schreibt 'unbekannt'
+        self.lbl_info.configure(text="NAM mod%s  ·  %s  ·  %d instance(s)  ·  %d of %d possible models"
+                                % (ref, state, nam.get("instances", 2), len(self.models), L.NAM_STEPS))
         self.fill(select)
 
     def fill(self, select=None):

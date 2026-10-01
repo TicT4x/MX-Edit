@@ -2809,11 +2809,11 @@ class ModelSelector(OverlayDialog):
                     self.items.append((m, b, m))
             else:
                 self.items.append((b, b, None))
-        self.cats = ["Alle"] + [c for c, _ in CATEGORIES if any(self.cat_of(b) == c for _, b, _ in self.items)]
+        self.cats = ["All"] + [c for c, _ in CATEGORIES if any(self.cat_of(b) == c for _, b, _ in self.items)]
         if any(self.cat_of(b) == "Other" for _, b, _ in self.items):
             self.cats.append("Other")
         cur_base = base_name(current) if current else None
-        self.cat = self.cat_of(cur_base) if cur_base else "Alle"
+        self.cat = self.cat_of(cur_base) if cur_base else "All"
         self.pick = None
         for it in self.items:
             if it[1] == cur_base and (it[2] is None or it[2] == current_model):
@@ -2882,7 +2882,7 @@ class ModelSelector(OverlayDialog):
 
     def shown_items(self):
         q = self.filter.get().lower()
-        return [it for it in self.items if (self.cat == "Alle" or self.cat_of(it[1]) == self.cat)
+        return [it for it in self.items if (self.cat == "All" or self.cat_of(it[1]) == self.cat)
                 and (q in it[0].lower() or q in it[1].lower())]
 
     def fill(self):
