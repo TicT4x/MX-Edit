@@ -5,14 +5,14 @@ Aufruf:   python tools\\patcher_exe.py           (braucht: pip install pyinstall
 Ergebnis: <Quellcode>\\exe\\MX5Bridge_Patcher.exe (Zwischendateien in exe\\build, werden geloescht).
 
 mod/ und bin/sqlite3 kommen als Daten in die EXE (bridgepatch liest sie aus sys._MEIPASS);
-Download und Ausgabeordner legt patcher.py neben die EXE (BASE). Konsolenprogramm, damit der
-Fortschritt sichtbar ist; per Doppelklick wartet es am Ende auf Enter. Das Icon (tuerkises
+Download und Ausgabeordner legt patcher.py neben die EXE (BASE). Fensterprogramm (patcher_gui.py);
+die Konsolenversion bleibt python patcher.py. Das Icon (tuerkises
 "MX5" mit Pfeil nach unten) wird hier erzeugt."""
 import os, shutil, subprocess, sys
 
 Q = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(Q, 'exe')
-ICON = os.path.join(OUT, 'patcher.ico')
+ICON = os.path.join(Q, 'patcher.ico')    # auch fuer patcher_gui.py aus dem Quellcode
 
 
 def make_icon():
@@ -43,12 +43,13 @@ def main():
     make_icon()
     work = os.path.join(OUT, 'build')
     sep = os.pathsep
-    cmd = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile', '--console',
+    cmd = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile', '--windowed',
            '--name', 'MX5Bridge_Patcher', '--icon', ICON,
            '--distpath', OUT, '--workpath', work, '--specpath', work,
            '--add-data', os.path.join(Q, 'mod') + sep + 'mod',
            '--add-data', os.path.join(Q, 'bin', 'sqlite3') + sep + 'bin',
-           os.path.join(Q, 'patcher.py')]
+           '--add-data', ICON + sep + '.',
+           os.path.join(Q, 'patcher_gui.py')]
     subprocess.run(cmd, check=True, cwd=Q)
     shutil.rmtree(work, ignore_errors=True)
     exe = os.path.join(OUT, 'MX5Bridge_Patcher.exe')

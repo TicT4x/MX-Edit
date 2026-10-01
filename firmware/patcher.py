@@ -28,8 +28,17 @@ UPDATER_FILES = ('FirmwareUpdater.exe', 'libusb-1.0.dll', 'Background.png')
 SIG7Z = b"7z\xbc\xaf\x27\x1c"
 
 
+def _print_progress(got, total):
+    print('  %3d %%  (%d of %d MB)' % (got * 100 // total, got >> 20, total >> 20), flush=True)
+
+
+# Ausgabe-Haken: Konsole (print) oder GUI (patcher_gui setzt eigene Funktionen)
+LOG = [lambda text: print(text, flush=True)]
+PROGRESS = [_print_progress]      # (empfangen, gesamt) in Bytes, hoechstens einmal pro Sekunde
+
+
 def say(*a):
-    print(*a, flush=True)
+    LOG[0](' '.join(str(x) for x in a))
 
 
 class Fail(Exception):
@@ -52,7 +61,7 @@ def download(dest):
             got += len(chunk)
             if total and time.time() - last > 1:
                 last = time.time()
-                say('  %3d %%  (%d of %d MB)' % (got * 100 // total, got >> 20, total >> 20))
+                PROGRESS[0](got, total)
     os.replace(tmp, dest)
     say('  done, %d MB' % (os.path.getsize(dest) >> 20))
 
@@ -81,8 +90,9 @@ def extract_7z(archive, dest):
             tools.append([exe, 'x', '-y', '-o' + dest, archive])
     if shutil.which('bsdtar'):
         tools.append(['bsdtar', '-xf', archive, '-C', dest])
+    flags = 0x08000000 if os.name == 'nt' else 0      # CREATE_NO_WINDOW: kein Konsolenblitz in der GUI
     for cmd in tools:
-        r = subprocess.run(cmd, capture_output=True)
+        r = subprocess.run(cmd, capture_output=True, creationflags=flags)
         if r.returncode == 0 and os.path.exists(os.path.join(dest, 'Update.img')):
             return
     raise Fail('Could not unpack the updater. Windows 10/11 has tar.exe built in; on other systems '
@@ -119,7 +129,7 @@ def unpack(src, work):
 
 
 # ---- Patchen ----
-def patch(raw, nam_info=None):
+def patch(raw, nam_info=None, need_nam=False):
     if not fitpatch.verify(raw):
         raise Fail('Update.img is damaged (checksum mismatch)')
     say('Unpacking the root file system ...')
@@ -133,6 +143,9 @@ def patch(raw, nam_info=None):
         except FileNotFoundError:
             return b''
     files, nam = bridgepatch.plan(cat, nam_info, log=say)
+    if need_nam and not nam:
+        raise Fail('This file does not contain the NAM mod. Choose the "(NAM mod).exe" made by the NAM '
+                   'installer, or untick "Use a firmware file I already have" so the patcher runs the NAM installer.')
     say('Writing %d files%s ...' % (len(files), ' (NAM mod found - kept, switchable)' if nam else ''))
     for target, (data, mode) in files.items():
         fs.write_file(target, data, mode)
@@ -177,16 +190,23 @@ def config_json(nam):
     return json.dumps(cfg, indent=4, ensure_ascii=False) + '\n'
 
 
-def main():
-    ap = argparse.ArgumentParser(description='Build the MX5 Bridge firmware updater from the official HeadRush MX5 2.7 updater.')
-    ap.add_argument('input', nargs='?', help='official updater (.zip/.exe), NAM mod updater (.exe), folder or Update.img; '
-                                             'omitted = download the official updater')
-    ap.add_argument('--out', help='output folder (default: MX5Bridge_<version>_Updater next to this script)')
-    a = ap.parse_args()
-    say('MX5 Bridge %s firmware patcher (unofficial - use at your own risk)\n' % bridgepatch.VERSION)
+def install_hint(out, nam):
+    return ('To install:\n'
+            '  1. Connect the MX5 to power and USB.\n'
+            '  2. On the MX5: Global Settings > ... (more) > Firmware Update.\n'
+            '  3. Run FirmwareUpdater.exe in %s and click "Install MX5Bridge %s%s".\n'
+            '     Do not disconnect until it has finished.'
+            % (out, bridgepatch.VERSION, ' + NAM' if nam else ''))
+
+
+def build(src=None, out=None, need_nam=False, out_parent=None):
+    """Updater bauen. src: Eingabe (None = offiziellen Updater laden bzw. den schon geladenen
+    nehmen), out: Ausgabeordner (None = neben Skript/EXE). need_nam: Eingabe muss die NAM-Mod
+    enthalten (GUI: Haken NAM + eigene Datei). out_parent: Ordner, in dem der Ausgabeordner
+    MX5Bridge_<v>[_NAM]_Updater angelegt wird (Standard neben Skript/EXE). Liefert (Ausgabeordner, nam, fehlende Dateien);
+    Fehler als Fail/PatchError/Ext4Error."""
     work = tempfile.mkdtemp(prefix='mx5bridge_')
     try:
-        src = a.input
         if not src:
             src = os.path.join(BASE, 'HeadRush_MX5_2.7_Updater.zip')
             if os.path.exists(src):
@@ -207,9 +227,9 @@ def main():
         info = os.path.abspath(src) + '.nam.txt'     # Herkunft von tools/nam-mod.sh
         if os.path.exists(info):
             nam_info = open(info, encoding='ascii').read()
-        new, nam = patch(raw, nam_info)
+        new, nam = patch(raw, nam_info, need_nam)
 
-        out = a.out or os.path.join(BASE, 'MX5Bridge_%s%s_Updater' % (bridgepatch.VERSION, '_NAM' if nam else ''))
+        out = out or os.path.join(out_parent or BASE, 'MX5Bridge_%s%s_Updater' % (bridgepatch.VERSION, '_NAM' if nam else ''))
         os.makedirs(out, exist_ok=True)
         open(os.path.join(out, 'Update.img'), 'wb').write(new)
         open(os.path.join(out, 'Config.json'), 'w', encoding='utf-8', newline='\n').write(config_json(nam))
@@ -220,20 +240,28 @@ def main():
                 shutil.copy(p, os.path.join(out, name))
             else:
                 missing.append(name)
-        say('\nDone: %s' % out)
-        if missing:
-            say('Copy these files from the official HeadRush updater into that folder: ' + ', '.join(missing))
-        say('\nTo install:\n'
-            '  1. Connect the MX5 to power and USB.\n'
-            '  2. On the MX5: Global Settings > ... (more) > Firmware Update.\n'
-            '  3. Run FirmwareUpdater.exe in the folder above and click "Install MX5Bridge %s%s".\n'
-            '     Do not disconnect until it has finished.' % (bridgepatch.VERSION, ' + NAM' if nam else ''))
-        return 0
+        return out, nam, missing
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def main():
+    ap = argparse.ArgumentParser(description='Build the MX5 Bridge firmware updater from the official HeadRush MX5 2.7 updater.')
+    ap.add_argument('input', nargs='?', help='official updater (.zip/.exe), NAM mod updater (.exe), folder or Update.img; '
+                                             'omitted = download the official updater')
+    ap.add_argument('--out', help='output folder (default: MX5Bridge_<version>_Updater next to this script)')
+    a = ap.parse_args()
+    say('MX5 Bridge %s firmware patcher (unofficial - use at your own risk)\n' % bridgepatch.VERSION)
+    try:
+        out, nam, missing = build(a.input, a.out)
     except (Fail, bridgepatch.PatchError, ext4.Ext4Error) as e:
         say('\nERROR: %s' % e)
         return 1
-    finally:
-        shutil.rmtree(work, ignore_errors=True)
+    say('\nDone: %s' % out)
+    if missing:
+        say('Copy these files from the official HeadRush updater into that folder: ' + ', '.join(missing))
+    say('\n' + install_hint('the folder above', nam))
+    return 0
 
 
 if __name__ == '__main__':

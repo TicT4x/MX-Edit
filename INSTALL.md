@@ -21,20 +21,24 @@ You only need two files from the [latest release](../../releases/latest):
 be installed, and Python is not needed. Both programs are not code-signed, so Windows SmartScreen
 may warn about an unknown publisher. Click *More info › Run anyway*.
 
-1. Put **`MX5Bridge_0.7_Patcher.exe`** into an empty folder, for example `Desktop\MX5Bridge`.
-2. Double-click it. A console window opens, and the patcher:
-   - downloads the official *HeadRush MX5 2.7 Firmware Updater* (about 60 MB) from
-     `cdn.inmusicbrands.com`;
-   - adds the bridge to the firmware and checks every file it wrote;
-   - creates the folder **`MX5Bridge_0.7_Updater`** next to the patcher.
+1. Put **`MX5Bridge_0.7_Patcher.exe`** into an empty folder, for example `Desktop\MX5Bridge`, and
+   double-click it. The patcher window opens.
+2. Choose the options, then click **Build updater**:
+   - **Use a firmware file I already have:** leave it unticked and the patcher downloads the
+     official *HeadRush MX5 2.7 Firmware Updater* (about 60 MB) from `cdn.inmusicbrands.com`.
+     Tick it to use a copy you already have: click **Choose …** and select the HeadRush updater
+     (the `.exe`, or the `.zip` from HeadRush). Dragging that file onto the patcher's `.exe`
+     preselects it.
+   - **Also install the NAM mod:** see the next section. Leave it unticked for the bridge only.
+   - **Output:** the folder in which the new updater is created (default: next to the patcher).
 
-   This takes one to two minutes. Press Enter to close the window afterwards. If you already
-   have the official updater (the `.zip` or the `.exe`), drag it onto the patcher and nothing is
-   downloaded.
+   The patcher adds the bridge, checks every file it wrote and creates
+   **`MX5Bridge_0.7_Updater`**. This takes one to two minutes.
 3. Connect the MX5 to its **power supply** and to the computer with **USB**.
 4. On the MX5: **Global Settings › ⋯ (more) › Firmware Update**.
-5. In `MX5Bridge_0.7_Updater`, run **`FirmwareUpdater.exe`**. Its window title must say
-   *"MX5Bridge 0.7"*. Click **"Install MX5Bridge 0.7"** and wait. **Do not disconnect** the MX5
+5. Click **Start firmware updater** in the patcher (or run `FirmwareUpdater.exe` in
+   `MX5Bridge_0.7_Updater`). Its window title must say *"MX5Bridge 0.7"*. Click
+   **"Install MX5Bridge 0.7"** and wait. **Do not disconnect** the MX5
    until the update is finished and the device has restarted.
 
 Your rigs, setlists, presets and IRs stay on the device. The update only replaces the system
@@ -48,27 +52,29 @@ The [HeadRush NAM mod by lolgab](https://github.com/lolgab/headrush-nam-mod) tur
 The NAM mod is a separate project and is not included here. Its installer builds its part, and
 the bridge patcher adds the bridge on top.
 
-Instead of steps 1–2 above:
+To install it, tick **Also install the NAM mod** in the patcher and click **Build updater**:
 
-1. Download the NAM mod's installer for Windows (`headrush-nam-gui`, a `.zip`) from its
-   [releases page](https://github.com/lolgab/headrush-nam-mod/releases). Unzip it and keep the
-   `.exe` together with its `.dll` files.
-2. Start it, select **MX5** and the number of NAM instances:
+1. The patcher downloads the NAM mod's official installer (`headrush-nam-gui`, the newest
+   release from its GitHub page) and opens it in a second window.
+2. In that window, select **MX5** and the number of NAM instances:
    - **2 instances**: *Anxiety OD* and *Anxiety OD 2* become NAM blocks.
    - **up to 4 instances**: *Anxiety OD V2* and *Anxiety OD V2 2* as well. This uses more of the
      device's processing power.
 
-   Click **Install NAM Mod**. It downloads the official updater and writes two files into its
-   folder: **`HeadRush MX5 Firmware Updater (NAM mod).exe`** and
-   `HeadRush MX5 Firmware Updater (stock).exe`.
-3. **Do not run the "(NAM mod)" updater.** Drag it onto **`MX5Bridge_0.7_Patcher.exe`** instead.
-   The patcher shows *"NAM mod found"* and creates the folder
-   **`MX5Bridge_0.7_NAM_Updater`**.
-4. Continue with steps 3–5 above, using `FirmwareUpdater.exe` from `MX5Bridge_0.7_NAM_Updater`.
-   The button is called **"Install MX5Bridge 0.7 + NAM"**.
+   Then click **Install NAM Mod** and wait. The NAM installer downloads the official firmware
+   itself and builds its part.
+3. The patcher notices when the NAM installer is done and continues by itself. You can close the
+   NAM installer's window. The patcher creates **`MX5Bridge_0.7_NAM_Updater`**.
+4. Continue with steps 3–5 above. The button in the firmware updater is called
+   **"Install MX5Bridge 0.7 + NAM"**.
 
-Keep the "(stock)" updater. It is the unmodified official updater for getting back to the stock
-firmware (section 4).
+If you already have an updater made by the NAM installer
+(`HeadRush MX5 Firmware Updater (NAM mod).exe`), tick both boxes and choose that file instead.
+The patcher then does not open the NAM installer. **Never run the "(NAM mod)" updater itself**
+if you want the bridge too: it would install NAM without the bridge.
+
+The patcher also keeps `HeadRush MX5 Firmware Updater (stock).exe` next to the new updater. It is
+the unmodified official updater, for getting back to the stock firmware (section 4).
 
 **Using NAM with the editor:**
 
@@ -87,9 +93,8 @@ firmware (section 4).
   bridge switches NAM off by itself, and the editor tells you. Problems with the NAM mod itself
   belong in [its issue tracker](https://github.com/lolgab/headrush-nam-mod/issues).
 
-Already have NAM installed and want to add the bridge? Do the same: the NAM mod's installer
-creates a new "(NAM mod)" updater each time. Drag that onto the bridge patcher and install the
-result.
+Already have NAM installed and want to add the bridge? Do the same: tick **Also install the NAM
+mod**, and install the result.
 
 ## 3. Start the editor
 
@@ -116,7 +121,8 @@ run on your system. Install [Python 3](https://www.python.org/downloads/) (3.9 o
 *Add python.exe to PATH*).
 
 - Patcher: download `MX5Bridge_0.7_Patcher.zip`, unzip it and double-click `Patch_Firmware.bat`
-  (or run `python patcher.py [updater]`). No extra packages are needed. It also runs on
+  (the same window). `python patcher.py [updater]` is a console version without the NAM
+  installer step. No extra packages are needed. It also runs on
   Linux/macOS when `7z` or `bsdtar` is installed. To build the `.exe` yourself from the
   repository: `pip install pyinstaller pillow`, then `python firmware\tools\patcher_exe.py`.
 - Editor: see below.
@@ -162,7 +168,8 @@ with `action restore`.
 | Problem | What to try |
 |---|---|
 | Patcher: *"Could not unpack the updater"* | Windows 10 (1803+) / 11 has `tar.exe` built in. On older systems install [7-Zip](https://www.7-zip.org) and make sure `7z` is on the PATH |
-| Patcher: download fails | Download the official updater yourself from HeadRush (MX5, firmware 2.7, Windows) and drag the `.zip` onto the patcher |
+| Patcher: download fails | Download the official updater yourself from HeadRush (MX5, firmware 2.7, Windows), tick *Use a firmware file I already have* and choose it |
+| Patcher: *"The NAM mod installer was closed before it built the MX5 updater"* | Click *Build updater* again. In the NAM installer, choose **MX5** and click *Install NAM Mod*, then wait until it is done |
 | Patcher: *"… has unexpected layout"* / *"already patched"* | The input is not the plain official 2.7 updater (or an updater from the NAM mod). Use the official one |
 | Editor: *"No MX5 found"* | Wait ~15 s after the device has started. Check the cable. In *Settings*, set both MIDI ports to *Automatic* |
 | Editor asks for a newer bridge | The device runs an older bridge or the stock firmware. Install the firmware from step 2 |

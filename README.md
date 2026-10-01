@@ -61,8 +61,8 @@ installer:
 2. It adds the bridge files to that firmware **on your computer**.
 3. It writes a ready-to-run updater folder that uses HeadRush's own `FirmwareUpdater.exe`.
 
-The patcher is a single Windows program (`MX5Bridge_0.7_Patcher.exe`). It needs neither Python
-nor Linux/WSL. It also accepts an updater made by the NAM mod's installer, so you can have both.
+The patcher is a single Windows program with a window (`MX5Bridge_0.7_Patcher.exe`). It needs
+neither Python nor Linux/WSL. It can also run the NAM mod's own installer for you, so you get both.
 
 ## Quick start
 
@@ -70,8 +70,8 @@ Full instructions: **[INSTALL.md](INSTALL.md)**.
 
 1. Download `MX5Bridge_0.7_Patcher.exe` and `MX5Editor_0.9.exe` from the
    [latest release](../../releases/latest). Nothing has to be installed.
-2. Firmware: double-click `MX5Bridge_0.7_Patcher.exe`, then run the `FirmwareUpdater.exe` it
-   creates while the MX5 is in firmware update mode.
+2. Firmware: double-click `MX5Bridge_0.7_Patcher.exe` and click **Build updater**. Put the MX5
+   into firmware update mode, then click **Start firmware updater**.
 3. Editor: double-click `MX5Editor_0.9.exe`.
 
 Both are also available as Python source (`…_Patcher.zip`, `MX5Editor_0.9.zip`).
@@ -79,14 +79,15 @@ Both are also available as Python source (`…_Patcher.zip`, `MX5Editor_0.9.zip`
 ### With the NAM mod
 
 To get [NAM](https://github.com/lolgab/headrush-nam-mod) (Neural Amp Modeler) and the bridge
-together:
+together, tick **Also install the NAM mod** in the patcher:
 
-1. Run the NAM mod's installer (`headrush-nam-gui`), choose **MX5**, and click
-   **Install NAM Mod**. **Do not run** the `HeadRush MX5 Firmware Updater (NAM mod).exe` it
-   creates.
-2. Drag that file onto `MX5Bridge_0.7_Patcher.exe`. It keeps the NAM mod and creates
-   `MX5Bridge_0.7_NAM_Updater`.
-3. Run `FirmwareUpdater.exe` from that folder and click **Install MX5Bridge 0.7 + NAM**.
+1. The patcher downloads the NAM mod's official installer and opens it.
+2. In it, choose **MX5** and the number of instances, and click **Install NAM Mod**.
+3. The patcher continues by itself and creates `MX5Bridge_0.7_NAM_Updater`. Install it with
+   **Start firmware updater** › **Install MX5Bridge 0.7 + NAM**.
+
+Already have an updater from the NAM installer? Tick *Use a firmware file I already have* as
+well and choose it.
 
 Then manage your `.nam` models with the **NAM** button in the editor. Details:
 [INSTALL.md › with the NAM mod](INSTALL.md#optional-with-the-nam-mod-neural-amp-modeler).
