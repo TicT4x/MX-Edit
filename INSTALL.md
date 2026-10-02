@@ -63,15 +63,18 @@ To install it, tick **Also install the NAM mod** in the patcher and click **Buil
 
    Then click **Install NAM Mod** and wait. The NAM installer downloads the official firmware
    itself and builds its part.
-3. The patcher notices when the NAM installer is done and continues by itself. You can close the
-   NAM installer's window. The patcher creates **`MX5Bridge_0.7_NAM_Updater`**.
+3. **Then just wait.** ⚠️ **Do not click "Open"** on the NAM installer's "Done!" screen: that
+   would start an updater with NAM but **without the bridge**. The patcher notices when the NAM
+   installer is done, **closes its window by itself** and adds the bridge. It creates
+   **`MX5Bridge_0.7_NAM_Updater`** and deletes the NAM-only updater, so only the right one is left.
 4. Continue with steps 3–5 above. The button in the firmware updater is called
    **"Install MX5Bridge 0.7 + NAM"**.
 
 If you already have an updater made by the NAM installer
 (`HeadRush MX5 Firmware Updater (NAM mod).exe`), tick both boxes and choose that file instead.
 The patcher then does not open the NAM installer. **Never run the "(NAM mod)" updater itself**
-if you want the bridge too: it would install NAM without the bridge.
+if you want the bridge too: it would install NAM without the bridge. If that already happened,
+no harm is done: just install `MX5Bridge_0.7_NAM_Updater` afterwards.
 
 The patcher also keeps `HeadRush MX5 Firmware Updater (stock).exe` next to the new updater. It is
 the unmodified official updater, for getting back to the stock firmware (section 4).
@@ -170,6 +173,7 @@ with `action restore`.
 | Patcher: *"Could not unpack the updater"* | Use patcher v0.9.2 or newer — it unpacks the updater itself (older versions relied on Windows' `tar.exe`, which cannot unpack it on Windows 10). If it still fails, the downloaded file is probably incomplete: delete it next to the patcher and try again |
 | Patcher: download fails | Download the official updater yourself from HeadRush (MX5, firmware 2.7, Windows), tick *Use a firmware file I already have* and choose it |
 | Patcher: *"The NAM mod installer was closed before it built the MX5 updater"* | Click *Build updater* again. In the NAM installer, choose **MX5** and click *Install NAM Mod*, then wait until it is done |
+| I ran the NAM installer's updater (*"Install NAM Mod"* / *Open*) instead of the bridge one | No harm: NAM is installed, the bridge is not. Build the updater with the patcher and install `MX5Bridge_0.7_NAM_Updater` (if you still have the `(NAM mod).exe`, tick both boxes and choose it) |
 | Patcher: *"… has unexpected layout"* / *"already patched"* | The input is not the plain official 2.7 updater (or an updater from the NAM mod). Use the official one |
 | Editor: *"No MX5 found"* | Wait ~15 s after the device has started. Check the cable. In *Settings*, set both MIDI ports to *Automatic* |
 | Editor asks for a newer bridge | The device runs an older bridge or the stock firmware. Install the firmware from step 2 |

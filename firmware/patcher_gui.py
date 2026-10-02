@@ -18,6 +18,11 @@ import patcher, naminstaller, bridgepatch, ext4
 BG, PANEL, CARD, LINE = "#0b0b0e", "#141519", "#1c1d23", "#2a2b33"
 TEXT, MUTED, DIM = "#e8e8ea", "#9a9ba3", "#5f6069"
 ACCENT, ACCENT_HI, ACCENT_TXT, DANGER = "#1fc9a1", "#43dcb8", "#07110e", "#e5484d"
+WARN, WARN_BG = "#f5a524", "#2a2112"
+NAM_STEPS = ("1.  Choose MX5 and the number of NAM instances.\n"
+             "2.  Click “Install NAM Mod”.\n"
+             "3.  Wait. Do NOT click “Open” in the NAM installer – that updater has no bridge.\n"
+             "     The patcher closes the NAM installer by itself and adds the bridge.")
 NAM_URL = "https://github.com/lolgab/headrush-nam-mod"
 VERSION = bridgepatch.VERSION
 
@@ -171,6 +176,16 @@ class PatcherApp(tk.Tk):
                  bg=BG, fg=MUTED, font=("Segoe UI", 10), anchor="w", justify="left",
                  wraplength=px(660)).pack(fill="x", pady=(0, px(14)))
 
+        # Gross sichtbar, solange der NAM-Installer laeuft (Nutzer flashten sonst dessen Updater)
+        self.banner = tk.Frame(root, bg=WARN_BG, padx=px(20), pady=px(16), highlightthickness=2,
+                               highlightbackground=WARN)
+        self.banner_title = tk.Label(self.banner, text="", bg=WARN_BG, fg=WARN, font=("Segoe UI", 14, "bold"),
+                                     anchor="w", justify="left", wraplength=px(640))
+        self.banner_title.pack(fill="x")
+        self.banner_text = tk.Label(self.banner, text="", bg=WARN_BG, fg=TEXT, font=("Segoe UI", 11),
+                                    anchor="w", justify="left", wraplength=px(640))
+        self.banner_text.pack(fill="x", pady=(px(8), 0))
+
         # Optionen in einem eigenen Rahmen: nach dem Erfolg ersetzt der Ergebniskasten sie
         self.opts = tk.Frame(root, bg=BG)
         self.opts.pack(fill="x")
@@ -189,6 +204,11 @@ class PatcherApp(tk.Tk):
         self.chk_nam = Check(c, "Also install the NAM mod (Neural Amp Modeler)", command=self.refresh)
         self.chk_nam.pack(fill="x", pady=(px(10), 0))
         self.note_nam = self.note(c)
+        self.nam_howto = tk.Frame(c, bg=WARN_BG, padx=px(14), pady=px(10))
+        tk.Label(self.nam_howto, text="How it works – a second window (the NAM installer) opens:", bg=WARN_BG,
+                 fg=WARN, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x")
+        tk.Label(self.nam_howto, text=NAM_STEPS, bg=WARN_BG, fg=TEXT, font=("Segoe UI", 10), anchor="w",
+                 justify="left", wraplength=px(600)).pack(fill="x", pady=(px(4), 0))
         self.note(c, "NAM mod by lolgab (GPLv3) · github.com/lolgab/headrush-nam-mod", link=NAM_URL)
 
         c = self.card(self.opts, "Output")
@@ -248,12 +268,15 @@ class PatcherApp(tk.Tk):
                    "The official HeadRush MX5 2.7 updater is downloaded from inMusic (about 60 MB).")
         self.note_file.configure(text=txt)
         if nam and not use_file:
-            self.note_nam.configure(text="The NAM mod's own installer is downloaded from GitHub and opens in a "
-                                         "second window. Choose MX5 and the number of instances there and click "
-                                         "“Install NAM Mod” – the patcher then continues by itself.")
+            self.note_nam.configure(text="The NAM mod's own installer is downloaded from GitHub. It builds the "
+                                         "NAM part, then the patcher adds the bridge on top.")
+            self.nam_howto.pack(fill="x", pady=(px(10), 0), after=self.note_nam)
         elif nam:
-            self.note_nam.configure(text="The chosen file must already contain the NAM mod.")
-        else:
+            self.note_nam.configure(text="The chosen file must already contain the NAM mod. Install only the "
+                                         "updater the patcher makes – the “(NAM mod)” file alone has no bridge.")
+        if not (nam and not use_file):
+            self.nam_howto.pack_forget()
+        if not nam:
             self.note_nam.configure(text="Without the NAM mod the Anxiety OD stays the stock pedal. "
                                          "You can add NAM later by running the patcher again.")
         self.lbl_out.configure(text=self.out_parent)
@@ -297,6 +320,10 @@ class PatcherApp(tk.Tk):
                     self.prog.configure(mode="indeterminate")
                     self.prog.start(15)
                     self.status.configure(text=a[0])
+                elif kind == "banner":
+                    self.show_banner(*a)
+                elif kind == "nam_window":
+                    self.arrange(*a)
                 elif kind == "finished":
                     self.finished(*a)
         except queue.Empty:
@@ -349,19 +376,66 @@ class PatcherApp(tk.Tk):
                 self.post("busy", "Getting the NAM mod installer …")
                 exe, tag, page = naminstaller.fetch(patcher.BASE, log, patcher.PROGRESS[0])
                 self.post("busy", "Waiting for the NAM mod installer …")
+                self.post("banner", "Step 1 of 2 – in the NAM installer window", NAM_STEPS)
                 workdir = os.path.join(patcher.BASE, "NAM installer", "output")
-                src, stock = naminstaller.run(exe, workdir, log, lambda: self.cancel)
+                src, stock = naminstaller.run(exe, workdir, log, lambda: self.cancel,
+                                              on_window=lambda hwnd: self.post("nam_window", hwnd))
+                intermediate = src
+                self.post("banner", "Step 2 of 2 – adding the bridge …",
+                          "The NAM part is done. The patcher closed the NAM installer on purpose – "
+                          "please wait, this takes one to two minutes.", True)
+            else:
+                intermediate = None
             self.post("busy", "Building the updater …")
             out, found_nam, missing = patcher.build(src, need_nam=nam, out_parent=out_parent)
             kept = naminstaller.keep_stock(stock, out_parent)
+            naminstaller.drop_intermediate(intermediate)
             self.post("finished", True, out, found_nam, missing, kept)
         except (patcher.Fail, bridgepatch.PatchError, ext4.Ext4Error, naminstaller.NamError) as e:
             self.post("finished", False, str(e))
         except Exception as e:     # Netz, Dateien ... - dem Nutzer zeigen statt still zu sterben
             self.post("finished", False, "%s: %s" % (type(e).__name__, e))
 
+    def show_banner(self, title, text, front=False):
+        self.banner_title.configure(text=title)
+        self.banner_text.configure(text=text)
+        self.opts.pack_forget()      # gesperrt und mit derselben Anleitung - Platz fuer Banner + Protokoll
+        self.banner.pack(fill="x", pady=(0, self.px(12)), before=self.bar)
+        if front:     # nach dem Schliessen des NAM-Installers den Patcher nach vorn holen
+            self.btn_cancel.pack_forget()     # Abbrechen wirkt nur beim Warten auf den Installer
+            self.deiconify()
+            self.lift()
+            self.attributes("-topmost", True)
+            self.after(300, lambda: self.attributes("-topmost", False))
+            self.focus_force()
+
+    def arrange(self, hwnd):
+        """NAM-Installer und Patcher nebeneinander legen, damit die Anleitung sichtbar bleibt
+        (nur wenn beide auf den Arbeitsbereich passen)."""
+        try:
+            import ctypes
+            from ctypes import wintypes
+            u = ctypes.windll.user32
+            r, wa = wintypes.RECT(), wintypes.RECT()
+            u.GetWindowRect(hwnd, ctypes.byref(r))
+            u.SystemParametersInfoW(0x30, 0, ctypes.byref(wa), 0)      # SPI_GETWORKAREA
+            nw, nh = r.right - r.left, r.bottom - r.top
+            self.update_idletasks()
+            pw, ph = self.winfo_width(), self.winfo_height()
+            gap = self.px(12)
+            if nw + gap + pw > wa.right - wa.left:
+                return
+            x0 = wa.left + (wa.right - wa.left - nw - gap - pw) // 2
+            py = max(wa.top, min(self.winfo_y(), wa.bottom - ph - self.px(40)))
+            ny = py + self.px(60)
+            u.SetWindowPos(hwnd, 0, x0, ny, 0, 0, 0x0001 | 0x0004)     # SWP_NOSIZE | SWP_NOZORDER
+            self.geometry("+%d+%d" % (x0 + nw + gap, py))
+        except Exception:
+            pass
+
     def finished(self, ok, *a):
         self.busy = False
+        self.banner.pack_forget()
         self.prog.stop()
         self.btn_cancel.pack_forget()
         px = self.px
@@ -369,6 +443,8 @@ class PatcherApp(tk.Tk):
             self.prog.configure(mode="determinate", value=0)
             self.write("ERROR: " + a[0], "err")
             self.status.configure(text="Failed – see the messages below.", fg=DANGER)
+            if not self.opts.winfo_manager():
+                self.opts.pack(fill="x", before=self.bar)
             self.refresh()
             return
         out, nam, missing, kept = a
@@ -399,6 +475,11 @@ class PatcherApp(tk.Tk):
                  justify="left", wraplength=px(620)).pack(fill="x", pady=(px(2), 0))
         tk.Label(box, text=steps, bg=PANEL, fg=TEXT, font=("Segoe UI", 10), anchor="w", justify="left",
                  wraplength=px(620)).pack(fill="x", pady=(px(6), px(10)))
+        if nam:
+            tk.Label(box, text="This updater contains NAM and the bridge. Do not use the NAM installer’s "
+                               "“(NAM mod)” updater – it has no bridge.", bg=WARN_BG, fg=WARN,
+                     font=("Segoe UI", 10, "bold"), anchor="w", justify="left", wraplength=px(600),
+                     padx=px(12), pady=px(8)).pack(fill="x", pady=(0, px(10)))
         row = tk.Frame(box, bg=PANEL)
         row.pack(fill="x")
         upd = os.path.join(out, "FirmwareUpdater.exe")

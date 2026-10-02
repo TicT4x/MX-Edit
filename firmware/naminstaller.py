@@ -81,17 +81,55 @@ def _stable(path, secs=2.0):
         return False
 
 
-def run(exe, workdir, log, cancelled):
+def find_window(pid, timeout=10.0, alive=None):
+    """HWND des sichtbaren Hauptfensters des Prozesses pid (Windows), sonst None; alive() -> False
+    bricht ab (Prozess schon beendet)."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+    except ImportError:
+        return None
+    if not hasattr(ctypes, 'windll'):
+        return None
+    u = ctypes.windll.user32
+    proto = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    end = time.time() + timeout
+    while time.time() < end and (alive is None or alive()):
+        found = []
+
+        def cb(hwnd, _):
+            p = wintypes.DWORD()
+            u.GetWindowThreadProcessId(hwnd, ctypes.byref(p))
+            if p.value == pid and u.IsWindowVisible(hwnd):
+                found.append(hwnd)
+                return False
+            return True
+        u.EnumWindows(proto(cb), 0)
+        if found:
+            return found[0]
+        time.sleep(0.2)
+    return None
+
+
+def run(exe, workdir, log, cancelled, on_window=None):
     """Installer im Arbeitsordner starten und auf seine MX5-Ausgabe warten. cancelled() -> True
-    bricht ab. Liefert (Pfad der "(NAM mod).exe", Pfad der "(stock).exe" oder None)."""
+    bricht ab. Sobald die Ausgabe fertig ist, wird der Installer geschlossen: sein Fertig-Bildschirm
+    bietet "Open" fuer den reinen NAM-Updater an, und genau den haben Nutzer dann statt des
+    Bridge-Updaters geflasht. on_window(hwnd) bekommt sein Fenster (zum Anordnen).
+    Liefert (Pfad der "(NAM mod).exe", Pfad der "(stock).exe" oder None)."""
     os.makedirs(workdir, exist_ok=True)
     for old in glob.glob(os.path.join(workdir, 'HeadRush * Firmware Updater (*).exe')):
         os.remove(old)
     log('The NAM mod installer opens in its own window. In it:\n'
         '  1. choose MX5 and the number of NAM instances,\n'
-        '  2. click "Install NAM Mod" and wait until it says it is done.\n'
-        'The patcher continues by itself. Do not run the updater the NAM installer creates.')
+        '  2. click "Install NAM Mod".\n'
+        'Then just wait: the patcher closes the NAM installer by itself and adds the bridge.\n'
+        'Do NOT click "Open" in the NAM installer - that updater has no bridge.')
     proc = subprocess.Popen([exe], cwd=workdir)
+    if on_window:
+        hwnd = find_window(proc.pid, alive=lambda: proc.poll() is None and not cancelled())
+        if hwnd:
+            on_window(hwnd)
     told_other = set()
     while True:
         if cancelled():
@@ -111,7 +149,12 @@ def run(exe, workdir, log, cancelled):
                 if os.path.exists(stock) and _stable(stock, 0.5):
                     break
                 time.sleep(0.5)
-            log('The NAM installer has built the MX5 updater. You can close its window.')
+            time.sleep(1.0)       # danach raeumt er nur noch seinen Temp-Ordner auf
+            if proc.poll() is None:
+                proc.terminate()
+                log('The NAM installer has built its part - closed it. Now adding the bridge ...')
+            else:
+                log('The NAM installer has built its part. Now adding the bridge ...')
             return mx5[0], (stock if os.path.exists(stock) else None)
         if proc.poll() is not None:
             made = glob.glob(os.path.join(workdir, MX5_NAME))
@@ -119,6 +162,16 @@ def run(exe, workdir, log, cancelled):
                 continue
             raise NamError('The NAM mod installer was closed before it built the MX5 updater.')
         time.sleep(0.5)
+
+
+def drop_intermediate(path):
+    """Den reinen NAM-Updater (ohne Bridge) nach erfolgreichem Bau loeschen, damit ihn niemand
+    versehentlich startet; der Bridge-Updater enthaelt NAM ja schon."""
+    try:
+        if path and os.path.exists(path):
+            os.remove(path)
+    except OSError:
+        pass
 
 
 def keep_stock(stock, out_parent):
