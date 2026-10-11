@@ -6,8 +6,8 @@ Die Liste zeigt die Modelle in der Reihenfolge des Geraets: Platz = Drive-Wert d
 der das Modell waehlt. Jede Aenderung benennt den Ordner lueckenlos 'NNN - Name.nam' und zieht
 die Drive-Werte der Rigs und NAM-Presets nach (live.nam_apply), damit jedes Rig sein Modell
 behaelt; Rigs mit einem geloeschten Modell werden stumm. Die Mod liest den Ordner nur beim
-App-Start - der Editor startet die Geraete-App beim Schliessen neu (nam_dialog_done). Der Dialog
-ist eine Ebene ueber dem Fenster (ui.Overlay wie der IR-Dialog), nicht modal.
+App-Start - der Editor startet die Geraete-App beim Schliessen neu (nam_dialog_done). Die Verwaltung
+ist eine eigene Seite an Stelle der Hauptansicht (ui.Page wie der Setlist-Manager).
 
 NAMBrowser ist die Modellauswahl eines NAM-Blocks (Parameterzeile "Model"); mit der Einstellung
 "audition" setzt ein Klick das Modell sofort und die Auswahl bleibt zum Durchprobieren offen.
@@ -29,16 +29,35 @@ def size_text(n):
     return "%.1f MB" % (n / 1048576.0) if n >= 1048576 else "%d KB" % max(1, n // 1024)
 
 
-class NAMDialog(U.Overlay):
-    """data: {'nam': nam_status, 'models': db_nam_models()['models'], 'usage': nam_usage}."""
+class NAMPage(U.Page):
+    """Eigene Seite an Stelle der Hauptansicht (wie der Setlist-Manager).
+    data: {'nam': nam_status, 'models': db_nam_models()['models'], 'usage': nam_usage}."""
 
     def __init__(self, editor, data):
-        super().__init__(editor, "NAM models", width=820, height=580)
+        super().__init__(editor, "NAM models")
         self.ed = editor
         self.closed = False
         self.changed = False          # Dateien geaendert -> Neustart der Geraete-App noetig
-        self.set_data(data, build=True)
+        self.loading = None           # ui.Loading, solange die Liste noch vom Geraet kommt (data=None)
+        if data is None:              # sofort offen, die Liste kommt mit loaded()
+            self.nam, self.models, self.usage = {}, [], {}
+            self.build()
+            self.loading = U.Loading(self.body, "Loading NAM models …")
+        else:
+            self.set_data(data, build=True)
         self.bind_keys()
+
+    def loaded(self, data):
+        if self.closed or not self.winfo_exists():
+            return
+        self.set_data(data)
+        if self.loading is not None:
+            self.loading.done()
+            self.loading = None
+
+    def load_failed(self, text):
+        if self.loading is not None and not self.closed:
+            self.loading.fail(text)
 
     def title(self):
         return "NAM models"   # fuer Rueckfragen (wie Toplevel.title())
@@ -87,7 +106,7 @@ class NAMDialog(U.Overlay):
                  ).pack(fill="x", pady=(px(6), 0))
         bf = self.bf = tk.Frame(b, bg=PANEL)
         bf.pack(fill="x", side="bottom", pady=(px(12), 0))
-        U.Btn(bf, "Close", command=self.close, kind="primary").pack(side="right")
+        U.Btn(bf, "Done", command=self.close, kind="primary").pack(side="right")
         small = dict(padx=10, pady=4, font=FONT_SMALL)
         U.Btn(bf, "Upload …", command=self.upload, **small).pack(side="left")
         self.btn_up = U.Btn(bf, "▲", command=lambda: self.move(-1), **small)
@@ -172,37 +191,55 @@ class NAMDialog(U.Overlay):
 
     def mark_changed(self):
         self.changed = True
+        if not self.winfo_exists():
+            return
         if not self.lbl_restart.winfo_ismapped():
             self.lbl_restart.pack(fill="x", pady=(px(8), 0), before=self.bf)
         self.lbl_restart.configure(text="The NAM mod reads its models only when the device app starts: the app is "
-                                        "restarted when this dialog closes (about 15 s).")
+                                        "restarted when you close this page (about 15 s).")
 
     # ---------------- Aenderungen ----------------
     def apply(self, final, text, delete=(), replace=None, select=None, done_text=None):
         """final: [(Quelle, Name)] in neuer Reihenfolge -> live.nam_apply, danach alles neu lesen."""
         old = [m["file"] for m in self.models]
         nam = self.nam
-        say = lambda t: self.ed._inbox.put(lambda: self.ed.status.set(t))
+        if not self.ed.session or self.ed._job:
+            self.ed.status.set("Please wait, the device is still busy.")
+            return
+        # ab hier kann sich der Ordner aendern (auch bei einem Fehler mittendrin) -> Neustart beim Schliessen
+        self.mark_changed()
+        screen = U.ProgressOverlay(self.ed, text.rstrip(" …"), "Preparing …",
+                                   "Rigs and presets that use moved models are updated as well.")
+        say = screen.reporter(self.ed._inbox)
 
         def job(br):
-            res = L.nam_apply(br, nam, old, final, delete=delete, replace=replace, progress=say)
+            err, res = None, None
+            try:
+                res = L.nam_apply(br, nam, old, final, delete=delete, replace=replace, progress=say)
+            except Exception as e:   # Fehler melden, den Stand trotzdem neu lesen (ausser die Verbindung ist weg)
+                if L.transport_error(e):
+                    raise
+                err = str(e)
+            say("Reading the model list …", 1.0 if not err else None)
             models = L.db_nam_models(br)["models"]
-            return {"res": res, "nam": L.nam_status(br), "models": models, "usage": L.nam_usage(br, nam)}
+            return {"res": res, "err": err, "nam": L.nam_status(br), "models": models, "usage": L.nam_usage(br, nam)}
 
         def after(data, err):
+            err = err or (data or {}).get("err")
+            if data:
+                self.ed.lrig.nam_models = data["models"]
+                if self.winfo_exists():
+                    sel = [m["file"] for m in data["models"] if m["name"] in (select or [])]
+                    self.set_data(data, select=sel)
             if err:
-                messagebox.showwarning(self.title(), err, parent=self)
-                self.reload()
+                screen.finish(False, "That did not work", err)
                 return
-            self.mark_changed()
-            self.ed.lrig.nam_models = data["models"]
-            if not self.winfo_exists():
-                return
-            sel = [m["file"] for m in data["models"] if m["name"] in (select or [])]
-            self.set_data(data, select=sel)
             r = data["res"]["remapped"]
-            self.ed.status.set((done_text or "NAM models updated.") +
-                               ("  %d rig(s)/preset(s) updated so they keep their model." % r if r else ""))
+            extra = "%d rig(s)/preset(s) updated so they keep their model." % r if r else ""
+            self.ed.status.set((done_text or "NAM models updated.") + ("  " + extra if extra else ""))
+            screen.finish(True, (done_text or "NAM models updated").rstrip("."),
+                          "The device app restarts when you close the NAM page, so the mod loads the models.",
+                          extra or None)
         self.ed.run_job(job, after, text)
 
     def reload(self):
@@ -353,7 +390,7 @@ class NAMBrowser(U.Overlay):
     Drive-Platz 0..n-1, dahinter 'kein Modell (stumm)' = L.NAM_SILENT. on_pick(idx) setzt den Drive.
     audition (Einstellung): ein Klick setzt das Modell sofort, der Dialog bleibt offen;
     "Done"/x behaelt es, "Revert" setzt das Modell vom Oeffnen zurueck. Ohne audition wie bisher:
-    Doppelklick/Apply setzt und schliesst. on_manage: Knopf "Manage models …" (oeffnet den NAMDialog)."""
+    Doppelklick/Apply setzt und schliesst. on_manage: Knopf "Manage models …" (oeffnet die NAMPage)."""
 
     SILENT = "No model (silent)"
 

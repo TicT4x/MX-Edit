@@ -4,25 +4,30 @@
 Start:  python werkzeuge\\regressionstest.py            (aus dem Editor-Ordner)
         python werkzeuge\\regressionstest.py --schnell  (ohne Speichern-Test)
 
-Prueft ohne Rueckfragen die Kette Verbinden -> Rig-Liste (Datenbank) -> Setlist
-GHOST -> Test-Rig laden -> Parameter schreiben/lesen -> Verwerfen -> Speichern ->
+Prueft ohne Rueckfragen die Kette Verbinden -> Rig-Liste (Datenbank) -> eigenes
+Test-Rig anlegen -> Test-Rig laden -> Parameter schreiben/lesen -> Verwerfen -> Speichern ->
 Datenbank schreiben (Farbe + Auffrischen, Als neues Rig + Loeschen; Bruecke 0.4) ->
 Hardware-Zuweisungen (inkl. Scene-Preset) -> Scenes + Fussschalter druecken -> Bloecke
-verschieben -> Tuner -> Pegel -> kompakter Poll -> Datenbank-Export -> EVAL -> Umlaute
+verschieben -> Tuner -> Looper -> Pegel -> kompakter Poll -> Datenbank-Export -> EVAL -> Umlaute
 (Bruecke 0.5) -> Setlists in der Datenbank -> Import + Wiederherstellen -> IR-Auswahl ->
 Dateifunktionen -> NAM-Mod (Bruecke 0.7 mit NAM, sonst uebersprungen) -> Verbindungsverlust
-(LiveSession) -> App-Neustart (restart_app).
-Dauer ~48 s, mit --schnell ~27 s (ohne Speichern, Als neues Rig und App-Neustart).
+(LiveSession) -> App-Neustart (restart_app) -> Aufraeumen.
+Dauer ~60 s, mit --schnell ~30 s (ohne Speichern, Als neues Rig, All Rigs und App-Neustart).
 Der App-Neustart zeigt am Display kurz 'restore last state?' - der Test antwortet selbst
 (No), bitte nicht am Geraet druecken.
-Verandert und speichert dabei
-ausschliesslich das Test-Rig MXBRIDGE TEST (Setlist GHOST, Programmnummer 3) und
-legt voruebergehend eine Kopie davon an; andere Rigs werden nur geladen. Am Ende
-ist das Test-Rig wieder im Ausgangszustand und gespeichert.
 
-Voraussetzungen: MX5 per USB mit Brueckenfirmware 0.5 (wie der Editor),
-kein Dialog am Display,
-der Editor darf nicht gleichzeitig im Live-Modus laufen (gleicher MIDI-Port).
+Braucht kein bestimmtes Rig und keine bestimmte Setlist (seit 2026-10-04): Der Test legt sein
+Rig 'ZZ MXB REGTEST' aus regtest_rig.rig (neben diesem Skript; Kette mit Luecke, IR-Block,
+Scenes) selbst an und setzt es voruebergehend an Platz 1 der gerade aktiven Setlist (in 'All
+Rigs' steht es am Ende) - eine eigene Setlist braeuchte zwei App-Neustarts, weil das Geraet die
+Setlist-Namen nur beim Start liest. Nur dieses Rig wird veraendert und gespeichert; andere Rigs
+werden nur geladen. Zum Schluss (auch nach Fehlern) laedt der Test das Rig von vorher, stellt die
+Ansicht wieder her und loescht sein Rig (der Setlist-Eintrag verschwindet mit). Reste eines
+abgebrochenen Laufs raeumt der naechste Lauf weg.
+
+Voraussetzungen: MX5 per USB mit Brueckenfirmware 0.5 (wie der Editor), kein Dialog am
+Display, keine ungespeicherten Aenderungen am geladenen Rig (sonst bricht der Test ab, statt sie
+zu verwerfen), der Editor darf nicht gleichzeitig im Live-Modus laufen (gleicher MIDI-Port).
 Ergebnis: Konsole + Anhang an regressionstest_log.txt im aktuellen Ordner,
 Exit-Code 0 = alles bestanden, 1 = mindestens ein Fehler.
 """
@@ -34,8 +39,8 @@ from bridge import Bridge, BridgeError
 import live as L
 from rigmodel import Catalog
 
-TEST_RIG = "MXBRIDGE TEST"
-TEST_SET = "GHOST"
+TEST_RIG = "ZZ MXB REGTEST"        # wird angelegt und am Ende geloescht
+RIG_FILE = os.path.join(HERE, "regtest_rig.rig")
 LOG = "regressionstest_log.txt"
 
 
@@ -86,30 +91,71 @@ class Test:
 
     def t_rigliste(self):
         res = L.read_rig_list(self.br)
-        assert TEST_SET in res["setlists"], "Setlist %s fehlt: %s" % (TEST_SET, res["setlists"])
         assert res["sure"], "aktive Setlist nur vermutet"
         n = len(res["rows"])
         assert n > 0, "keine Rigs"
         self.res["liste"] = res
         return "%d Rigs in '%s', Setlists %s" % (n, res["setlist"], res["setlists"])
 
-    def t_setlist(self):
+    # ---- eigenes Test-Rig ----
+    @property
+    def set(self):
+        """Die Liste, in der der Test arbeitet: die beim Start aktive Setlist (oder All Rigs)."""
+        return self.need("start")["setlist"]
+
+    def _set_id(self):
+        return self.need("liste")["setlist_ids"].get(self.set) if self.set != L.ALL_RIGS else None
+
+    def _refresh(self, reload_id=None):
         res = self.need("liste")
-        if res["setlist"] != TEST_SET:
-            res = L.enter_setlist(self.br, res["setlists"], TEST_SET, res["setlist_ids"], discard=True)
-            assert res["setlist"] == TEST_SET and res["sure"], "Setlist nicht erkannt: %s" % res["setlist"]
-            self.res["liste"] = res
-        names = [L.display_name(r["name"]) for r in res["rows"]]
-        assert TEST_RIG in names, "%s nicht in %s: %s" % (TEST_RIG, TEST_SET, names)
-        self.res["index"] = names.index(TEST_RIG)
-        self.res["prog"] = L._prog(res["rows"][self.res["index"]])
-        self.res["rig_id"] = res["rows"][self.res["index"]]["id"]
-        return "%s ist Platz %d, Programm %s" % (TEST_RIG, self.res["index"] + 1, self.res["prog"])
+        res2 = L.refresh_lists(self.br, res["setlists"], self.set, res["setlist_ids"], reload_id=reload_id)
+        self.res["liste"] = dict(res, rows=res2["rows"], status=res2["status"])
+        return res2
+
+    def _leftovers(self):
+        return self.br.sql("select id, name from rigs where name like 'ZZ MXB REGTEST%'")
+
+    def t_vorbereiten(self):
+        """Ausgangszustand merken (geladenes Rig, Ansicht), Reste frueherer Laeufe loeschen, Test-Rig
+        aus regtest_rig.rig anlegen, an Platz 1 der aktiven Setlist setzen, Liste auffrischen."""
+        res = self.need("liste")
+        st = L.rig_status(self.br)
+        assert not st["dirty"], ("Das geladene Rig '%s' hat ungespeicherte Aenderungen - bitte am Geraet "
+                                 "speichern oder verwerfen, der Test wuerde sie sonst verwerfen" % st["name"])
+        left = self._leftovers()
+        if any(r["id"] == st["id"] for r in left):    # abgebrochener Lauf: sein Rig ist noch geladen
+            other = next((i for i, r in enumerate(res["rows"]) if not r["name"].startswith(TEST_RIG)), None)
+            assert other is not None, "nur Test-Rigs in der aktiven Liste"
+            st = L.load_rig(self.br, res["rows"], other, discard=True)
+        self.res["start"] = {"setlist": res["setlist"], "rig": st["id"], "name": st["name"],
+                             "board": self.br.get(L.BOARD)}
+        for r in left:
+            L.delete_rig(self.br, r["id"])
+        d = json.load(open(RIG_FILE, encoding="utf-8"))
+        rid = L.create_rig(self.br, TEST_RIG, content=d["content"], color=d.get("color", 9))
+        self.res["rig_id"] = rid
+        sid = self._set_id()
+        if sid:   # vor alle anderen Eintraege - deren show_order bleibt unveraendert
+            self.br.sql_write(
+                "insert into setlist_rigs (id, setlist_id, rig_id, show_order) select %s, %s, %s, "
+                "coalesce(min(show_order), 0) - 1 from setlist_rigs where setlist_id = %s"
+                % (L.sql_lit(L.new_id()), L.sql_lit(sid), L.sql_lit(rid), L.sql_lit(sid)))
+        res2 = self._refresh()
+        ids = [r["id"] for r in res2["rows"]]
+        assert rid in ids, "Test-Rig nicht in der Liste '%s'" % self.set
+        self.res["index"] = ids.index(rid)
+        assert not sid or self.res["index"] == 0, "Test-Rig steht an Platz %d statt 1" % (self.res["index"] + 1)
+        assert res2["status"]["id"] == st["id"], "Auffrischen hat ein anderes Rig geladen"
+        return "%s angelegt, Platz %d in '%s'%s; Ausgangs-Rig %s" % (
+            TEST_RIG, self.res["index"] + 1, self.set, ", %d Rest(e) geloescht" % len(left) if left else "", st["name"])
 
     def t_anderes_rig(self):
         """Erst ein anderes Rig laden, damit das Laden des Test-Rigs wirklich etwas tut."""
         res = self.need("liste")
-        other = next(i for i, r in enumerate(res["rows"]) if r["id"] != self.need("rig_id"))
+        if L.rig_status(self.br)["id"] != self.need("rig_id"):
+            return "schon ein anderes Rig geladen (%s)" % L.rig_status(self.br)["name"]
+        other = next((i for i, r in enumerate(res["rows"]) if r["id"] != self.need("rig_id")), None)
+        assert other is not None, "kein zweites Rig in der Liste"
         st = L.load_rig(self.br, res["rows"], other, discard=True)
         assert st["id"] == res["rows"][other]["id"], "LoadedID %s statt %s" % (st["id"], res["rows"][other]["id"])
         return "geladen: %s (%s, %.1f s)" % (st["name"], L.LAST_LOAD.get("via"), L.LAST_LOAD.get("secs", 0))
@@ -211,23 +257,25 @@ class Test:
     def t_db_farbe(self):
         """Farbe in der Datenbank aendern und die aktive Setlist auffrischen lassen: die
         Bank-Anzeige zeigt die neue Farbe, das geladene Rig bleibt geladen und unveraendert."""
-        res, rig_id, idx = self.need("liste"), self.need("rig_id"), self.need("index")
+        rig_id, idx = self.need("rig_id"), self.need("index")
         st0 = L.rig_status(self.br)
-        L.set_rig_color(self.br, rig_id, 5)
+        colour0 = self.br.sql("select color from rigs where id = %s" % L.sql_lit(rig_id))[0]["color"]
+        new = 5 if colour0 != 5 else 3
+        L.set_rig_color(self.br, rig_id, new)
         try:
             t = time.time()
-            res2 = L.refresh_lists(self.br, res["setlists"], TEST_SET, res["setlist_ids"], reload_id=rig_id)
+            res2 = self._refresh(reload_id=rig_id)
             dauer = time.time() - t
             assert res2["status"] == st0, "Auffrischen hat das geladene Rig veraendert: %s" % (res2["status"],)
             L.goto_bank(self.br, res2["rows"], idx // 3)
             shown = L.read_bank(self.br)[idx % 3]
-            assert shown == (TEST_RIG, "Red"), "Bank zeigt %s" % (shown,)
+            assert shown == (TEST_RIG, L.RIG_COLOURS[new]), "Bank zeigt %s" % (shown,)
         finally:
-            L.set_rig_color(self.br, rig_id, 9)
-            res2 = L.refresh_lists(self.br, res["setlists"], TEST_SET, res["setlist_ids"], reload_id=rig_id)
+            L.set_rig_color(self.br, rig_id, colour0)
+            res2 = self._refresh(reload_id=rig_id)
         L.goto_bank(self.br, res2["rows"], idx // 3)
-        assert L.read_bank(self.br)[idx % 3] == (TEST_RIG, "Light Blue"), "Farbe nicht zurueckgesetzt"
-        return "Farbe Red in der Bank-Anzeige, Auffrischen %.1f s, Rig blieb geladen" % dauer
+        assert L.read_bank(self.br)[idx % 3] == (TEST_RIG, L.RIG_COLOURS[colour0]), "Farbe nicht zurueckgesetzt"
+        return "Farbe %s in der Bank-Anzeige, Auffrischen %.1f s, Rig blieb geladen" % (L.RIG_COLOURS[new], dauer)
 
     def t_db_kopie(self):
         """Als neues Rig (save_rig_as): Kopie mit dem Live-Stand anlegen, laden, wieder loeschen."""
@@ -239,13 +287,13 @@ class Test:
         before = L.db_rig(self.br, rig_id)["content"]
         self.br.set(self._on_path(), "state", int(not orig))
         self.br.set(L.RIGS + "/Dirty", "state", 1)
-        new_id = L.save_rig_as(self.br, name, setlist_id=res["setlist_ids"][TEST_SET])
+        new_id = L.save_rig_as(self.br, name, setlist_id=self._set_id())
         try:
             assert L.db_rig(self.br, rig_id)["content"] == before, "Originalzeile veraendert"
             copy = json.loads(L.db_rig(self.br, new_id)["content"])["data"]["Patch"]["children"]
             assert copy["Rig"]["children"]["PresetName"]["string"] == name, "innerer Name der Kopie"
             assert copy[self.need("block")]["children"]["On"]["state"] == (not orig), "Kopie ohne Live-Stand"
-            res2 = L.refresh_lists(self.br, res["setlists"], TEST_SET, res["setlist_ids"], reload_id=new_id)
+            res2 = self._refresh(reload_id=new_id)
             assert res2["status"]["id"] == new_id and not res2["status"]["dirty"], res2["status"]
             assert self._on() == (not orig), "geladene Kopie hat nicht den Live-Stand"
             st = L.load_rig(self.br, res2["rows"], [r["id"] for r in res2["rows"]].index(rig_id))
@@ -254,7 +302,7 @@ class Test:
             if L.rig_status(self.br)["id"] == new_id:
                 L.load_rig(self.br, res["rows"], self.need("index"), discard=True)
             L.delete_rig(self.br, new_id)
-            res2 = L.refresh_lists(self.br, res["setlists"], TEST_SET, res["setlist_ids"], reload_id=rig_id)
+            res2 = self._refresh(reload_id=rig_id)
         assert new_id not in [r["id"] for r in res2["rows"]], "Kopie nicht geloescht"
         assert res2["status"]["id"] == rig_id and not res2["status"]["dirty"]
         return "Kopie %s angelegt, geladen, geloescht; Original unveraendert" % name
@@ -339,6 +387,9 @@ class Test:
             except L.LiveError:
                 pass
             assert L.read_scene_slots(self.br, n, 1)[empty][1] == 0, "leerer Platz hat einen Modus"
+        # Fuer das Ausloesen den Block in der Scene schalten lassen (sonst prueft der Druck nichts);
+        # das Test-Rig wird danach ohnehin verworfen
+        L.set_scene_slot(self.br, n, 1, slot, new)
         # Ausloesen: Board-Modus kurz auf Stomp (press_footswitch verlangt ihn), danach zurueck
         board = self.br.get(L.BOARD)
         modes = L._entries(self.br, L.BOARD)
@@ -424,6 +475,54 @@ class Test:
         assert self.br.get(L.BOARD).get("string") == board["string"]
         return "Tuner auf/zu aus %s, jeweils zurueck; Kammerton %d Hz, Ablesung %.0f ms" % (" und ".join(seen), t["ref"], ms)
 
+    def t_looper(self):
+        """Looper-Ansicht oeffnen, Stille aufnehmen (Loop schliessen, Overdub = 2. Ebene), Peel,
+        Geschwindigkeit, Rueckwaerts, Loeschen, Ansicht schliessen. Ein vorhandener Loop des
+        Benutzers wird nicht angefasst (Schritt uebersprungen)."""
+        board = self.br.get(L.BOARD)
+        first = L.looper_open(self.br, None, show=False)
+        if first["start"] != "Empty" or first["rec"] == "Rec":
+            return "uebersprungen: am Geraet laeuft ein Loop (%s)" % first["state"]
+        try:
+            st = L.looper_open(self.br, None)
+            assert st["board"] == "Looper", "Looper-Ansicht nicht offen (%s)" % st["board"]
+            st = L.looper_action(self.br, "record")
+            assert st["rec"] == "Rec" and st["start"] == "Empty", "Aufnahme: %s/%s" % (st["start"], st["rec"])
+            time.sleep(1.0)
+            st = L.looper_action(self.br, "record")
+            assert st["start"] == "Playing" and st["rec"] == "OverReady", "Loop schliessen: %s/%s" % (st["start"], st["rec"])
+            length = st["length"]
+            L.looper_action(self.br, "record")
+            time.sleep(1.6)   # eine Overdub-Ebene zaehlt erst, wenn sie ueber den Loop-Anfang laeuft
+            st = L.looper_action(self.br, "record")
+            for _ in range(10):   # die Ebene zaehlt manchmal erst einen Moment spaeter
+                if st["layers"] == 2:
+                    break
+                time.sleep(0.1)
+                st = L.looper_parse(self.br.get_many(L.LOOPER_PATHS))
+            assert st["layers"] == 2, "Overdub: %d Ebenen" % st["layers"]
+            st = L.looper_action(self.br, "undo")
+            assert st["layers"] == 1 and st["start"] == "Playing", "Peel: %d Ebenen, %s" % (st["layers"], st["start"])
+            st = L.looper_action(self.br, "double_speed")
+            assert st["speed"] == "x 2", "Speed %s" % st["speed"]
+            st = L.looper_action(self.br, "reverse")
+            assert st["reverse"], "nicht rueckwaerts"
+            st = L.looper_action(self.br, "reverse")
+            pos = [L.looper_parse(self.br.get_many(L.LOOPER_PATHS))["pos"] for _ in range(3) if not time.sleep(0.1)]
+            st = L.looper_action(self.br, "play")
+            assert st["start"] == "Stopped", "Stop: %s" % st["start"]
+        finally:
+            st = L.looper_parse(self.br.get_many(L.LOOPER_PATHS))
+            if st["start"] != "Empty" or st["rec"] == "Rec":
+                st = L.looper_action(self.br, "clear")
+            L.looper_close(self.br)
+            L.restore_board(self.br, board)
+        assert st["start"] == "Empty" and st["speed"] == "x 1", "nach Clear %s, %s" % (st["start"], st["speed"])
+        now = self.br.get(L.BOARD).get("string")
+        assert now == board["string"], "nach dem Looper %s statt %s" % (now, board["string"])
+        return "Aufnahme %s, Overdub + Peel, x2, rueckwaerts, Position %s, geloescht; Ansicht %s" % (
+            length, "/".join("%d" % p for p in pos), now)
+
     def t_pegel(self):
         out = []
         for m in ("Input", "Output"):
@@ -494,9 +593,13 @@ class Test:
             finally:
                 L.delete_rig(self.br, new_id)
             assert not L.db_name_taken(self.br, "rigs", name), "Import nicht geloescht"
-            sl = next(s for s, _ in L.db_setlist_rows(self.br) if s["name"] == TEST_SET)
-            rr = [(r, "") for r in L.db_setlist_rig_ids(self.br, sl["id"])]
-            L._write(os.path.join(folder, "Setlists", TEST_SET + ".setlist"), L.setlist_file_json(sl, rr))
+            # irgendeine vorhandene Setlist (die aktive, sonst die erste) - keine: ohne Setlist-Datei
+            sls = [s for s, _ in L.db_setlist_rows(self.br)]
+            sl = next((s for s in sls if s["name"] == self.set), sls[0] if sls else None)
+            if sl:
+                rr = [(r, "") for r in L.db_setlist_rig_ids(self.br, sl["id"])]
+                L._write(os.path.join(folder, "Setlists", L.safe_filename(sl["name"]) + ".setlist"),
+                         L.setlist_file_json(sl, rr))
             bid = self.br.sql("select id from blocks order by id limit 1")[0]["id"]
             blk = L._exact_row(self.br, "blocks", ["id", "type", "name", "content", "is_readonly"], "id", bid)
             L._write(os.path.join(folder, "Blocks", "X", L.safe_filename(blk["name"]) + ".block"), L.block_file_json(blk))
@@ -576,26 +679,63 @@ class Test:
         assert br.ping().startswith("MX5Bridge"), "Bridge danach nicht mehr ansprechbar"
         return "verlorene Antwort ueberbrueckt, stummes Geraet nach %.1f s (eval) / %.1f s (get_many) erkannt" % (took, took2)
 
+    def _zahl_param(self):
+        """Pfad und Info eines Zahlenparameters des ersten Blocks (oder None)."""
+        block = self.need("block")
+        for p in self.need("params"):
+            path = L.LiveRig.path(block, p)
+            info = self.br.get(path)
+            if L.kind_of(info) == L.L_NUMBER and "unnormalized" in info:
+                return path, info
+        return None
+
     def t_neustart(self):
-        """restart_app: Geraete-App neu starten, Dialog mit No beantworten, Setlist + Test-Rig laden."""
+        """restart_app mit keep_edits: ungespeicherte Aenderung am Test-Rig, Geraete-App neu starten,
+        Dialog mit No beantworten, Setlist + Test-Rig laden - die Aenderung muss noch da sein, das Rig
+        als geaendert markiert und seine Datenbankzeile unveraendert. Danach wird verworfen."""
         if self.quick:
             return "uebersprungen (--schnell)"
         t0 = time.time()
+        rid = self.need("rig_id")
+        st = L.rig_status(self.br)
+        if st["id"] != rid:
+            res = self.need("liste")
+            L.load_rig(self.br, res["rows"], [r["id"] for r in res["rows"]].index(rid), discard=True)
+        saved = L.db_rig(self.br, rid)["content"]
+        par = self._zahl_param()
+        assert par, "kein Zahlenparameter im ersten Block"
+        path, info = par
+        edit = 0.81 if abs(info["value"] - 0.81) > 0.05 else 0.23
+        self.br.set(path, "value", edit)
+        self.br.set(L.RIGS + "/Dirty", "state", 1)
         board = self.br.get(L.BOARD).get("string")
-        res = L.restart_app(self.br, rig_id=self.need("rig_id"), setlist=TEST_SET)
+        res = L.restart_app(self.br, rig_id=rid, setlist=self.set, keep_edits=True)
         now = self.br.get(L.BOARD).get("string")
         assert now == board, "Ansicht nach dem Neustart %s statt %s" % (now, board)
         st = L.rig_status(self.br)
-        assert st["id"] == self.need("rig_id") and not st["dirty"], "nach dem Neustart: %s" % (st,)
-        assert res["setlist"] == TEST_SET, "Setlist %s" % res["setlist"]
+        assert st["id"] == rid, "nach dem Neustart geladen: %s" % (st,)
+        assert res["setlist"] == self.set, "Setlist %s" % res["setlist"]
         assert not L.dialog_buttons(self.br), "Dialog offen: %s" % L.dialog_buttons(self.br)
+        assert res.get("edits_kept") and not res.get("edits_lost"), "Aenderungen nicht behalten: %s" % res.get("edits_lost")
+        assert st["dirty"], "Rig nach dem Neustart nicht als geaendert markiert"
+        v = self.br.get(path)["value"]
+        assert abs(v - edit) < 0.02, "%s nach dem Neustart %s statt %s" % (path, v, edit)
+        assert L.db_rig(self.br, rid)["content"] == saved, "Datenbankzeile des Test-Rigs wurde veraendert"
+        # verwerfen: Dirty weg, frisch laden -> wieder der gespeicherte Wert
+        L.drop_changes(self.br)
+        L.reload_rig(self.br, res["rows"])
+        v2 = self.br.get(path)["value"]
+        assert abs(v2 - info["value"]) < 0.02, "nach dem Verwerfen %s statt %s" % (v2, info["value"])
+        assert not L.rig_status(self.br)["dirty"], "nach dem Verwerfen noch geaendert"
         self.res["liste"] = res
-        return "App neu gestartet, %s in %s geladen (%s), %.0f s" % (TEST_RIG, TEST_SET, L.LAST_LOAD.get("via"), time.time() - t0)
+        return "App neu gestartet, %s in %s geladen (%s), Aenderung %s = %.2f behalten, %.0f s" % (
+            TEST_RIG, self.set, L.LAST_LOAD.get("via"), path.rsplit("/", 2)[-2] + "/" + path.rsplit("/", 1)[-1], edit,
+            time.time() - t0)
 
     def t_all_rigs(self):
         """All Rigs: ein Rig mit doppeltem Anzeigenamen (zweites Vorkommen) und das zuletzt angelegte
         (Ende der rowid-Reihenfolge) ueber ihre Position laden, an der LoadedID pruefen. Die Rigs
-        werden nur geladen; danach wieder Setlist GHOST mit dem Test-Rig."""
+        werden nur geladen; danach wieder die Ausgangsliste mit dem Test-Rig."""
         if self.quick:
             return "uebersprungen (--schnell)"
         res = self.need("liste")
@@ -615,13 +755,13 @@ class Test:
                 done.append("%s (Platz %d, %s, %.1f s)" % (names[i], i + 1, "Bank" if i == dup else "Sprung",
                                                            time.time() - t))
         finally:
-            back = L.enter_setlist(self.br, res["setlists"], TEST_SET, res["setlist_ids"], discard=True)
+            back = L.enter_setlist(self.br, res["setlists"], self.set, res["setlist_ids"], discard=True)
             idx = [r["id"] for r in back["rows"]].index(self.need("rig_id"))
             st = L.load_rig(self.br, back["rows"], idx, discard=True)
             L.restore_board(self.br, board)
             self.res["liste"] = back
         assert st["id"] == self.need("rig_id") and not st["dirty"], "Test-Rig nicht zurueck"
-        return "geladen: %s; zurueck in %s" % (", ".join(done), TEST_SET)
+        return "geladen: %s; zurueck in %s" % (", ".join(done), self.set)
 
     def t_datenbank(self):
         row = L.db_rig(self.br, self.need("rig_id"))
@@ -632,7 +772,8 @@ class Test:
         exact = L._sql_text(self.br, "content", "rigs where id = %s" % L.sql_lit(row["id"]), size=5000)
         assert exact == row["content"], "stueckweises Lesen liefert anderen Inhalt"
         sets = {sl["name"]: rr for sl, rr in L.db_setlist_rows(self.br)}
-        assert TEST_SET in sets and any(i == row["id"] for i, _ in sets[TEST_SET]), "Test-Rig nicht in %s" % TEST_SET
+        if self.set != L.ALL_RIGS:
+            assert any(i == row["id"] for i, _ in sets.get(self.set, [])), "Test-Rig nicht in %s" % self.set
         blocks = self.br.sql("select count(*) n from blocks")[0]["n"]
         settings = L.db_settings(self.br)
         assert "RigVersion" in settings
@@ -748,29 +889,48 @@ class Test:
             nam["ref"], "an" if nam["active"] else "aus", len(models), len(use))
 
     def t_ende(self):
+        """Laeuft immer (auch nach Fehlern): Ausgangsliste betreten, das Rig von vorher laden
+        (Aenderungen am Test-Rig verwerfen), Test-Rigs loeschen, Liste auffrischen, Ansicht zurueck."""
         v = self.br.ping()
+        start = self.need("start")
+        res = self.need("liste")
+        back = L.enter_setlist(self.br, res["setlists"], start["setlist"], res["setlist_ids"], discard=True)
+        ids = [r["id"] for r in back["rows"]]
+        assert start["rig"] in ids, "Ausgangs-Rig %s nicht mehr in '%s'" % (start["name"], start["setlist"])
+        if L.rig_status(self.br)["id"] != start["rig"]:
+            L.load_rig(self.br, back["rows"], ids.index(start["rig"]), discard=True)
+        left = self._leftovers()
+        for r in left:
+            L.delete_rig(self.br, r["id"])
+        L.refresh_lists(self.br, res["setlists"], start["setlist"], res["setlist_ids"])
+        L.restore_board(self.br, start["board"])
         st = L.rig_status(self.br)
-        assert st["name"] == TEST_RIG and not st["dirty"], "Endzustand: %s dirty=%s" % (st["name"], st["dirty"])
+        assert st["id"] == start["rig"] and not st["dirty"], "Endzustand: %s dirty=%s" % (st["name"], st["dirty"])
+        assert not self._leftovers(), "Test-Rig nicht geloescht"
         assert not L.dialog_buttons(self.br), "Dialog am Display offen"
-        return "%s, %s sauber geladen" % (v, TEST_RIG)
+        now = self.br.get(L.BOARD).get("string")
+        assert now == start["board"].get("string"), "Ansicht %s statt %s" % (now, start["board"].get("string"))
+        return "%s; wieder %s in '%s', Ansicht %s, %d Test-Rig(s) geloescht" % (
+            v, start["name"], start["setlist"], now, len(left))
 
     # ---------------- Ablauf ----------------
     def run(self):
         steps = [("Verbinden", self.t_verbinden), ("Rig-Liste (Datenbank)", self.t_rigliste),
-                 ("Setlist %s" % TEST_SET, self.t_setlist), ("Anderes Rig laden", self.t_anderes_rig),
+                 ("Test-Rig anlegen", self.t_vorbereiten), ("Anderes Rig laden", self.t_anderes_rig),
                  ("Test-Rig laden", self.t_laden), ("Kette lesen", self.t_kette),
                  ("Schalter schreiben + Dirty", self.t_schreiben), ("Zahlenparameter", self.t_zahl),
                  ("Verwerfen (neu laden)", self.t_verwerfen), ("Speichern", self.t_speichern),
                  ("DB: Farbe + Auffrischen", self.t_db_farbe), ("DB: Als neues Rig + Loeschen", self.t_db_kopie),
                  ("Hardware-Zuweisungen", self.t_hardware), ("Scenes + Fussschalter", self.t_scenes),
-                 ("Bloecke verschieben", self.t_verschieben), ("Tuner", self.t_tuner), ("Pegel", self.t_pegel),
+                 ("Bloecke verschieben", self.t_verschieben), ("Tuner", self.t_tuner), ("Looper", self.t_looper),
+                 ("Pegel", self.t_pegel),
                  ("Kompakter Poll", self.t_kompakt), ("All Rigs: Laden per Position", self.t_all_rigs),
                  ("Datenbank-Export", self.t_datenbank),
                  ("EVAL", self.t_eval), ("Umlaute (Bruecke 0.5)", self.t_umlaute),
                  ("DB: Setlists", self.t_setlists), ("DB: Import + Wiederherstellen", self.t_import),
                  ("IR-Auswahl", self.t_ir), ("Dateien (Bruecke)", self.t_dateien), ("NAM-Mod (Bruecke 0.7)", self.t_nam),
                  ("Verbindungsverlust", self.t_verbindung), ("App-Neustart", self.t_neustart),
-                 ("Endzustand", self.t_ende)]
+                 ("Aufraeumen + Endzustand", self.t_ende)]
         t0 = time.time()
         for name, fn in steps:
             if self.br is None and fn != self.t_verbinden:

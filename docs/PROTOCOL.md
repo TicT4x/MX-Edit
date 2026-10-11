@@ -104,6 +104,10 @@ list is (re-)entered. After a write, re-enter the active list (`RedirCtrl/Access
 | `/Engine/Pedal1/…`, `/Engine/Pedal2/…` | expression pedal assignments |
 | `/Engine/FFTCtrl/TunerString`, `TunerCents` | tuner (open with `RedirCtrl/AccessTuner`) |
 | `/Engine/InputMeter/Current`, `/Engine/OutputMeterL/Current` | level meters (dB) |
+| `/Engine/Looper/Record`, `Play`, `Stop`, `Undo`, `Clear`, `DirectionChange`, `HalfSpeed`, `DoubleSpeed`, `HalfLen`, `DoubleLen` | looper buttons (press: state 1, then 0); work in every view |
+| `/Engine/Looper/StartState`, `RecState`, `StateText`, `LengthText`, `RelativPos`, `NumLayers`, `SpeedText`, `MultText`, `Reverse` | looper state (position 0–100 %) |
+| `/Engine/Looper/Mix`, `Feedback`, `/Engine/AudioCtrl/OtherSettings/LooperLoc`, `/Engine/RedirCtrl/AltLooperFS` | loop level, feedback, Pre/Post, footswitch layout Main/Alt |
+| `/Engine/RedirCtrl/SelectLooperMode`, `ExitLooper` | show / leave the looper view |
 
 Things to avoid: never trigger `PresetCtrl/LoadBlockPreset` (it crashes the app unless the
 preset list is open on the display). Never set a scene mode on an empty chain slot. Never call

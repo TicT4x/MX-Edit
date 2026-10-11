@@ -61,6 +61,94 @@ def px(n):
     return int(round(n * S))
 
 
+APP_NAME = "MX-Edit"
+APP_ID = "MXEdit.Editor"          # AppUserModelID: eigene Taskleisten-Gruppe statt python.exe
+ICON_SIZES = (16, 20, 24, 32, 40, 48, 64, 96, 128, 256)   # alle Groessen, die Windows bei 100-200 % braucht
+
+
+def app_icon(size):
+    """Programm-Icon (Drehregler mit Skalenbogen auf dunkler Kachel) in genau dieser Groesse, mit
+    Pillow 4-fach ueberabgetastet gezeichnet. Kleine Groessen bekommen dickere Linien und weniger
+    Rand, damit der Regler auch mit 16 px lesbar bleibt. Quelle fuer Fenster-, Taskleisten-,
+    EXE-Icon (werkzeuge/exe_bauen.py) und das Logo der Titelleiste."""
+    import math
+    Z = size * 4
+    im = Image.new("RGBA", (Z, Z), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    small = size <= 24
+    pad = Z * (0.0 if small else 0.03)
+    d.rounded_rectangle((pad, pad, Z - pad, Z - pad), radius=Z * (0.2 if small else 0.22), fill=PANEL)
+    c = Z / 2
+    ring_w = Z * (0.13 if small else 0.085)
+    r_ring = Z * (0.5 - (0.06 if small else 0.11)) - ring_w / 2
+    box = (c - r_ring, c - r_ring, c + r_ring, c + r_ring)
+    d.arc(box, 135, 405, fill=CARD_HI, width=int(ring_w))      # Skala
+    d.arc(box, 135, 330, fill=ACCENT, width=int(ring_w))       # Stellung
+    for a in (135, 330):                                       # runde Enden des Akzentbogens
+        rm = r_ring - ring_w / 2                               # Mitte des Strichs (arc zeichnet nach innen)
+        x, y = c + rm * math.cos(math.radians(a)), c + rm * math.sin(math.radians(a))
+        d.ellipse((x - ring_w / 2, y - ring_w / 2, x + ring_w / 2, y + ring_w / 2), fill=ACCENT)
+    r_knob = r_ring - ring_w * (1.05 if small else 1.25)
+    d.ellipse((c - r_knob, c - r_knob, c + r_knob, c + r_knob), fill=CARD_HI)
+    lw = Z * (0.1 if small else 0.065)
+    a = math.radians(330)
+    x2, y2 = c + (r_knob - lw * 0.9) * math.cos(a), c + (r_knob - lw * 0.9) * math.sin(a)
+    d.line((c, c, x2, y2), fill=TEXT, width=int(lw))
+    for x, y in ((c, c), (x2, y2)):
+        d.ellipse((x - lw / 2, y - lw / 2, x + lw / 2, y + lw / 2), fill=TEXT)
+    return im.resize((size, size), Image.LANCZOS)
+
+
+def save_app_icon(path):
+    """app_icon in allen ICON_SIZES als .ico schreiben (jede Groesse eigens gezeichnet)."""
+    imgs = [app_icon(s) for s in ICON_SIZES]
+    imgs[-1].save(path, format="ICO", sizes=[(s, s) for s in ICON_SIZES], append_images=imgs[:-1])
+
+
+def app_user_model_id():
+    """Vor dem ersten Fenster aufrufen: eigene App-ID, damit die Taskleiste das Fenster-Icon zeigt
+    und es nicht mit anderen Python-Programmen unter dem Python-Symbol gruppiert."""
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+    except Exception:
+        pass
+
+
+def set_window_icon(top, ico):
+    """Fenster-Icons in der Groesse setzen, die Windows fuer die aktuelle DPI erwartet (Tk selbst
+    gibt nur 16 und 32 px weiter - die Taskleiste rechnet bei 125 % 32 px auf 40 hoch, das wird
+    unscharf). Wird nach jedem neuen Wrapper-Fenster wiederholt (<Map>)."""
+    try:
+        top.iconbitmap(default=ico)          # Tk-Standard, auch fuer weitere Toplevels
+    except tk.TclError:
+        return
+    if sys.platform != "win32":
+        return
+    u32 = ctypes.windll.user32
+    u32.LoadImageW.restype = ctypes.c_void_p
+    u32.LoadImageW.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_uint, ctypes.c_int, ctypes.c_int,
+                               ctypes.c_uint]
+    u32.SendMessageW.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p]
+
+    def apply(e=None):
+        hwnd = _hwnd(top)
+        if not hwnd or getattr(top, "_icon_hwnd", None) == hwnd:
+            return
+        try:
+            dpi = u32.GetDpiForWindow(ctypes.c_void_p(hwnd)) or 96
+            big = u32.GetSystemMetricsForDpi(11, dpi) or 32       # SM_CXICON
+            small = u32.GetSystemMetricsForDpi(49, dpi) or 16     # SM_CXSMICON
+        except Exception:
+            big, small = 32, 16
+        for which, n in ((1, big), (0, small)):                   # ICON_BIG, ICON_SMALL
+            h = u32.LoadImageW(None, ico, 1, n, n, 0x10)          # IMAGE_ICON, LR_LOADFROMFILE
+            if h:
+                u32.SendMessageW(ctypes.c_void_p(hwnd), 0x80, ctypes.c_void_p(which), ctypes.c_void_p(h))   # WM_SETICON
+        top._icon_hwnd = hwnd
+    top.bind("<Map>", apply, add="+")
+    top.after_idle(apply)
+
+
 def dpi_aware():
     """Vor tk.Tk() aufrufen: Fenster in echter Aufloesung statt hochskaliert."""
     try:
@@ -97,6 +185,8 @@ def _evict(cache, limit):
     if len(cache) <= limit:
         return
     for k, im in list(cache.items()):
+        if isinstance(k, tuple) and k[:1] == ("md",):   # Modell-Symbole der Blockauswahl: begrenzt, vorgewaermt (warm_model_icons)
+            continue
         try:
             used = _ROOT is not None and int(_ROOT.tk.call("image", "inuse", str(im)))
         except Exception:
@@ -126,7 +216,28 @@ def _image(key, w, h, draw_fn, alpha=None):
 def rrect_img(w, h, r, fill, outline=None, width=0):
     def d(dr, W, H):
         dr.rounded_rectangle([0, 0, W - 1, H - 1], radius=r * SS, fill=fill, outline=outline, width=width * SS)
-    return _image(("rr", w, h, r, fill, outline, width), w, h, d)
+    w, h = max(1, int(w)), max(1, int(h))
+    key = ("rr", w, h, r, fill, outline, width)
+    k = int(r + width) + 2   # Ecke samt Rahmen
+    if w * h <= 40000 or w <= 2 * k or h <= 2 * k or key in _IMAGES:
+        return _image(key, w, h, d)
+    # Grosse Flaechen (Overlay-Karten): nur eine kleine Vorlage geglaettet zeichnen und zerlegen -
+    # Ecken einkopieren, die geraden Kanten strecken. Sieht gleich aus, statt ~30 ms je Groesse ~1 ms.
+    _evict(_IMAGES, 600)
+    n = 2 * k + 1
+    pic = Image.new("RGBA", (n * SS, n * SS), (0, 0, 0, 0))
+    d(ImageDraw.Draw(pic), n * SS, n * SS)
+    t = pic.resize((n, n), Image.LANCZOS)
+    out = Image.new("RGBA", (w, h), t.getpixel((k, k)))
+    for (x0, y0), (dx, dy) in (((0, 0), (0, 0)), ((k + 1, 0), (w - k, 0)), ((0, k + 1), (0, h - k)),
+                               ((k + 1, k + 1), (w - k, h - k))):
+        out.paste(t.crop((x0, y0, x0 + k, y0 + k)), (dx, dy))
+    out.paste(t.crop((k, 0, k + 1, k)).resize((w - 2 * k, k), Image.NEAREST), (k, 0))
+    out.paste(t.crop((k, k + 1, k + 1, n)).resize((w - 2 * k, k), Image.NEAREST), (k, h - k))
+    out.paste(t.crop((0, k, k, k + 1)).resize((k, h - 2 * k), Image.NEAREST), (0, k))
+    out.paste(t.crop((k + 1, k, n, k + 1)).resize((k, h - 2 * k), Image.NEAREST), (w - k, k))
+    im = _IMAGES[key] = ImageTk.PhotoImage(out)
+    return im
 
 
 def circle_img(dia, fill, outline=None, width=0):
@@ -214,6 +325,35 @@ def icon_img(kind, colour, size=24):
                         cx + 10 * u, cy + 10 * u, cx - 10 * u, cy + 10 * u], outline=colour, width=lw)
             dr.rectangle([cx - 5 * u, cy - 10 * u, cx + 4 * u, cy - 4 * u], outline=colour, width=lw)
             dr.rectangle([cx - 6 * u, cy + 2 * u, cx + 6 * u, cy + 10 * u], fill=colour)
+        elif kind == "undo":    # Pfeil im Bogen zurueck (Aenderungen verwerfen)
+            import math
+            lw = max(1, int(2.2 * u))
+            r, ox, oy = 7.5 * u, cx + 1.5 * u, cy + 1.5 * u
+            dr.arc([ox - r, oy - r, ox + r, oy + r], 200, 120, fill=colour, width=lw)
+            t = math.radians(200)
+            px_, py_ = ox + r * math.cos(t), oy + r * math.sin(t)
+            dx, dy = math.sin(t), -math.cos(t)           # Laufrichtung gegen den Uhrzeigersinn
+            nx, ny = -dy, dx
+            dr.polygon([px_ + dx * 5 * u, py_ + dy * 5 * u, px_ + nx * 4.5 * u - dx * 1 * u, py_ + ny * 4.5 * u - dy * 1 * u,
+                        px_ - nx * 4.5 * u - dx * 1 * u, py_ - ny * 4.5 * u - dy * 1 * u], fill=colour)
+        elif kind == "looper":  # Kreispfeil im Uhrzeigersinn, Aufnahmepunkt in der Mitte
+            import math
+            lw = max(1, int(2.2 * u))
+            r = 9 * u
+            dr.arc([cx - r, cy - r, cx + r, cy + r], -60, 240, fill=colour, width=lw)
+            t = math.radians(240)                         # Bogenende oben links, Spitze zeigt in die Luecke
+            px_, py_ = cx + r * math.cos(t), cy + r * math.sin(t)
+            dx, dy = -math.sin(t), math.cos(t)           # Laufrichtung im Uhrzeigersinn (Bildschirm)
+            nx, ny = -dy, dx
+            dr.polygon([px_ + dx * 5 * u, py_ + dy * 5 * u, px_ + nx * 4.5 * u - dx * 1 * u, py_ + ny * 4.5 * u - dy * 1 * u,
+                        px_ - nx * 4.5 * u - dx * 1 * u, py_ - ny * 4.5 * u - dy * 1 * u], fill=colour)
+            dr.ellipse([cx - 3.5 * u, cy - 3.5 * u, cx + 3.5 * u, cy + 3.5 * u], fill=colour)
+        elif kind == "record":  # gefuellter Kreis
+            dr.ellipse([cx - 8 * u, cy - 8 * u, cx + 8 * u, cy + 8 * u], fill=colour)
+        elif kind == "play":    # Dreieck nach rechts
+            dr.polygon([cx - 6 * u, cy - 9 * u, cx + 9 * u, cy, cx - 6 * u, cy + 9 * u], fill=colour)
+        elif kind == "stop":    # Quadrat
+            dr.rounded_rectangle([cx - 7.5 * u, cy - 7.5 * u, cx + 7.5 * u, cy + 7.5 * u], radius=1.5 * u, fill=colour)
         elif kind == "mix":     # zwei Zweige laufen zusammen (Mischpunkt der parallelen Wege)
             lw = max(1, int(2.2 * u))
             for sgn in (-1, 1):
@@ -473,7 +613,7 @@ class TitleBar(tk.Frame):
     _HT = {"w": 10, "e": 11, "n": 12, "nw": 13, "ne": 14, "s": 15, "sw": 16, "se": 17}
 
     def __init__(self, top, title="", on_close=None, logo=None, logo_w=60, buttons=("winclose", "maximize", "minimize"),
-                 font=FONT_SMALL, fg=MUTED, bg=BG):
+                 font=FONT_SMALL, fg=MUTED, bg=BG, logo_icon=False):
         super().__init__(top, bg=bg, height=px(self.H))
         self.top, self.on_close, self.bg = top, on_close or top.destroy, bg
         self.active = native_frameless(top)
@@ -486,8 +626,15 @@ class TitleBar(tk.Frame):
             lf = tk.Frame(self, bg=BG, width=px(logo_w))
             lf.pack(side="left", fill="y")
             lf.pack_propagate(False)
-            ll = tk.Label(lf, text=logo, bg=BG, fg=ACCENT, font=("Segoe UI", 13, "bold"))
-            ll.pack(expand=True)
+            if logo_icon and Image is not None:   # Programm-Icon vor dem Schriftzug
+                n = int(px(20))
+                self._logo_img = ImageTk.PhotoImage(app_icon(n))
+                ll = tk.Label(lf, text=" " + logo, image=self._logo_img, compound="left", bg=BG, fg=TEXT,
+                              font=("Segoe UI", 11, "bold"))
+                ll.pack(side="left", padx=(px(18), 0))
+            else:
+                ll = tk.Label(lf, text=logo, bg=BG, fg=ACCENT, font=("Segoe UI", 13, "bold"))
+                ll.pack(expand=True)
             drag += [lf, ll]
         self.lbl = tk.Label(self, text=title, bg=bg, fg=fg, font=font, anchor="w")
         self.lbl.pack(side="left", fill="x", expand=True, padx=(px(6) if logo else px(20), 0))
@@ -499,8 +646,12 @@ class TitleBar(tk.Frame):
             c.bind("<Enter>", lambda e, k=kind: self._btn(k, True))
             c.bind("<Leave>", lambda e, k=kind: self._btn(k, False))
             c.bind("<ButtonRelease-1>", lambda e, k=kind: self._click(k, e))
+            c.bind("<Motion>", lambda e, k=kind: self._btn_motion(k, e))
+            c.bind("<Button-1>", lambda e, k=kind: self._btn_press(k, e))
             self.btns[kind] = c
             self._btn(kind, False)
+        self._last = buttons[0] if buttons else None   # ganz rechts (side="right" zuerst gepackt)
+        self._edge_press = None
         for w in drag:
             self.drag_from(w)
         self.grips = {}
@@ -539,6 +690,9 @@ class TitleBar(tk.Frame):
 
     def _click(self, kind, e):
         c = self.btns[kind]
+        if self._edge_press:   # war der Beginn einer Groessenaenderung am Rand
+            self._edge_press = None
+            return
         if not (0 <= e.x < c.winfo_width() and 0 <= e.y < c.winfo_height()):
             return
         if kind == "winclose":
@@ -547,6 +701,27 @@ class TitleBar(tk.Frame):
             self.toggle_max()
         else:
             self.top.iconify()
+
+    def _edge(self, kind, e):
+        """Randzone eines Knopfs fuer die Groessenaenderung (die Griffe liegen nicht ueber den
+        Knoepfen, sonst decken sie die Hover-Farbe ab): 'n', 'e', 'ne' oder None."""
+        if self.zoomed():
+            return None
+        B = px(self.GRIP)
+        c = self.btns[kind]
+        n = e.y < B
+        east = kind == self._last and e.x >= c.winfo_width() - B
+        return ("n" if n else "") + ("e" if east else "") or None
+
+    def _btn_motion(self, kind, e):
+        side = self._edge(kind, e)
+        self.btns[kind].configure(cursor=self._CURSORS[side] if side else "")
+
+    def _btn_press(self, kind, e):
+        side = self._edge(kind, e)
+        self._edge_press = side
+        if side:
+            _nc_drag(self.top, self._HT[side])
 
     def _btn(self, kind, hover):
         c = self.btns.get(kind)
@@ -574,16 +749,21 @@ class TitleBar(tk.Frame):
             for f in g.values():
                 f.place_forget()
             return
-        g["n"].place(x=B, y=0, relwidth=1, width=-2 * B, height=B)
+        bw = px(46) * len(self.btns)   # ueber den Knoepfen uebernehmen diese den Rand (_edge)
+        g["n"].place(x=B, y=0, relwidth=1, width=-B - bw, height=B)
         g["s"].place(x=B, rely=1, y=-B, relwidth=1, width=-2 * B, height=B)
         g["w"].place(x=0, y=B, relheight=1, height=-2 * B, width=B)
-        g["e"].place(relx=1, x=-B, y=B, relheight=1, height=-2 * B, width=B)
+        g["e"].place(relx=1, x=-B, y=px(self.H), relheight=1, height=-px(self.H) - 2 * B, width=B)
         g["nw"].place(x=0, y=0, width=B * 2, height=B * 2)
-        g["ne"].place(relx=1, x=-2 * B, y=0, width=B * 2, height=B * 2)
+        if self.btns:
+            g["ne"].place_forget()
+        else:
+            g["ne"].place(relx=1, x=-2 * B, y=0, width=B * 2, height=B * 2)
         g["sw"].place(x=0, rely=1, y=-2 * B, width=B * 2, height=B * 2)
         g["se"].place(relx=1, x=-2 * B, rely=1, y=-2 * B, width=B * 2, height=B * 2)
         for f in g.values():
-            f.lift()
+            if f.winfo_manager():
+                f.lift()
 
 
 # ---------------- Aufklappfenster (Kontextmenue, Farbwahl) ----------------
@@ -655,9 +835,29 @@ class _Popup(tk.Toplevel):
             y = max(0, (above if above is not None else sh) - h)
         self.geometry("%dx%d+%d+%d" % (w, h, x, y))
         self.c.configure(width=w, height=h)
+        fade = ANIM
+        if fade:   # einblenden (Tk: -alpha zusammen mit -transparentcolor geht unter Windows)
+            try:
+                self.wm_attributes("-alpha", 0.0)
+            except tk.TclError:
+                fade = False
         self.deiconify()
         self.lift()
         self.focus_force()
+        if fade:
+            self._fade_t0 = time.perf_counter()
+            self._fade()
+
+    FADE_MS = 150
+
+    def _fade(self):
+        try:
+            t = (time.perf_counter() - self._fade_t0) * 1000.0 / self.FADE_MS
+            self.wm_attributes("-alpha", min(1.0, ease_in_out(t)))
+            if t < 1:
+                self.after(8, self._fade)
+        except tk.TclError:
+            pass
 
     def _bg(self, w, h):
         rrect(self.c, 0, 0, w, h, px(8), CARD, LINE, 1)
@@ -875,18 +1075,342 @@ class SwatchPopup(_Popup):
         root.after(1, lambda: self.on_pick(name))
 
 
+# ---------------- Animationen (Ueberblenden) ----------------
+# Tk kann Widgets weder durchscheinend zeichnen noch ueberblenden. Darum: ein Bildschirmfoto des
+# alten Zustands liegt als randloses Fenster genau ueber dem Bereich, darunter wird sofort
+# umgebaut, und das Foto wird ausgeblendet. Das Fenster ist ein "layered window", dessen Inhalt mit
+# UpdateLayeredWindow gesetzt wird - es zeigt das Bild ab dem ersten Moment (ohne auf WM_PAINT zu
+# warten), nimmt keinen Fokus und laesst Klicks durch (WS_EX_TRANSPARENT).
+ANIM = True        # Einstellung "animations" (der Editor setzt sie)
+FADE_MS = 240      # Dauer einer Ueberblendung
+_GHOSTS = []       # laufende Ueberblendungen
+
+
+def ease_out(t):
+    return 1 - (1 - max(0.0, min(1.0, t))) ** 3
+
+
+def ease_in_out(t):
+    """Weicher Anfang und weiches Ende (fuer Ueberblendungen: kein harter erster Schritt)."""
+    t = max(0.0, min(1.0, t))
+    return 4 * t * t * t if t < 0.5 else 1 - (-2 * t + 2) ** 3 / 2
+
+
+def _timer_fine(on):
+    """Windows-Zeitgeber auf 1 ms (sonst landet after() auf 15,6-ms-Schritten, die Blende ruckelt)."""
+    try:
+        (ctypes.windll.winmm.timeBeginPeriod if on else ctypes.windll.winmm.timeEndPeriod)(1)
+    except Exception:
+        pass
+
+
+def app_in_front(widget):
+    """Liegt ein Fenster dieses Programms vorne und ist das Fenster sichtbar? Nur dann stimmt ein
+    Bildschirmfoto (ImageGrab nimmt, was oben liegt)."""
+    if sys.platform != "win32":
+        return False
+    try:
+        import os
+        top = widget.winfo_toplevel()
+        if not top.winfo_viewable() or top.state() in ("iconic", "withdrawn"):
+            return False
+        u = ctypes.windll.user32
+        pid = ctypes.c_ulong()
+        u.GetWindowThreadProcessId(u.GetForegroundWindow(), ctypes.byref(pid))
+        return pid.value == os.getpid()
+    except Exception:
+        return False
+
+
+def drop_ghosts():
+    """Laufende Ueberblendungen sofort beenden und warten, bis der Bildschirm sie nicht mehr zeigt
+    (vor einem neuen Bildschirmfoto, sonst steht die halbe alte Blende darin)."""
+    if not _GHOSTS:
+        return
+    for g in _GHOSTS[:]:
+        g.stop()
+    try:
+        ctypes.windll.dwmapi.DwmFlush()
+    except Exception:
+        pass
+
+
+_GDI = None
+
+
+def _gdi():
+    """(user32, gdi32, wintypes, BITMAPINFOHEADER) mit Argumenttypen - unter 64 Bit sind Handles
+    Zeiger, ohne argtypes schneidet ctypes sie auf 32 Bit ab."""
+    global _GDI
+    if _GDI is None:
+        from ctypes import wintypes
+        u, g = ctypes.windll.user32, ctypes.windll.gdi32
+
+        class BITMAPINFOHEADER(ctypes.Structure):
+            _fields_ = [("biSize", wintypes.DWORD), ("biWidth", ctypes.c_long), ("biHeight", ctypes.c_long),
+                        ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD),
+                        ("biCompression", wintypes.DWORD), ("biSizeImage", wintypes.DWORD),
+                        ("biXPelsPerMeter", ctypes.c_long), ("biYPelsPerMeter", ctypes.c_long),
+                        ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD)]
+        u.GetDC.restype = wintypes.HDC
+        u.GetDC.argtypes = [wintypes.HWND]
+        u.ReleaseDC.argtypes = [wintypes.HWND, wintypes.HDC]
+        u.GetAncestor.restype = wintypes.HWND
+        u.GetAncestor.argtypes = [wintypes.HWND, ctypes.c_uint]
+        u.GetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int]
+        u.SetWindowLongW.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_long]
+        u.SetWindowLongPtrW.argtypes = [wintypes.HWND, ctypes.c_int, ctypes.c_void_p]
+        u.SetWindowLongPtrW.restype = ctypes.c_void_p
+        u.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+        u.UpdateLayeredWindow.argtypes = [wintypes.HWND, wintypes.HDC, ctypes.c_void_p, ctypes.c_void_p,
+                                          wintypes.HDC, ctypes.c_void_p, wintypes.DWORD, ctypes.c_void_p,
+                                          wintypes.DWORD]
+        g.CreateCompatibleDC.restype = wintypes.HDC
+        g.CreateCompatibleDC.argtypes = [wintypes.HDC]
+        g.CreateDIBSection.restype = wintypes.HBITMAP
+        g.CreateDIBSection.argtypes = [wintypes.HDC, ctypes.c_void_p, ctypes.c_uint,
+                                       ctypes.POINTER(ctypes.c_void_p), wintypes.HANDLE, wintypes.DWORD]
+        g.SelectObject.restype = wintypes.HGDIOBJ
+        g.SelectObject.argtypes = [wintypes.HDC, wintypes.HGDIOBJ]
+        g.DeleteObject.argtypes = [wintypes.HGDIOBJ]
+        g.DeleteDC.argtypes = [wintypes.HDC]
+        g.BitBlt.argtypes = [wintypes.HDC, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.HDC,
+                             ctypes.c_int, ctypes.c_int, wintypes.DWORD]
+        _GDI = (u, g, wintypes, BITMAPINFOHEADER)
+    return _GDI
+
+
+class _Dib:
+    """32-Bit-Bitmap im Speicher (DIB) samt Speicher-DC: Ziel des Bildschirmfotos und Inhalt des
+    Ueberblend-Fensters. with _Dib(w, h) as d: d.mem (DC), d.bits (Pixel BGRX, Zeilen von oben)."""
+
+    def __init__(self, w, h):
+        u, g, _, BIH = _gdi()
+        self.w, self.h = w, h
+        self.screen = u.GetDC(None)
+        self.mem = g.CreateCompatibleDC(self.screen)
+        self.bits = ctypes.c_void_p()
+        bi = BIH(ctypes.sizeof(BIH), w, -h, 1, 32, 0, 0, 0, 0, 0, 0)
+        self.bmp = g.CreateDIBSection(self.screen, ctypes.byref(bi), 0, ctypes.byref(self.bits), None, 0)
+        self.old = g.SelectObject(self.mem, self.bmp) if self.bmp else None
+        if not self.bmp or not self.bits.value:
+            self.close()
+            raise OSError("CreateDIBSection")
+
+    def blt_from(self, widget, sx=0, sy=0):
+        """Den Inhalt von widget hineinkopieren. Gelesen wird aus dem DC des eigenen Fensters (unter DWM
+        dessen Zwischenflaeche): ~3 ms statt ~75 ms fuer ImageGrab bei 1900x1000, und es kommt immer
+        das eigene Fenster, auch wenn ein anderes darueber liegt."""
+        u, g, _, _ = _gdi()
+        hw = widget.winfo_id()
+        src = u.GetDC(hw)
+        try:
+            g.BitBlt(self.mem, 0, 0, self.w, self.h, src, sx, sy, 0x00CC0020)   # SRCCOPY
+        finally:
+            u.ReleaseDC(hw, src)
+
+    def image(self):
+        buf = (ctypes.c_char * (self.w * self.h * 4)).from_address(self.bits.value)
+        return Image.frombuffer("RGBX", (self.w, self.h), buf, "raw", "BGRX", 0, 1).convert("RGB")
+
+    def close(self):
+        u, g, _, _ = _gdi()
+        if self.old:
+            g.SelectObject(self.mem, self.old)
+            self.old = None
+        if self.bmp:
+            g.DeleteObject(self.bmp)
+            self.bmp = None
+        if self.mem:
+            g.DeleteDC(self.mem)
+            self.mem = None
+        if self.screen:
+            u.ReleaseDC(None, self.screen)
+            self.screen = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
+def grab(widget):
+    """Bild eines Widgets (oder Fensters) als RGB-Bild, oder None."""
+    try:
+        widget.update_idletasks()
+        w, h = widget.winfo_width(), widget.winfo_height()
+        if w < 2 or h < 2 or Image is None:
+            return None
+        drop_ghosts()
+        if sys.platform == "win32":
+            try:
+                with _Dib(w, h) as d:
+                    d.blt_from(widget)
+                    return d.image()
+            except Exception:
+                pass
+        from PIL import ImageGrab
+        x, y = widget.winfo_rootx(), widget.winfo_rooty()
+        return ImageGrab.grab(bbox=(x, y, x + w, y + h), all_screens=True).convert("RGB")
+    except Exception:
+        return None
+
+
+class _Ghost:
+    """Ein Foto von widget als randloses Fenster genau darueber, das in ms ausgeblendet wird (siehe oben)."""
+
+    def __init__(self, widget, ms, rect=None, fade_in=False, dy=0, settle=True, on_done=None):
+        """rect: (x, y, w, h) in widget statt des ganzen Widgets. fade_in: von unsichtbar einblenden
+        (sonst ausblenden); dy: startet so viele Pixel tiefer und gleitet an seinen Platz. on_done:
+        nach dem letzten Bild (das Fenster bleibt dann noch einen Moment stehen, bis darunter gezeichnet ist)."""
+        u, g, wintypes, _ = _gdi()
+        self.ms, self.alive, self.start = ms, False, None
+        self.fade_in, self.dy, self.on_done = fade_in, dy, on_done
+        top = widget.winfo_toplevel()
+        rx, ry, rw, rh = rect or (0, 0, widget.winfo_width(), widget.winfo_height())
+        x, y, w, h = widget.winfo_rootx() + rx, widget.winfo_rooty() + ry, rw, rh
+        self.x, self.y, self.w, self.h = x, y, w, h
+        self.win = tk.Toplevel(top)
+        self.win.withdraw()
+        self.win.overrideredirect(True)
+        self.win.geometry("%dx%d+%d+%d" % (w, h, x, y))
+        self.win.update_idletasks()
+        hwnd = u.GetAncestor(self.win.winfo_id(), 2)
+        # WS_EX_LAYERED | TRANSPARENT (Klicks gehen durch) | NOACTIVATE | TOOLWINDOW (keine Taskleiste)
+        u.SetWindowLongW(hwnd, -20, u.GetWindowLongW(hwnd, -20) | 0x80000 | 0x20 | 0x08000000 | 0x80)
+        u.SetWindowLongPtrW(hwnd, -8, _hwnd(top))   # GWLP_HWNDPARENT: Besitzer = Fenster, bleibt darueber
+
+        class BLEND(ctypes.Structure):
+            _fields_ = [("op", ctypes.c_ubyte), ("flags", ctypes.c_ubyte), ("alpha", ctypes.c_ubyte),
+                        ("fmt", ctypes.c_ubyte)]
+        self.BLEND = BLEND
+        with _Dib(w, h) as d:
+            d.blt_from(widget, rx, ry)
+            ok = u.UpdateLayeredWindow(hwnd, d.screen, ctypes.byref(wintypes.POINT(x, y + dy)),
+                                       ctypes.byref(wintypes.SIZE(w, h)), d.mem, ctypes.byref(wintypes.POINT(0, 0)),
+                                       0, ctypes.byref(BLEND(0, 0, 0 if fade_in else 255, 0)), 2)   # ULW_ALPHA
+        if not ok:
+            self.win.destroy()
+            raise OSError("UpdateLayeredWindow")
+        u.ShowWindow(hwnd, 4)   # SW_SHOWNOACTIVATE
+        self.hwnd, self.alive = hwnd, True
+        _GHOSTS.append(self)
+        _timer_fine(True)
+        self.win.bind("<Destroy>", lambda e: self.stop() if e.widget is self.win else None)
+        self.on_start = None       # Rueckruf, sobald die Blende wirklich laeuft (Overlay: Karte gleitet)
+        self.widget = widget
+        self.POINT = wintypes.POINT
+        # Erst ausblenden, wenn darunter fertig umgebaut ist: nach dem laufenden Ereignis (der Aufrufer
+        # baut gerade um) Geometrie und Zeichnen erledigen, dann noch ein Bild Zeit fuer WM_PAINT der
+        # neuen Fenster - sonst laeuft die Blende, waehrend Tk noch rechnet, und ruckelt.
+        if settle:
+            self.win.after_idle(self._settle)
+        else:
+            self._begin()
+
+    def _settle(self):
+        if not self.alive:
+            return
+        try:
+            self.widget.winfo_toplevel().update_idletasks()
+        except tk.TclError:
+            pass
+        self.win.after(20, lambda: self.win.after_idle(self._begin) if self.alive else None)
+
+    def _begin(self):
+        if not self.alive:
+            return
+        self.start = time.perf_counter()
+        cb, self.on_start = self.on_start, None
+        if cb:
+            try:
+                cb()
+            except Exception:
+                pass
+        self._step()
+
+    def _step(self):
+        if not self.alive:
+            return
+        t = (time.perf_counter() - self.start) * 1000.0 / self.ms
+        if t >= 1:
+            self._finish()
+            return
+        try:
+            e = ease_in_out(t)
+            a = int(255 * (e if self.fade_in else 1 - e))
+            pos = None
+            if self.dy:   # gleiten: schnell los, weich ankommen
+                pos = ctypes.byref(self.POINT(self.x, self.y + int(round(self.dy * (1 - ease_out(t)) ** 1.4))))
+            ctypes.windll.user32.UpdateLayeredWindow(self.hwnd, None, pos, None, None, None, 0,
+                                                     ctypes.byref(self.BLEND(0, 0, a, 0)), 2)
+            self.win.after(8, self._step)
+        except tk.TclError:
+            self.stop()
+
+    def _finish(self):
+        cb, self.on_done = self.on_done, None
+        if not cb:
+            self.stop()
+            return
+        try:   # Endlage voll deckend, dann darunter das Echte zeigen und erst danach verschwinden
+            ctypes.windll.user32.UpdateLayeredWindow(self.hwnd, None, ctypes.byref(self.POINT(self.x, self.y)),
+                                                     None, None, None, 0, ctypes.byref(self.BLEND(0, 0, 255, 0)), 2)
+            cb()
+            self.win.after_idle(lambda: self.win.after(30, self.stop))
+        except Exception:
+            self.stop()
+
+    def stop(self):
+        if not self.alive:
+            return
+        self.alive = False
+        for name in ("on_start", "on_done"):   # abgebrochen: wer darauf wartet, bekommt es trotzdem
+            cb = getattr(self, name, None)
+            setattr(self, name, None)
+            if cb:
+                try:
+                    cb()
+                except Exception:
+                    pass
+        if self in _GHOSTS:
+            _GHOSTS.remove(self)
+        _timer_fine(False)
+        try:
+            self.win.destroy()
+        except tk.TclError:
+            pass
+
+
+def ghost_fade(widget, ms=None):
+    """Den jetzigen Anblick von widget (Fenster oder Bereich) ueber ihm stehen lassen und in ms
+    ausblenden - der Aufrufer baut darunter gleich um (Seitenwechsel, Dialog zu, Laden fertig).
+    Gibt die Blende zurueck oder None (Animationen aus, Fenster nicht vorne, kein Windows)."""
+    if not ANIM or not app_in_front(widget):
+        return None
+    try:
+        widget.update_idletasks()
+        if widget.winfo_width() < 2 or widget.winfo_height() < 2:
+            return None
+        drop_ghosts()
+        return _Ghost(widget, ms or FADE_MS)
+    except Exception:
+        return None
+
+
 # ---------------- Overlay (Dialog im Fenster, Hintergrund unscharf) ----------------
 _ROOT = None     # Hauptfenster (setup), Ziel der Meldungen ohne parent
 
 
-def _backdrop(top):
+def _backdrop(top, im=None):
     """Bildschirmfoto des Fensterinhalts, verkleinert, weichgezeichnet und abgedunkelt (oder None)."""
-    try:
-        from PIL import ImageGrab, ImageFilter
-        x, y, w, h = top.winfo_rootx(), top.winfo_rooty(), top.winfo_width(), top.winfo_height()
-        im = ImageGrab.grab(bbox=(x, y, x + w, y + h), all_screens=True).convert("RGB")
-    except Exception:
+    if im is None:
+        im = grab(top)
+    if im is None:
         return None
+    from PIL import ImageFilter
+    w, h = im.size
     small = im.resize((max(1, w // 3), max(1, h // 3)), Image.BOX).filter(ImageFilter.GaussianBlur(2.2))
     return Image.blend(small, Image.new("RGB", small.size, BG), 0.45)
 
@@ -896,12 +1420,20 @@ class Overlay(tk.Canvas):
     dunkler gezeigt, in der Mitte eine abgerundete Karte mit Titel, x und Inhalt in .body.
     modal: run() wartet auf close(result) und sperrt den Rest. click_out: Klick neben die Karte schliesst."""
 
+    RISE = 16       # Karte gleitet beim Oeffnen um so viele Pixel nach oben ein
+    RISE_MS = 300
+    FADE_IN_MS = 260
+
     def __init__(self, parent, title=None, width=None, height=None, click_out=False, blur=True, closable=True):
         top = (parent or _ROOT).winfo_toplevel()
         top.update_idletasks()
-        self._small = _backdrop(top) if blur and Image is not None else None
+        anim = ANIM and app_in_front(top)
+        shot = grab(top) if (blur or anim) and Image is not None else None
+        self._small = _backdrop(top, shot) if blur and shot is not None else None
         super().__init__(top, bg=blend(BG, "#000000", 0.6), highlightthickness=0, bd=0, cursor="")
         self.result = None
+        self._rise = px(self.RISE) if anim and shot is not None else 0
+        self._closing = False
         self.fixed_w = px(width) if width else None
         self.fixed_h = px(height) if height else None
         self.pad, self.r = px(22), px(14)
@@ -922,7 +1454,15 @@ class Overlay(tk.Canvas):
                 x.bind("<Button-1>", lambda e: self.cancel())
         self.body = tk.Frame(self.card, bg=PANEL)
         self.body.pack(fill="both", expand=True)
-        self._win = self.create_window(0, 0, window=self.card, anchor="nw")
+        self._win = self.create_window(0, 0, window=self.card, anchor="nw", tags="card")
+        # Oeffnen: der alte Anblick steht als Foto darueber und blendet aus, die Karte gleitet ein
+        if self._rise:
+            g = ghost_fade(top, ms=self.FADE_IN_MS)
+            self._rise_t0 = None
+            if g is None:
+                self._rise = 0
+            else:
+                g.on_start = self._card_in
         self.place(x=0, y=0, relwidth=1, relheight=1)
         self.raise_()
         self.bind("<Configure>", lambda e: self._layout())
@@ -952,6 +1492,7 @@ class Overlay(tk.Canvas):
         bw, bh = cw + 2 * self.pad, ch + 2 * self.pad
         x, y = max(px(16), (W - bw) // 2), max(px(16), (H - bh) // 2)
         self.box = (x, y, x + bw, y + bh)
+        y += self._rise
         self.delete("bg")
         if self._small is not None:
             if self._size != (W, H):
@@ -959,13 +1500,50 @@ class Overlay(tk.Canvas):
                 self._size = (W, H)
             self.create_image(0, 0, anchor="nw", image=self._photo, tags="bg")
         sp = px(18)
-        self.create_image(x - sp, y - sp, anchor="nw", image=shadow_img(bw, bh, self.r, sp), tags="bg")
-        rrect(self, x, y, bw, bh, self.r, PANEL, LINE, 1, tags="bg")
+        self.create_image(x - sp, y - sp, anchor="nw", image=shadow_img(bw, bh, self.r, sp), tags=("bg", "card"))
+        rrect(self, x, y, bw, bh, self.r, PANEL, LINE, 1, tags=("bg", "card"))
         self.coords(self._win, x + self.pad, y + self.pad)
         if self.fixed_w:
             self.itemconfigure(self._win, width=cw)
         if self.fixed_h:
             self.itemconfigure(self._win, height=ch)
+
+    def _card_in(self):
+        """Einblenden der Karte: nicht die Karte selbst verschieben (jede Verschiebung zeichnet alle
+        Widgets darin neu, ~25 ms je Bild), sondern ein Bild von ihr (samt Schatten) als eigenes
+        Fenster gleiten und einblenden lassen; die echte Karte ist so lange versteckt."""
+        try:
+            if self._rise:
+                self.move("card", 0, -self._rise)
+                self._rise = 0
+            self.update_idletasks()
+            x1, y1, x2, y2 = self.box
+            sp = px(18)
+            W, H = self.winfo_width(), self.winfo_height()
+            rect = (max(0, x1 - sp), max(0, y1 - sp // 2), min(W, x2 + sp) - max(0, x1 - sp),
+                    min(H, y2 + sp) - max(0, y1 - sp // 2))
+            g = _Ghost(self, self.FADE_IN_MS + 40, rect=rect, fade_in=True, dy=px(self.RISE), settle=False,
+                       on_done=lambda: self.itemconfigure("card", state="normal"))
+        except Exception:
+            self.itemconfigure("card", state="normal")
+            return
+        self.itemconfigure("card", state="hidden")
+
+    def _rise_step(self):
+        """Karte gleitet nach oben an ihren Platz (verschiebt nur die Karten-Elemente)."""
+        try:
+            now = time.perf_counter()
+            if self._rise_t0 is None:
+                self._rise_t0 = now
+            t = (now - self._rise_t0) * 1000.0 / self.RISE_MS
+            new = 0 if t >= 1 else int(round(px(self.RISE) * (1 - ease_out(t)) ** 1.6))
+            if new != self._rise:
+                self.move("card", 0, new - self._rise)
+                self._rise = new
+            if new:
+                self.after(8, self._rise_step)
+        except tk.TclError:
+            pass
 
     def bind_keys(self, widget=None):
         """Escape (und Enter, falls on_return gesetzt) auch in Eingabefeldern und Listen der Karte."""
@@ -985,6 +1563,9 @@ class Overlay(tk.Canvas):
     def close(self, result=None):
         self.result = result
         try:
+            if not self._closing and self.winfo_ismapped():
+                self._closing = True
+                ghost_fade(self.winfo_toplevel())   # Schliessen: blendet zum Fenster darunter aus
             self.destroy()
         except tk.TclError:
             pass
@@ -1005,6 +1586,124 @@ class Overlay(tk.Canvas):
             except tk.TclError:
                 pass
         return self.result
+
+
+class Page(tk.Frame):
+    """Eigene Ansicht an Stelle von Rig-Liste, Signalkette und Parameterfeld (wie der Setlist-Manager):
+    eine Flaeche mit Titel, Inhalt in .body. Dieselbe Schnittstelle wie Overlay (body, card, close,
+    cancel, bind_keys, raise_), damit Dialog-Code als Overlay und als Seite laeuft. Der Editor packt
+    die Seite (Editor.enter_page) und stellt beim Schliessen die Hauptansicht wieder her."""
+
+    def __init__(self, parent, title=None):
+        super().__init__(parent, bg=BG)
+        self.result = None
+        p = Panel(self)
+        p.pack(fill="both", expand=True)
+        self.card = tk.Frame(p.inner, bg=PANEL)
+        self.card.pack(fill="both", expand=True, padx=px(8), pady=(px(14), px(12)))
+        self.head = tk.Frame(self.card, bg=PANEL)
+        self.head.pack(fill="x", pady=(0, px(10)))
+        self.lbl_title = tk.Label(self.head, text=title or "", bg=PANEL, fg=TEXT, font=FONT_HEAD, anchor="w")
+        self.lbl_title.pack(side="left")
+        self.body = tk.Frame(self.card, bg=PANEL)
+        self.body.pack(fill="both", expand=True)
+
+    def raise_(self):
+        pass   # liegt schon im Fenster
+
+    def bind_keys(self, widget=None):
+        pass   # Escape schliesst eine Seite nicht (wie im Setlist-Manager)
+
+    def cancel(self):
+        self.close(None)
+
+    def close(self, result=None):
+        self.result = result
+        try:
+            self.destroy()
+        except tk.TclError:
+            pass
+
+
+class Loading(tk.Canvas):
+    """Ladehinweis ueber einem Bereich (Seite, Dialog), solange dessen Daten vom Geraet kommen: so
+    geht die Seite sofort auf, statt erst nach dem Lesen. Deckt den Bereich ab und zeigt in der Mitte
+    Ladekreis + Text - erst nach DELAY ms, damit eine schnelle Antwort nicht aufblitzt. done() blendet
+    zum Inhalt ueber, fail(text) zeigt an seiner Stelle den Fehler."""
+
+    FRAMES, TICK, DELAY = 24, 33, 120
+
+    def __init__(self, parent, text, bg=PANEL):
+        super().__init__(parent, bg=bg, highlightthickness=0, bd=0, cursor="watch")
+        self.text, self.bgc, self.err = text, bg, None
+        self.frame, self.shown = 0, False
+        self.place(x=0, y=0, relwidth=1, relheight=1)
+        self.tk.call("raise", self._w)
+        self.bind("<Configure>", lambda e: self._draw())
+        self._after = self.after(self.DELAY, self._tick)
+
+    def alive(self):
+        try:
+            return bool(self.winfo_exists())
+        except tk.TclError:
+            return False
+
+    def set_text(self, text):
+        self.text = text
+        self._draw()
+
+    def _tick(self):
+        self._after = None
+        if not self.alive() or self.err:
+            return
+        self.shown = True
+        self.frame += 1
+        self._draw()
+        self._after = self.after(self.TICK, self._tick)
+
+    def _draw(self):
+        self.delete("all")
+        if not (self.shown or self.err):
+            return
+        W, H = self.winfo_width(), self.winfo_height()
+        n = px(36)
+        cx, cy = W / 2, max(n, H * 0.42)
+        if self.err:
+            circle(self, cx, cy, n, blend(DANGER, self.bgc, 0.22))
+            self.create_text(cx, cy, text="!", fill=DANGER, font=("Segoe UI", 14, "bold"))
+            self.create_text(cx, cy + n / 2 + px(14), text=self.err, fill=MUTED, font=FONT, anchor="n",
+                             justify="center", width=max(px(120), min(W - px(40), px(560))))
+            return
+        self.create_image(cx - n / 2, cy - n / 2, anchor="nw",
+                          image=spinner_img(n, ACCENT, self.frame % self.FRAMES, self.FRAMES))
+        self.create_text(cx, cy + n / 2 + px(14), text=self.text, fill=MUTED, font=FONT, anchor="n",
+                         justify="center", width=max(px(120), W - px(40)))
+
+    def _stop(self):
+        if self._after:
+            try:
+                self.after_cancel(self._after)
+            except tk.TclError:
+                pass
+            self._after = None
+
+    def fail(self, text):
+        """Statt des Ladekreises einen Fehler zeigen (der Bereich bleibt abgedeckt)."""
+        if not self.alive():
+            return
+        self._stop()
+        self.err = text
+        self.configure(cursor="")
+        self._draw()
+
+    def done(self):
+        """Daten sind da: zum Inhalt darunter ueberblenden und verschwinden."""
+        if not self.alive():
+            return
+        self._stop()
+        if self.shown:
+            ghost_fade(self)
+        self.destroy()
 
 
 WARN = "#f2b33d"
@@ -1049,7 +1748,7 @@ class _MessageBox:
 
     @staticmethod
     def _title(title):
-        return None if not title or title.startswith("MX5 Editor") else title
+        return None if not title or title.startswith((APP_NAME, "MX5 Editor")) else title
 
     def showinfo(self, title=None, message="", parent=None, **_):
         ask(parent, message, [("OK", True, "primary")], self._title(title), "info", cancel=True)
@@ -1070,6 +1769,165 @@ class _MessageBox:
 
 
 messagebox = _MessageBox()
+
+
+def spinner_img(dia, colour, frame, frames=24):
+    """Ein Bild des drehenden Ladekreises (frame 0..frames-1): schwache Spur + Bogen."""
+    def d(dr, W, H):
+        w = max(2, int(W * 0.09))
+        box = [w / 2, w / 2, W - 1 - w / 2, H - 1 - w / 2]
+        dr.ellipse(box, outline=blend(colour, PANEL, 0.18), width=w)
+        a = frame * 360.0 / frames - 90
+        dr.arc(box, a, a + 100, fill=colour, width=w)
+    return _image(("spin", dia, colour, frame), dia, dia, d)
+
+
+class ProgressOverlay(Overlay):
+    """Ladebildschirm fuer laengere Geraeteaktionen (Hochladen, App-Neustart) als Ebene ueber dem
+    Fenster: Ladekreis, Titel, aktueller Schritt, Fortschrittsbalken (step: Anteil 0..1, None =
+    unbestimmt, ein laufender Streifen) und eine Zeile darunter. Solange es laeuft, gibt es weder x
+    noch Escape - die Ebene sperrt den Rest des Fensters. finish() zeigt Erfolg oder Fehler mit OK
+    (auto_close: bei Erfolg nach so vielen ms von selbst zu). reporter(inbox) liefert die
+    Fortschrittsfunktion fuer den Arbeits-Thread."""
+
+    FRAMES, TICK = 24, 33
+
+    def __init__(self, parent, title, text="", detail=None, width=460):
+        super().__init__(parent, None, width=width, closable=False)
+        self.running = True
+        self.shown = 0.0       # angezeigter Anteil, gleitet zum Ziel
+        self.target = None     # None = unbestimmt
+        self.frame = 0
+        self.on_close = None
+        self.colour = ACCENT
+        self._after = None
+        b = self.body
+        row = tk.Frame(b, bg=PANEL)
+        row.pack(fill="x")
+        n = px(40)
+        self.ic = tk.Canvas(row, width=n, height=n, bg=PANEL, highlightthickness=0)
+        self.ic.pack(side="left", anchor="n", padx=(0, px(16)))
+        tf = tk.Frame(row, bg=PANEL)
+        tf.pack(side="left", fill="x", expand=True)
+        wrap = px(width) - px(100)
+        self.lbl_head = tk.Label(tf, text=title, bg=PANEL, fg=TEXT, font=FONT_BOLD, anchor="w", justify="left",
+                                 wraplength=wrap)
+        self.lbl_head.pack(fill="x")
+        self.lbl_text = tk.Label(tf, text=text, bg=PANEL, fg=MUTED, anchor="w", justify="left", wraplength=wrap)
+        self.lbl_text.pack(fill="x", pady=(px(4), 0))
+        self.bar = tk.Canvas(b, height=px(6), width=px(40), bg=PANEL, highlightthickness=0)
+        self.bar.pack(fill="x", pady=(px(18), 0))
+        self.lbl_detail = tk.Label(b, text=detail or "", bg=PANEL, fg=DIM, font=FONT_SMALL, anchor="w",
+                                   justify="left", wraplength=px(width) - px(48))
+        self.lbl_detail.pack(fill="x", pady=(px(8), 0))
+        self.bf = tk.Frame(b, bg=PANEL)
+        self.bind("<Return>", lambda e: self.cancel())
+        self._tick()
+
+    def reporter(self, inbox):
+        """say(text, anteil=None) fuer den Arbeits-Thread - landet ueber inbox auf dem GUI-Thread."""
+        return lambda text, frac=None: inbox.put(lambda: self.step(text, frac))
+
+    def alive(self):
+        try:
+            return bool(self.winfo_exists())
+        except tk.TclError:
+            return False
+
+    def step(self, text=None, frac=None, detail=None):
+        if not self.running or not self.alive():
+            return
+        if text is not None:
+            self.lbl_text.configure(text=text)
+        if detail is not None:
+            self.lbl_detail.configure(text=detail)
+        if frac is None:
+            self.target = None
+        else:
+            frac = max(0.0, min(1.0, float(frac)))
+            if self.target is None:
+                self.shown = min(self.shown, frac)
+            self.target = max(frac, self.target or 0.0)   # der Balken laeuft nie zurueck
+
+    def finish(self, ok, head, text="", detail=None, auto_close=None, warn=False):
+        """Ergebnis zeigen: ok (gruener Haken; warn = gelbes Ausrufezeichen) oder Fehler (rot)."""
+        if not self.alive():
+            return
+        self.running = False
+        if ok:
+            self.target = 1.0
+        self.lbl_head.configure(text=head)
+        self.lbl_text.configure(text=text)
+        self.lbl_detail.configure(text=detail or "")
+        if not detail:
+            self.lbl_detail.pack_forget()
+        col = self.colour = DANGER if not ok else (WARN if warn else ACCENT)
+        n = px(40)
+        self.ic.delete("all")
+        circle(self.ic, n / 2, n / 2, n, blend(col, PANEL, 0.22))
+        self.ic.create_text(n / 2, n / 2, text="✓" if ok and not warn else "!", fill=col,
+                            font=("Segoe UI", 15, "bold"))
+        self._draw_bar(colour=col)
+        if ok and auto_close and not warn:
+            self.after(auto_close, self.cancel)
+            return
+        self.bf.pack(fill="x", pady=(px(18), 0))
+        Btn(self.bf, "OK", command=self.cancel, kind="primary", padx=18, pady=6).pack(side="right")
+        self.focus_set()
+
+    def _draw_bar(self, colour=ACCENT):
+        c = self.bar
+        c.delete("all")
+        W, H = c.winfo_width(), int(c.cget("height"))
+        if W < 4:
+            return
+        rrect(c, 0, 0, W, H, H // 2, CARD)
+        if self.target is None and self.running:   # unbestimmt: Streifen laeuft durch
+            sw = max(H, W // 4)
+            x = (self.frame * px(6)) % (W + sw) - sw
+            x1, x2 = max(0, x), min(W, x + sw)
+            if x2 - x1 >= H:
+                rrect(c, x1, 0, x2 - x1, H, H // 2, colour)
+            return
+        w = int(W * self.shown)
+        if w >= H:
+            rrect(c, 0, 0, w, H, H // 2, colour)
+
+    def _tick(self):
+        self._after = None
+        if not self.alive():
+            return
+        self.frame += 1
+        if self.target is not None:
+            self.shown += (self.target - self.shown) * 0.2
+            if abs(self.target - self.shown) < 0.002:
+                self.shown = self.target
+        if self.running:
+            n = px(40)
+            self.ic.delete("all")
+            self.ic.create_image(0, 0, anchor="nw", image=spinner_img(n, ACCENT, self.frame % self.FRAMES, self.FRAMES))
+            self._draw_bar()
+        elif self.target is not None and self.shown < self.target:
+            self._draw_bar(colour=self.colour)
+        else:
+            return   # fertig und Balken steht: nicht weiter zeichnen
+        self._after = self.after(self.TICK, self._tick)
+
+    def cancel(self):
+        if not self.running:
+            self.close()
+
+    def close(self, result=None):
+        if self._after:
+            try:
+                self.after_cancel(self._after)
+            except tk.TclError:
+                pass
+            self._after = None
+        cb, self.on_close = self.on_close, None
+        super().close(result)
+        if cb:
+            cb()
 
 
 def wrap_words(text, width, max_lines=3):
@@ -1133,9 +1991,11 @@ class Panel(tk.Canvas):
 
 class Btn(tk.Canvas):
     """Abgerundeter Knopf. kind: default (dunkle Karte), primary (Akzent), ghost (nur Text), danger.
-    icon = Name eines icon_img-Symbols statt Text (Knopf so hoch wie mit Text, quadratisch)."""
+    icon = Name eines icon_img-Symbols: ohne Text quadratisch (so hoch wie mit Text), mit Text
+    steht das Symbol links vor dem Text."""
     KINDS = {"default": (CARD, TEXT, CARD_HI, TEXT), "primary": (ACCENT, ACCENT_TXT, ACCENT_HI, ACCENT_TXT),
-             "ghost": (None, MUTED, None, TEXT), "danger": (CARD, TEXT, DANGER, TEXT)}
+             "ghost": (None, MUTED, None, TEXT), "danger": (CARD, TEXT, DANGER, TEXT),
+             "rec": (DANGER, "#ffffff", "#e8605a", "#ffffff")}
 
     def __init__(self, parent, text, command=None, kind="default", padx=12, pady=5, font=FONT, width=None,
                  state="normal", r=6, anchor="center", icon=None):
@@ -1161,7 +2021,9 @@ class Btn(tk.Canvas):
     def _size(self):
         tw, th = text_size(self.text or "M", self.font)
         self.h = th + 2 * self.pady
-        self.w = max(self.min_w, self.h if self.icon else tw + 2 * self.padx)
+        if self.icon and self.text:
+            tw += int(self.h * 0.62) + px(5)
+        self.w = max(self.min_w, self.h if self.icon and not self.text else tw + 2 * self.padx)
         super().configure(width=self.w, height=self.h)
         self.redraw()
 
@@ -1203,7 +2065,12 @@ class Btn(tk.Canvas):
             bg, fg = self.hover_bg or self.base_bg, self.hover_fg
         if bg:
             rrect(self, 0, 0, self.w, self.h, self.r, bg)
-        if self.icon:
+        if self.icon and self.text:
+            n = int(self.h * 0.62)
+            x = (self.w - text_size(self.text, self.font)[0] - n - px(5)) / 2   # Symbol + Text mittig
+            self.create_image(x, self.h / 2 - n / 2, anchor="nw", image=icon_img(self.icon, fg, n))
+            self.create_text(x + n + px(5), self.h / 2, text=self.text, fill=fg, font=self.font, anchor="w")
+        elif self.icon:
             n = int(self.h * 0.62)
             self.create_image(self.w / 2 - n / 2, self.h / 2 - n / 2, anchor="nw", image=icon_img(self.icon, fg, n))
         elif self.anchor == "w":
@@ -1554,7 +2421,7 @@ class Dropdown(tk.Canvas):
         rrect(self, 0, 0, w, h, self.r, CARD, ACCENT if self.hover and self.enabled else LINE, 1)
         fg = TEXT if self.enabled else DIM
         t = self.text
-        while t and text_size(t, self.font)[0] > w - px(30):
+        while len(t) > 1 and text_size(t, self.font)[0] > w - px(30):   # "…" allein passt evtl. nie (Breite noch 2)
             t = t[:-2] + "…"
         self.create_text(px(9), h / 2, text=t, fill=fg, font=self.font, anchor="w")
         self.create_text(w - px(10), h / 2, text="▾", fill=MUTED if self.enabled else DIM, font=self.font, anchor="e")
@@ -2359,7 +3226,7 @@ class ChainCanvas(tk.Canvas):
         self.create_image(x + self.p(2), y + self.p(19), anchor="nw", image=model_img(icon, sub, iw, ih, dim, fit=True))
         if preset:
             t = preset.upper()
-            while t and text_size(t, self.f_tiny)[0] > cw - self.p(6):
+            while len(t) > 1 and text_size(t, self.f_tiny)[0] > cw - self.p(6):
                 t = t[:-2] + "…"
             self.create_text(x + cw / 2, y + ch - self.p(3), text=t, fill=ACCENT, font=self.f_tiny, anchor="s")
         else:
@@ -2687,8 +3554,7 @@ class ChoiceDialog(OverlayDialog):
     def ok(self):
         sel = self.listbox.curselection()
         if sel:
-            self.result = self.shown[sel[0]]
-            self.destroy()
+            self.close(self.shown[sel[0]])
 
 
 class TextDialog(OverlayDialog):
@@ -2707,14 +3573,13 @@ class TextDialog(OverlayDialog):
         bf = tk.Frame(self.body, bg=PANEL)
         bf.pack(fill="x", pady=(px(18), 0))
         Btn(bf, ok, command=self.ok, kind="primary").pack(side="right")
-        Btn(bf, "Cancel", command=self.destroy, kind="ghost").pack(side="right", padx=px(8))
+        Btn(bf, "Cancel", command=self.cancel, kind="ghost").pack(side="right", padx=px(8))
         e.focus_entry()
         e.select_all()
         self.run()
 
     def ok(self):
-        self.result = self.var.get()
-        self.destroy()
+        self.close(self.var.get())
 
 
 # Kategorien der Modell-Auswahl (wie im Web-Editor); Blocknamen ohne die Endung " 2"
@@ -2780,12 +3645,37 @@ def class_label(name):
     return cat
 
 
+def warm_model_icons(widget, names=None, models=None, nam=True):
+    """Karten-Symbole der Blockauswahl im Leerlauf vorzeichnen (je Happen ein paar, die Oberflaeche
+    bleibt bedienbar), damit sie beim ersten Oeffnen schon im Cache liegen. names: Blocktypen
+    (Standard: alle aus CATEGORIES), models: {Block: [Modelle]} fuer Amp/Cab."""
+    todo = [("NAM", None)] if nam else []
+    for b in sorted(set(base_name(n) for n in (names or [n for _, ns in CATEGORIES for n in ns]))):
+        todo += [(b, m) for m in (models or {}).get(b) or [None]]
+    iw, ih = ModelSelector.ICON
+
+    def step():
+        try:
+            if not widget.winfo_exists():
+                return
+        except tk.TclError:
+            return
+        t0 = time.perf_counter()
+        while todo and time.perf_counter() - t0 < 0.012:
+            b, m = todo.pop(0)
+            model_img(b, m, px(iw), px(ih))
+        if todo:
+            widget.after(15, step)
+    widget.after(200, step)
+
+
 class ModelSelector(OverlayDialog):
     """Modell-Auswahl wie im Web-Editor: Kategorien links, Karten in der Mitte, Presets des
     gewaehlten Blocktyps rechts. names: Blocktypen des Geraets; models: {Block: [Modellnamen]}
     fuer Amp/Cab. nam: {Basisname: Anzeigename} der Bloecke, die die NAM-Mod spielt - sie erscheinen
     unter diesem Namen mit NAM-Symbol in der Kategorie Amp. Ergebnis: (Basisname, Modell oder None,
     Preset-Dict oder None)."""
+    ICON = (90, 63)   # Kartensymbol (logische px), auch fuer warm_model_icons
 
     def __init__(self, parent, title, names, current=None, models=None, current_model=None, presets=None, nam=None):
         super().__init__(parent, title, 1140, 620)
@@ -2819,6 +3709,7 @@ class ModelSelector(OverlayDialog):
             if it[1] == cur_base and (it[2] is None or it[2] == current_model):
                 self.pick = it
         self.cat_labels = {}
+        self.shown, self.boxes = [], []
         self.body.configure(padx=px(12))
         left = tk.Frame(self.body, bg=PANEL, width=px(200))
         left.pack(side="left", fill="y", padx=(px(8), px(12)), pady=(px(4), px(12)))
@@ -2887,6 +3778,8 @@ class ModelSelector(OverlayDialog):
 
     def fill(self):
         g = self.grid
+        if g.winfo_width() < 2:   # noch nicht ausgelegt - <Configure> zeichnet gleich mit der echten Breite
+            return
         g.delete("all")
         self.shown = self.shown_items()
         cw, ch, pad = self.CARD_W, self.CARD_H, self.PAD
@@ -2899,7 +3792,7 @@ class ModelSelector(OverlayDialog):
             self.boxes.append((it, x, y))
             sel = it == self.pick
             rrect(g, x, y, cw, ch, px(7), CARD, ACCENT if sel else None, 2 if sel else 0)
-            iw, ih = px(90), px(63)
+            iw, ih = px(self.ICON[0]), px(self.ICON[1])
             g.create_image(x + cw / 2 - iw / 2, y + px(8), anchor="nw", image=model_img("NAM" if base in self.nam else base, model, iw, ih))
             lines = wrap_words(name, 16, 2)
             ty = y + ch - px(30) - (len(lines) - 1) * px(7)
@@ -2956,5 +3849,4 @@ class ModelSelector(OverlayDialog):
 
     def ok(self):
         if self.pick:
-            self.result = (self.pick[1], self.pick[2], self.preset)
-            self.destroy()
+            self.close((self.pick[1], self.pick[2], self.preset))

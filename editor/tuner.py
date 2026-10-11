@@ -120,7 +120,7 @@ class TunerDialog(U.Overlay):
         if note:
             good = abs(cents) < L.TUNER_OK
             self.lbl_note.configure(text=note, fg=ACCENT if good else TEXT)
-            self.lbl_cents.configure(text="%+.1f cents  ·  %s" % (cents, "gestimmt" if good else
+            self.lbl_cents.configure(text="%+.1f cents  ·  %s" % (cents, "in tune" if good else
                                                                     ("too low ♭" if cents < 0 else "too high ♯")),
                                      fg=ACCENT if good else AMBER)
             self.shown += (cents - self.shown) * 0.6
@@ -204,4 +204,4 @@ class TunerDialog(U.Overlay):
         self.closed = True
         if not quiet:
             self.ed.tuner_dialog_done(self, device_exited)
-        self.destroy()
+        U.Overlay.close(self)

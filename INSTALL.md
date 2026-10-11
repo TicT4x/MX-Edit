@@ -17,7 +17,7 @@ drive to your computer. (After the bridge is installed, the editor can do this f
 ## 2. Build and install the bridge firmware
 
 You only need two files from the [latest release](../../releases/latest):
-**`MX5Bridge_0.7_Patcher.exe`** (firmware) and **`MX5Editor_0.9.exe`** (editor). Nothing has to
+**`MX5Bridge_0.7_Patcher.exe`** (firmware) and **`MX-Edit_0.9.exe`** (editor). Nothing has to
 be installed, and Python is not needed. Both programs are not code-signed, so Windows SmartScreen
 may warn about an unknown publisher. Click *More info › Run anyway*.
 
@@ -101,7 +101,7 @@ mod**, and install the result.
 
 ## 3. Start the editor
 
-1. Put **`MX5Editor_0.9.exe`** anywhere, for example on the desktop, and double-click it.
+1. Put **`MX-Edit_0.9.exe`** anywhere, for example on the desktop, and double-click it.
 2. If SmartScreen warns, click *More info › Run anyway* (see above).
 3. Switch the MX5 on and connect it via USB. About 10 seconds after the device has started, the
    MIDI port **"HeadRush MX5"** appears. The editor connects by itself and reads the current rig.
@@ -132,7 +132,7 @@ run on your system. Install [Python 3](https://www.python.org/downloads/) (3.9 o
 
 #### Editor from source
 
-Download `MX5Editor_0.9.zip`, unzip it and install the packages once:
+Download `MX-Edit_0.9.zip`, unzip it and install the packages once:
 
 ```bat
 pip install mido python-rtmidi pillow
@@ -146,7 +146,7 @@ run `pip install pyinstaller` and `python werkzeuge\exe_bauen.py`.
 This uses the source zip and the packages from the previous section.
 
 ```bat
-cd MX5Editor_0.9\werkzeuge
+cd MX-Edit_0.9\werkzeuge
 python mx5bridge_test.py --shell
 ```
 

@@ -270,12 +270,14 @@ class Bridge:
             raise BridgeError("Datei unvollstaendig gelesen (%d statt %d Bytes): %s" % (len(out), size, path))
         return bytes(out)
 
-    def _write_file6(self, path, data):
+    def _write_file6(self, path, data, progress=None):
         q = sh_quote(path)
         for off in range(0, max(len(data), 1), self.FILE_CHUNK):
             part = base64.b64encode(data[off:off + self.FILE_CHUNK]).decode("ascii")
             self._check6(*self._shell6("printf '%%s' '%s' | base64 -d %s %s" % (part, ">" if off == 0 else ">>", q)),
                          what="Schreiben fehlgeschlagen: %s" % path)
+            if progress:
+                progress(min(len(data), off + self.FILE_CHUNK), len(data))
         n = int(self._check6(*self._shell6("wc -c < %s" % q), what="Datei nicht lesbar: %s" % path).strip())
         if n != len(data):
             raise BridgeError("Datei unvollstaendig geschrieben (%s statt %d Bytes): %s" % (n, len(data), path))
@@ -308,11 +310,12 @@ class Bridge:
             out += bytes.fromhex(rows[0]["h"])
         return bytes(out)
 
-    def write_file(self, path, data, chunk=30000):
+    def write_file(self, path, data, chunk=30000, progress=None):
         """Datei auf dem Geraet schreiben (ueberschreibt); in Stuecken, die an die Datei
-        angehaengt werden. Liefert die geschriebene Laenge."""
+        angehaengt werden. progress(geschrieben, gesamt) nach jedem Stueck. Liefert die
+        geschriebene Laenge."""
         if self.long:
-            return self._write_file6(path, data)
+            return self._write_file6(path, data, progress)
         self._need_v3("Dateizugriffe")
         lit = sql_lit(path)
         first = True
@@ -326,6 +329,8 @@ class Bridge:
             if not rows or rows[0].get("n") is None:
                 raise BridgeError("Schreiben fehlgeschlagen: %s" % path)
             first = False
+            if progress:
+                progress(min(len(data), off + chunk), len(data))
         rows = self.sql("select length(readfile(%s)) as n" % lit)
         n = rows[0].get("n") if rows else None
         if n != len(data):

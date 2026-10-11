@@ -30,7 +30,7 @@ Geraetefunktionen (am Geraet verifiziert):
   Tastendruck state 1, mindestens 30 ms halten, state 0, danach mindestens
               30 ms Pause - sonst wird ein Druck verschluckt oder doppelt gezaehlt.
 """
-import collections, json, os, threading, time
+import base64, collections, json, os, threading, time
 from bridge import BridgeError, NoReply, sh_quote, sql_lit
 from rigmodel import base_name
 
@@ -906,7 +906,7 @@ def backup_all(br, folder, progress=None):
     except Exception:
         pass   # nur Beiwerk, die Rigs sind das Wichtige
     secs = time.time() - t0
-    info = ["MX5 Editor - backup of %s" % time.strftime("%d.%m.%Y %H:%M"),
+    info = ["MX-Edit - backup of %s" % time.strftime("%d.%m.%Y %H:%M"),
             "Bridge: %s" % getattr(br, "version", "?"),
             "Database: db_version %s, RigVersion %s" % (settings.get("db_version", "?"), settings.get("RigVersion", "?")),
             "",
@@ -1077,6 +1077,74 @@ def content_with_name(content, name):
         c["data"]["Patch"]["children"]["Rig"]["children"]["PresetName"]["string"] = name
     except (ValueError, KeyError, TypeError) as e:
         raise LiveError("Rig content not readable (%s)." % e)
+    return json.dumps(c, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def blank_rig_content(name):
+    """Inhalt eines leeren Rigs (alle Plaetze 'Empty Slot', seriell, kein Gate, Fussschalter
+    Toggle/unbelegt, Pedale Classic) - nachgebaut nach einem am Geraet leer angelegten Rig
+    ('PASS THROUGH'). Das 'Neues Rig' des Geraets (apiRigs.makeNewRig) ist ueber die Bruecke
+    nicht erreichbar. Liefert den JSON-Text wie in der Datenbank."""
+    def num(v, t=0):
+        return {"type": t, "value": v}
+
+    def txt(s, t=8):
+        return {"string": s, "type": t}
+
+    def flag(b):
+        return {"state": b, "type": 1}
+
+    def node(order, children, typed=True):
+        n = {"childorder": order, "children": children}
+        if typed:
+            n["type"] = "Node"
+        return n
+    info = {"version": "4.0.1"}
+    scene = base64.b64encode(b"".join(b"\0\0\0\0" + EMPTY.encode().ljust(32, b"\0") for _ in range(SLOTS))).decode()
+    fs_order, fs = [], {}
+    for n in (5, 6, 7):
+        s = str(n)
+        items = [("Module" + s, txt("Unassigned")), ("Operation" + s, txt("")),
+                 ("SceneNumberOfStates" + s, num(1, 10)), ("Scene" + s, {"state": scene, "type": 24}),
+                 ("MacroColour" + s, txt("Green", 4))]
+        items += [("Scene%sSlot%dPreset" % (s, k), txt("")) for k in range(1, SLOTS + 1)]
+        items += [("State2Scene" + s, {"state": scene, "type": 24}), ("State2MacroColour" + s, txt("Green", 4))]
+        items += [("State2Scene%sSlot%dPreset" % (s, k), txt("")) for k in range(1, SLOTS + 1)]
+        items += [("UserFootSwitchText" + s, txt("")), ("ModeNew" + s, txt("Toggle", 4))]
+        for k, v in items:
+            fs_order.append(k)
+            fs[k] = v
+    fs_order += ["TapTempoColour", "LastScene", "LastSceneState"]
+    fs.update(TapTempoColour=txt("Green", 4), LastScene=num(-1, 10), LastSceneState=num(0, 10))
+
+    def pedal(mode):
+        order, ch = [], {}
+        for i in range(1, 5):
+            for k, v in (("Module", txt("Unassigned")), ("Param", txt("")), ("Min", num(0)), ("Max", num(100))):
+                order.append(k + str(i))
+                ch[k + str(i)] = v
+        if mode:
+            order.append("PedalMode")
+            ch["PedalMode"] = txt("Classic", 4)
+        return order, ch
+    para = [("Para1Level", num(-6)), ("Para2Level", num(-6)), ("Para1Pan", num(0)), ("Para2Pan", num(0)),
+            ("ParaDelay", num(0))]
+    chain = [("Routing", txt("S", 4)), ("Tails", flag(True))]
+    chain += [("ModuleType%d" % k, txt(EMPTY, 4)) for k in range(1, SLOTS + 1)] + para
+    blocks = {
+        "Chain": chain,
+        "Rig": [("PresetName", txt(name)), ("Tempo", num(120)), ("TempoFromMaster", flag(True)),
+                ("RigCurPedalAB", flag(False))],
+        "Input": [("PresetName", txt("")), ("InputGain", num(0)), ("GateThresh", num(-120)), ("GateRelease", num(11)),
+                  ("FilterThreshold", num(-100)), ("RigInput", flag(False))],
+        "Output": [("PresetName", txt("")), ("RigVolume", num(0)), ("RigWidth", num(100))],
+        "Mix": para + [("PresetName", txt(""))],
+    }
+    patch = node(list(blocks), {b: node([k for k, _ in kv], dict(kv)) for b, kv in blocks.items()}, False)
+    c = {"FootSwitch": {"data": {"FootSwitch": node(fs_order, fs, False)}, "info": info},
+         "Pedal1": {"data": {"Pedal1": node(*pedal(True), typed=False)}, "info": info},
+         "Pedal2": {"data": {"Pedal2": node(*pedal(False), typed=False)}, "info": info},
+         "data": {"Patch": patch}, "info": info}
     return json.dumps(c, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -1545,7 +1613,31 @@ def restore_all(br, folder, progress=None, replace=False):
     return counts
 
 
-def restart_app(br, rig_id=None, setlist=None, progress=None, timeout=90, action="restart"):
+def _set_rig_content(br, rig_id, content):
+    br.sql_write("update rigs set content = %s where id = %s" % (sql_lit(content), sql_lit(rig_id)))
+
+
+def stash_edits(br, rig_id):
+    """Vor einem App-Neustart: ungespeicherte Aenderungen des geladenen Rigs rig_id sichern, ohne das
+    Rig zu speichern - wie save_rig_as: gespeicherten Inhalt merken, am Geraet speichern (die Zeile
+    traegt dann den Live-Stand), den Live-Stand merken und die Zeile sofort zuruecksetzen. Liefert
+    {'id', 'saved', 'live'} oder None (nicht geaendert / anderes Rig geladen). Schreibgeschuetzte
+    Rigs lassen sich am Geraet nicht speichern -> LiveError."""
+    st = rig_status(br)
+    if not rig_id or st["id"] != rig_id or not st["dirty"]:
+        return None
+    old = db_rig(br, rig_id)
+    if int(old.get("is_readonly") or 0):
+        raise LiveError("“%s” is read-only on the MX5, so its unsaved edits could not be kept." % old.get("name"))
+    if save_rig(br)["dirty"]:
+        raise LiveError("The MX5 did not save its unsaved edits. Was a dialog open on the display?")
+    live = db_rig(br, rig_id)["content"]
+    if live != old["content"]:
+        _set_rig_content(br, rig_id, old["content"])
+    return {"id": rig_id, "saved": old["content"], "live": live}
+
+
+def restart_app(br, rig_id=None, setlist=None, progress=None, timeout=90, action="restart", keep_edits=False):
     """Geraete-App neu starten (Bruecke 0.4). Noetig nach Setlist-Aenderungen: die Set-
     Anzeige (SetName1) liest die Setlists nur beim App-Start. Dauert ca. 10 s; ungesicherte
     Aenderungen am geladenen Rig gehen verloren. Den 'letzten Zustand wiederherstellen?'-
@@ -1553,22 +1645,39 @@ def restart_app(br, rig_id=None, setlist=None, progress=None, timeout=90, action
     aktiv - ein definierter Zustand. (Yes stellte einen aelteren Stand wieder her: ein
     anderes, als geaendert markiertes Rig, das beim naechsten Wechsel nachfragt.) Dann wird
     setlist betreten und rig_id geladen. Liefert das Ergebnis wie read_rig_list. action: die
-    Aktion, die neu startet (restart; nam-on/nam-off schalten vorher NAM um, Bruecke 0.7)."""
-    say = progress or (lambda t: None)
-    say("Restarting the device app ...")
+    Aktion, die neu startet (restart; nam-on/nam-off schalten vorher NAM um, Bruecke 0.7).
+    keep_edits: ungespeicherte Aenderungen von rig_id ueberstehen den Neustart (stash_edits): das
+    Rig wird mit dem Live-Stand geladen, die Zeile danach wieder auf den gespeicherten Stand gesetzt
+    und das Rig als geaendert markiert (res['edits_kept']); geht das nicht, steht der Grund in
+    res['edits_lost']. progress(Text, Anteil 0..1 oder None)."""
+    say = progress or (lambda t, f=None: None)
+    stash, lost = None, None
+    if keep_edits and rig_id:
+        say("Keeping your unsaved edits ...", 0.02)
+        try:
+            stash = stash_edits(br, rig_id)
+        except LiveError as e:
+            lost = str(e)
+    say("Stopping the device app ...", 0.04)
     board = br.get(BOARD)   # Ansicht am Geraet; nach dem Neustart landet es sonst in SetRig (2026-09-30)
+    start = time.time()
     br.action(action)
-    end = time.time() + timeout
-    time.sleep(3)
-    while True:   # die Bruecke ist erst mit der neuen App wieder da
+    end = start + timeout
+    waiting = lambda: say("Waiting for the device app to start ...",
+                          0.06 + 0.54 * min(1.0, (time.time() - start) / 11.0))
+    while time.time() < start + 3:
+        waiting()
+        time.sleep(0.5)
+    while True:   # die Bruecke ist erst mit der neuen App wieder da (meist nach ~9 s)
         try:
             br.ping()
             break
         except BridgeError:
             if time.time() > end:
                 raise LiveError("The device app is not reachable after the restart.")
+            waiting()
             time.sleep(1)
-    say("App is running again, waiting for the dialog ...")
+    say("App is running again, waiting for the dialog ...", 0.62)
     while time.time() < end:
         if br.get(BOARD).get("string") == "FreeText" and "Yes" in dialog_buttons(br):
             press(br, FS % 2)   # No = nichts wiederherstellen
@@ -1579,14 +1688,31 @@ def restart_app(br, rig_id=None, setlist=None, progress=None, timeout=90, action
             break
         time.sleep(0.5)
     time.sleep(SETTLE)
-    res = read_rig_list(br)
-    if setlist and setlist != res["setlist"] and (setlist == ALL_RIGS or setlist in res["setlist_ids"]):
-        say("Entering setlist %s ..." % setlist)
-        res = enter_setlist(br, res["setlists"], setlist, res["setlist_ids"], discard=True)
-    ids = [r["id"] for r in res["rows"]]
-    if rig_id in ids and rig_status(br)["id"] != rig_id:
-        say("Loading the rig again ...")
-        res["status"] = load_rig(br, res["rows"], ids.index(rig_id), discard=True)
+    if stash:   # der Live-Stand steht in der Zeile, bevor die Listen gelesen werden und das Rig laedt
+        _set_rig_content(br, rig_id, stash["live"])
+    try:
+        say("Reading the rig list ...", 0.72)
+        res = read_rig_list(br)
+        if setlist and setlist != res["setlist"] and (setlist == ALL_RIGS or setlist in res["setlist_ids"]):
+            say("Entering setlist %s ..." % setlist, 0.8)
+            res = enter_setlist(br, res["setlists"], setlist, res["setlist_ids"], discard=True)
+        ids = [r["id"] for r in res["rows"]]
+        if rig_id in ids and rig_status(br)["id"] != rig_id:
+            say("Loading the rig again ...", 0.88)
+            res["status"] = load_rig(br, res["rows"], ids.index(rig_id), discard=True)
+    finally:
+        if stash:   # gespeicherter Stand zurueck in die Datenbank
+            _set_rig_content(br, rig_id, stash["saved"])
+    if stash:
+        if rig_status(br)["id"] == rig_id:
+            say("Restoring your unsaved edits ...", 0.95)
+            keep_changes(br)   # im Speicher steht der Live-Stand, gespeichert der alte -> geaendert
+            res["status"] = rig_status(br)
+            res["edits_kept"] = True
+        else:
+            lost = "The rig was not loaded again after the restart."
+    if lost:
+        res["edits_lost"] = lost
     restore_board(br, board)
     return res
 
@@ -1767,9 +1893,10 @@ def ir_create_folder(br, folder):
     br.make_dir(ir_folder_path(folder))
 
 
-def ir_upload(br, folder, path, name=None, replace=False):
+def ir_upload(br, folder, path, name=None, replace=False, progress=None):
     """Lokale IR-Datei (.wav/.mp3) nach <folder>/<name>.<endung> auf das Geraet schreiben.
-    Liefert (Name, Dateiname). Ohne replace ist eine vorhandene Datei ein Fehler."""
+    Liefert (Name, Dateiname). Ohne replace ist eine vorhandene Datei ein Fehler.
+    progress(geschrieben, gesamt) wie Bridge.write_file."""
     base, ext = os.path.splitext(os.path.basename(path))
     ext = ext.lower()
     if ext not in IR_EXT:
@@ -1788,7 +1915,7 @@ def ir_upload(br, folder, path, name=None, replace=False):
         taken = {os.path.splitext(n)[0].lower() for n, d, _ in br.list_dir(ir_folder_path(folder)) if not d}
         if name.lower() in taken:
             raise LiveError("Folder %s already has an IR called %s." % (folder, name))
-    br.write_file(target, data)
+    br.write_file(target, data, progress=progress)
     return name, name + ext
 
 
@@ -1851,6 +1978,27 @@ def read_ir_folder(folder):
             if os.path.isdir(p):
                 entries += [(entry + "/" + fn, os.path.isdir(os.path.join(p, fn))) for fn in os.listdir(p)]
     return _ir_index(entries)
+
+
+# ---- Geraetemodell ----
+#
+# Die Bruecke laesst sich auch auf Pedalboard und Gigboard bauen (gleiche Firmware-Linie 2.7,
+# Andere_Geraete/BEFUND.txt), aber dieser Code kennt nur die Hardware des MX5: drei Fussschalter
+# FootSwitch5-7, Baenke mit drei Rigs, Dialoge auf FS1-3. Das Modell steht im Device-Tree.
+DEVICE_MODELS = {"inmusic,hg04": "MX5", "inmusic,mg01": "Pedalboard", "inmusic,hg02": "Gigboard"}
+
+
+def device_model(br):
+    """'MX5', 'Pedalboard', 'Gigboard', sonst der compatible-Eintrag; None, wenn es sich nicht
+    lesen laesst (dann verhaelt sich der Editor wie bisher). Merkt sich das Ergebnis in br.model."""
+    if not hasattr(br, "model"):
+        try:
+            rc, out = br.shell("tr '\\0' ' ' < /proc/device-tree/compatible")
+            first = out.split()[0] if rc == 0 and out.split() else ""
+            br.model = DEVICE_MODELS.get(first, first) or None
+        except Exception:
+            br.model = None
+    return br.model
 
 
 # ---- NAM-Mod (Bruecke 0.7, mit NAM gebaut) ----
@@ -2064,9 +2212,9 @@ def nam_apply(br, nam, old, final, delete=(), replace=None, progress=None):
     replace: {Datei aus old: lokaler Pfad} - Inhalt ersetzen, Platz und Name bleiben.
     Laedt neue Dateien unter Zwischennamen ohne .nam hoch (das Geraet sieht sie so nie halb),
     benennt dann alles lueckenlos 'NNN - Name.nam', loescht und schreibt die Drive-Werte der
-    Rigs/Presets nach (nam_remap), damit jedes Rig sein Modell behaelt. Liefert
-    {'files': Anzahl, 'remapped': geaenderte Rigs/Presets}."""
-    say = progress or (lambda t: None)
+    Rigs/Presets nach (nam_remap), damit jedes Rig sein Modell behaelt. progress(Text, Anteil
+    0..1 oder None). Liefert {'files': Anzahl, 'remapped': geaenderte Rigs/Presets}."""
+    say = progress or (lambda t, f=None: None)
     if len(final) > NAM_STEPS:
         raise LiveError("At most %d NAM models are reachable (Drive 0–100 %%)." % NAM_STEPS)
     seen = set()
@@ -2089,11 +2237,17 @@ def nam_apply(br, nam, old, final, delete=(), replace=None, progress=None):
             check_nam_data(f.read(), os.path.basename(src))
     _sh(br, "mkdir -p %s" % sh_quote(NAM_DIR))
     cur = {}
-    for k, (i, src) in enumerate(ups):
-        say("Uploading %s (%d/%d) …" % (os.path.basename(src), k + 1, len(ups)))
+    total = sum(os.path.getsize(src) for _, src in ups) or 1
+    sent = 0
+    for k, (i, src) in enumerate(ups):   # Hochladen = 0..80 %, Umbenennen und Rigs danach
+        text = "Uploading %s (%d/%d) …" % (os.path.basename(src), k + 1, len(ups))
+        say(text, 0.8 * sent / total)
         tmp = ".mx5b_up_%d" % k
         with open(src, "rb") as f:
-            br.write_file(NAM_DIR + "/" + tmp, f.read())
+            data = f.read()
+        br.write_file(NAM_DIR + "/" + tmp, data,
+                      progress=lambda n, _, t=text, s=sent: say(t, 0.8 * (s + n) / total))
+        sent += len(data)
         cur[src] = tmp
     if replace:
         _sh(br, "\n".join("mv -f %s %s" % (sh_quote(NAM_DIR + "/" + cur[p]), sh_quote(NAM_DIR + "/" + fn))
@@ -2103,13 +2257,13 @@ def nam_apply(br, nam, old, final, delete=(), replace=None, progress=None):
         now, new = cur.get(src, src), nam_filename(i, name)
         if now != new:
             renames.append((now, new))
-    say("Renaming models …")
+    say("Renaming models …", 0.85 if ups else 0.2)
     nam_rename_files(br, renames, [fn for fn in delete if fn in oldset])
     pos = {src: i for i, (src, _) in enumerate(final)}
     mapping = {i: pos.get(fn, NAM_SILENT) for i, fn in enumerate(old) if pos.get(fn, NAM_SILENT) != i}
     n = 0
     if mapping:
-        say("Updating rigs and presets …")
+        say("Updating rigs and presets …", 0.9 if ups else 0.5)
         n = nam_remap(br, nam, mapping)
     return {"files": len(final), "remapped": n}
 
@@ -2151,11 +2305,15 @@ TUNER_REF_MIN, TUNER_REF_MAX = 410, 480
 TUNER_OK = 6.0        # |Cents| darunter gilt als gestimmt (Schwelle der Geraeteanzeige)
 
 
-def tuner_open(br):
+def tuner_open(br, before=None):
     """Tuner-Seite am Geraet oeffnen; liefert die erste Ablesung (tuner_parse). Die Ansicht davor
-    merkt sich die Bridge-Verbindung fuer tuner_close (ExitTuner fuehrt sonst immer nach Hybrid)."""
+    merkt sich die Bridge-Verbindung fuer tuner_close (ExitTuner fuehrt sonst immer nach Hybrid).
+    Ist der Tuner am Geraet schon offen (dort geoeffnet), gilt before (BoardMode-Antwort der
+    letzten normalen Ansicht, vom Editor-Abgleich) als Ansicht davor."""
     board = br.get(BOARD) or {}
-    if board.get("string") != "Tuner":
+    if board.get("string") == "Tuner":
+        br.tuner_board = before
+    else:
         br.tuner_board = board
         press(br, RC + "/AccessTuner")
         for _ in range(20):
@@ -2210,6 +2368,121 @@ def meter_parse(module, res):
         peak = (res.get(p + "/Peak") or {}).get("unnormalized")
         out.append((name, None if cur is None else float(cur), None if peak is None else float(peak)))
     return out
+
+
+# ---- Looper (am Geraet verifiziert 2026-10-11, Bruecke 0.7) ----
+# Alles unter /Engine/Looper (Namen per get_many-Suche ueber alle Strings des Evil-Binaries
+# gefunden, die Looper-Seite selbst ist C++). Aktionen sind Tasten (state 1 -> 0, press):
+#   Record    RecState RecReady -> Rec (Aufnahme), beim zweiten Druck Loop schliessen und spielen
+#             (OverReady), danach Overdub an/aus (Rec <-> OverReady); jede Aufnahme = eine Ebene
+#   Play      Start/Stop (StartState Empty|Stopped|Playing; stoppt auch ein laufendes Overdub)
+#   Stop      nur Stop
+#   Undo      "PEEL": entfernt die letzte Ebene, bei nur einer Ebene ist der Loop danach leer (kein Redo)
+#   Clear     Loop loeschen (setzt auch Geschwindigkeit/Laenge zurueck)
+#   DirectionChange  vorwaerts/rueckwaerts (Reverse Normal|Reverse, PlaybackText NORMAL|REVERSE)
+#   HalfSpeed/DoubleSpeed  SpeedText x 1/4 .. x 4;  HalfLen/DoubleLen  MultText x 1 .. x 8
+#             (Laenge wirkt erst am Loop-Ende, LengthText folgt)
+# Anzeige: StateText EMPTY|RECORD|PLAY|OVERDUB|READY, RecordText RECORD|OVERDUB, PlayText START|STOP,
+#   LengthText "mm:ss.z" (waechst waehrend der Aufnahme), RelativPos unnormalized 0..100 (Position im
+#   Loop), NumLayers, Modified Y|N (seit dem Laden/Speichern veraendert), RemainingRecordingTimeString.
+# Einstellungen: Looper/Mix = Settings/LooperMix (Loop-Pegel 0..100 %, global), Looper/Feedback
+#   (0..100 %, Abklingen beim Overdub), AudioCtrl/OtherSettings/LooperLoc Pre|Post (Looper vor/nach
+#   der Kette, global), RedirCtrl/AltLooperFS Main|Alt (Belegung der Fussschalter in der Looper-Ansicht:
+#   Main FS1 Start/Stop, FS2 Record/Overdub, FS3 -> Alt; Alt FS2 Undo, FS3 -> Main).
+# Ansicht: RedirCtrl/SelectLooperMode oeffnet sie (BoardMode "Looper"), ExitLooper fuehrt nach Stomp.
+# Der Looper laeuft und laesst sich in jeder Ansicht bedienen; der Loop spielt nach dem Verlassen weiter.
+# Mute (TwoStateValue) zeigte keine Wirkung auf die Werte, Insert/InsertState ungeklaert - nicht benutzt.
+# Laden/Speichern von Loops (Ordner Loops auf dem USB-Laufwerk) geht nur ueber die GUI (LooperPage, C++).
+# Der Loop liegt nur im Speicher der App (keine Datei, keine Wellenform-Eigenschaft) - der Editor zeichnet
+# je Ebene die Huellkurve des Eingangspegels (InputMeter/Current), den er waehrend der Aufnahme mitliest.
+# RelativPos aktualisiert das Geraet alle ~30-40 ms in 1-%-Schritten; sie laeuft auch rueckwaerts
+# vorwaerts weiter (ohne Sprung beim Umschalten). LengthText beruecksichtigt Geschwindigkeit und Laenge
+# (x2 Speed: halbe Zeit), Fortschritt also 100 % / LengthText.
+LOOPER = "/Engine/Looper"
+LOOPER_MIX = LOOPER + "/Mix"
+LOOPER_FEEDBACK = LOOPER + "/Feedback"
+LOOPER_LOC = "/Engine/AudioCtrl/OtherSettings/LooperLoc"
+LOOPER_ALT_FS = RC + "/AltLooperFS"
+LOOPER_LEVEL = "/Engine/InputMeter/Current"     # Eingangspegel (dB) fuer die Ebenen-Huellkurven
+LOOPER_ACTIONS = {"record": "Record", "play": "Play", "stop": "Stop", "undo": "Undo", "clear": "Clear",
+                  "reverse": "DirectionChange", "half_speed": "HalfSpeed", "double_speed": "DoubleSpeed",
+                  "half_len": "HalfLen", "double_len": "DoubleLen"}
+LOOPER_PATHS = [LOOPER + "/" + k for k in ("StartState", "RecState", "StateText", "RecordText", "PlayText",
+                                           "UndoText", "LengthText", "RelativPos", "NumLayers", "SpeedText",
+                                           "MultText", "Reverse", "Modified", "RemainingRecordingTimeString")] + [
+    LOOPER_MIX, LOOPER_FEEDBACK, LOOPER_LOC, LOOPER_ALT_FS, BOARD, LOOPER_LEVEL]
+
+
+def looper_open(br, before=None, show=True):
+    """Looper-Ansicht am Geraet zeigen (show=False: nichts umschalten); liefert die erste Ablesung
+    (looper_parse). Die Ansicht davor merkt sich die Bridge-Verbindung fuer looper_close
+    (ExitLooper fuehrt sonst immer nach Stomp). Zeigt das Geraet die Looper-Ansicht schon, gilt
+    before (BoardMode-Antwort der letzten anderen normalen Ansicht) als Ansicht davor."""
+    board = br.get(BOARD) or {}
+    if board.get("string") == "Looper" or not show:
+        br.looper_board = before if (before or {}).get("string") not in (None, "Looper") else None
+        br.looper_shown = board.get("string") == "Looper"
+    else:
+        br.looper_board = board
+        press(br, RC + "/SelectLooperMode")
+        for _ in range(20):
+            if (br.get(BOARD) or {}).get("string") == "Looper":
+                break
+            time.sleep(0.05)
+        else:
+            raise LiveError("Looper not opened on the device (BoardMode stays %s)" % (br.get(BOARD) or {}).get("string"))
+        br.looper_shown = True
+    return looper_parse(br.get_many(LOOPER_PATHS))
+
+
+def looper_close(br):
+    """Looper-Ansicht verlassen, falls das Editor-Fenster sie gezeigt hat und das Geraet sie noch
+    zeigt, und die Ansicht von vorher wiederherstellen. Der Loop selbst laeuft weiter."""
+    if getattr(br, "looper_shown", False) and (br.get(BOARD) or {}).get("string") == "Looper":
+        press(br, RC + "/ExitLooper")
+        restore_board(br, getattr(br, "looper_board", None))
+    br.looper_board = None
+    br.looper_shown = False
+    return True
+
+
+def looper_action(br, name):
+    """Eine Looper-Taste druecken (Schluessel von LOOPER_ACTIONS); liefert die neue Ablesung."""
+    press(br, "%s/%s" % (LOOPER, LOOPER_ACTIONS[name]), hold=0.06, wait=0.03)
+    return looper_parse(br.get_many(LOOPER_PATHS))
+
+
+def looper_seconds(text):
+    """LengthText "mm:ss.z" -> Sekunden (None, wenn nicht lesbar)."""
+    try:
+        m, sec = (text or "").split(":")
+        return int(m) * 60 + float(sec)
+    except ValueError:
+        return None
+
+
+def looper_parse(res):
+    """get_many-Antwort der LOOPER_PATHS -> dict mit Zustand, Texten und Einstellungen."""
+    def g(k, field="string"):
+        return (res.get(k if k.startswith("/") else LOOPER + "/" + k) or {}).get(field)
+    pos = g("RelativPos", "unnormalized")
+    mix, fb = g(LOOPER_MIX, "unnormalized"), g(LOOPER_FEEDBACK, "unnormalized")
+    level = g(LOOPER_LEVEL, "unnormalized")
+    try:
+        layers = int(g("NumLayers") or 0)
+    except ValueError:
+        layers = 0
+    return {"start": g("StartState") or "Empty", "rec": g("RecState") or "RecReady",
+            "state": g("StateText") or "", "record_text": g("RecordText") or "RECORD",
+            "play_text": g("PlayText") or "START", "undo_text": g("UndoText") or "PEEL",
+            "length": g("LengthText") or "", "pos": float(pos) if pos is not None else 0.0, "layers": layers,
+            "speed": g("SpeedText") or "x 1", "mult": g("MultText") or "x 1",
+            "reverse": g("Reverse") == "Reverse", "modified": g("Modified") == "Y",
+            "remaining": g("RemainingRecordingTimeString") or "",
+            "mix": float(mix) if mix is not None else None, "feedback": float(fb) if fb is not None else None,
+            "loc": g(LOOPER_LOC), "alt": g(LOOPER_ALT_FS) == "Alt",
+            "board": g(BOARD), "level": float(level) if level is not None else None,
+            "seconds": looper_seconds(g("LengthText")), "ok": bool(res.get("ok", True)) and LOOPER + "/StartState" in res}
 
 
 # ---- Hardware-Zuweisungen (Fussschalter, Scenes, Expression-Pedale) ----

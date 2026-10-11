@@ -23,6 +23,14 @@ NAM_STEPS = ("1.  Choose MX5 and the number of NAM instances.\n"
              "2.  Click “Install NAM Mod”.\n"
              "3.  Wait. Do NOT click “Open” in the NAM installer – that updater has no bridge.\n"
              "     The patcher closes the NAM installer by itself and adds the bridge.")
+
+
+def nam_steps(device):
+    return NAM_STEPS.replace("Choose MX5", "Choose %s" % device)
+
+
+# Geraete in der Reihenfolge der Auswahl (bridgepatch.MODELS: MX5 geprueft, die anderen experimentell)
+MODELS = bridgepatch.offered()      # Hauptausgabe: nur MX5 (dann ohne Geraetekarte)
 NAM_URL = "https://github.com/lolgab/headrush-nam-mod"
 VERSION = bridgepatch.VERSION
 
@@ -108,7 +116,7 @@ class PatcherApp(tk.Tk):
         self.scale = self.winfo_fpixels("1i") / 96.0
         px = lambda v: int(v * self.scale)
         self.px = px
-        self.title("MX5 Bridge %s – Firmware Patcher" % VERSION)
+        self.title("%s %s – Firmware Patcher%s" % (bridgepatch.BRAND, VERSION, " (testing)" if bridgepatch.TESTING else ""))
         self.configure(bg=BG)
         self.geometry("%dx%d" % (px(720), px(820)))
         self.minsize(px(600), px(640))
@@ -122,6 +130,7 @@ class PatcherApp(tk.Tk):
         self.busy = False
         self.cancel = False
         self.file = None
+        self.model = MODELS[0]
         self.out_parent = patcher.BASE
         self.result = None
         self._build()
@@ -168,11 +177,18 @@ class PatcherApp(tk.Tk):
         root.pack(fill="both", expand=True)
         head = tk.Frame(root, bg=BG)
         head.pack(fill="x", pady=(0, px(14)))
-        tk.Label(head, text="MX5", bg=BG, fg=ACCENT, font=("Segoe UI", 22, "bold")).pack(side="left")
+        logo = bridgepatch.BRAND.split()[0]          # "MX5" bzw. "HeadRush" (Testausgabe)
+        tk.Label(head, text=logo, bg=BG, fg=ACCENT, font=("Segoe UI", 22, "bold")).pack(side="left")
         tk.Label(head, text="  Bridge %s · Firmware Patcher" % VERSION, bg=BG, fg=TEXT,
                  font=("Segoe UI", 16)).pack(side="left", pady=(px(4), 0))
-        tk.Label(root, text="Builds a firmware updater for the HeadRush MX5 (firmware 2.7) with the MX5 Bridge "
-                            "from the official HeadRush updater. Unofficial – use at your own risk.",
+        if len(MODELS) > 1:
+            intro = ("Builds a firmware updater for the HeadRush MX5, Pedalboard or Gigboard (firmware 2.7) with the "
+                     "%s from the official HeadRush updater. Pedalboard and Gigboard are experimental. "
+                     "Unofficial – use at your own risk." % bridgepatch.BRAND)
+        else:
+            intro = ("Builds a firmware updater for the HeadRush MX5 (firmware 2.7) with the MX5 Bridge "
+                     "from the official HeadRush updater. Unofficial – use at your own risk.")
+        tk.Label(root, text=intro,
                  bg=BG, fg=MUTED, font=("Segoe UI", 10), anchor="w", justify="left",
                  wraplength=px(660)).pack(fill="x", pady=(0, px(14)))
 
@@ -189,6 +205,22 @@ class PatcherApp(tk.Tk):
         # Optionen in einem eigenen Rahmen: nach dem Erfolg ersetzt der Ergebniskasten sie
         self.opts = tk.Frame(root, bg=BG)
         self.opts.pack(fill="x")
+        c = self.card(self.opts, "Device")
+        if len(MODELS) < 2:          # Hauptausgabe: nur das MX5 - keine Auswahl zeigen
+            c.pack_forget()
+        row = tk.Frame(c, bg=PANEL)
+        row.pack(fill="x", pady=(px(10), 0))
+        self.chk_models = {}
+        for m in MODELS:
+            label = m["device"] + ("" if m["tested"] else " (experimental)")
+            chk = Check(row, label, command=lambda m=m: self.pick_model(m))
+            chk.pack(side="left", padx=(0, px(22)))
+            self.chk_models[m["key"]] = chk
+        self.chk_models[self.model["key"]].set(True)
+        self.note_model = tk.Label(c, text="", bg=WARN_BG, fg=WARN, font=("Segoe UI", 10), anchor="w",
+                                   justify="left", wraplength=px(600), padx=px(12), pady=px(8))
+        self.chk_risk = Check(c, "I understand the risk and want to help testing", command=self.refresh)
+
         c = self.card(self.opts, "Firmware")
         self.chk_file = Check(c, "Use a firmware file I already have", command=self.refresh)
         self.chk_file.pack(fill="x", pady=(px(10), 0))
@@ -207,8 +239,9 @@ class PatcherApp(tk.Tk):
         self.nam_howto = tk.Frame(c, bg=WARN_BG, padx=px(14), pady=px(10))
         tk.Label(self.nam_howto, text="How it works – a second window (the NAM installer) opens:", bg=WARN_BG,
                  fg=WARN, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x")
-        tk.Label(self.nam_howto, text=NAM_STEPS, bg=WARN_BG, fg=TEXT, font=("Segoe UI", 10), anchor="w",
-                 justify="left", wraplength=px(600)).pack(fill="x", pady=(px(4), 0))
+        self.lbl_nam_steps = tk.Label(self.nam_howto, text=NAM_STEPS, bg=WARN_BG, fg=TEXT, font=("Segoe UI", 10),
+                                      anchor="w", justify="left", wraplength=px(600))
+        self.lbl_nam_steps.pack(fill="x", pady=(px(4), 0))
         self.note(c, "NAM mod by lolgab (GPLv3) · github.com/lolgab/headrush-nam-mod", link=NAM_URL)
 
         c = self.card(self.opts, "Output")
@@ -250,22 +283,43 @@ class PatcherApp(tk.Tk):
         self.log.tag_configure("ok", foreground=ACCENT)
 
     # ---------------- Zustand ----------------
+    def pick_model(self, m):
+        """Geraeteauswahl wie Optionsfelder: genau eines ist gewaehlt."""
+        if self.busy:
+            return
+        if m["key"] != self.model["key"]:
+            self.chk_risk.set(False)
+        self.model = m
+        for k, chk in self.chk_models.items():
+            chk.set(k == m["key"])
+        self.refresh()
+
     def refresh(self):
         px = self.px
         use_file, nam = self.chk_file.value, self.chk_nam.value
+        dev = self.model["device"]
+        note = patcher.risk_note(self.model)
+        if note:
+            self.note_model.configure(text=note)
+            self.note_model.pack(fill="x", pady=(px(10), 0))
+            self.chk_risk.pack(fill="x", pady=(px(8), 0), after=self.note_model)
+        else:
+            self.note_model.pack_forget()
+            self.chk_risk.pack_forget()
+        self.lbl_nam_steps.configure(text=nam_steps(dev))
         if use_file:
             self.file_row.pack(fill="x", pady=(px(8), 0), before=self.note_file)
             self.lbl_file.configure(text=self.file or "No file chosen", fg=TEXT if self.file else DIM)
             if nam:
-                txt = ("Choose the “HeadRush MX5 Firmware Updater (NAM mod).exe” that the NAM installer made. "
-                       "To let the patcher run the NAM installer instead, untick this box.")
+                txt = ("Choose the “HeadRush %s Firmware Updater (NAM mod).exe” that the NAM installer made. "
+                       "To let the patcher run the NAM installer instead, untick this box." % dev)
             else:
-                txt = ("Choose the official “HeadRush MX5 2.7 Firmware Updater” (.exe or the .zip from HeadRush). "
-                       "An updater made by the NAM installer works too – NAM is then kept.")
+                txt = ("Choose the official “HeadRush %s 2.7 Firmware Updater” (.exe or the .zip from HeadRush). "
+                       "An updater made by the NAM installer works too – NAM is then kept." % dev)
         else:
             self.file_row.pack_forget()
             txt = ("The NAM installer downloads the official firmware itself." if nam else
-                   "The official HeadRush MX5 2.7 updater is downloaded from inMusic (about 60 MB).")
+                   "The official HeadRush %s 2.7 updater is downloaded from inMusic (about 60 MB)." % dev)
         self.note_file.configure(text=txt)
         if nam and not use_file:
             self.note_nam.configure(text="The NAM mod's own installer is downloaded from GitHub. It builds the "
@@ -280,9 +334,9 @@ class PatcherApp(tk.Tk):
             self.note_nam.configure(text="Without the NAM mod the Anxiety OD stays the stock pedal. "
                                          "You can add NAM later by running the patcher again.")
         self.lbl_out.configure(text=self.out_parent)
-        ready = not self.busy and (not use_file or bool(self.file))
+        ready = not self.busy and (not use_file or bool(self.file)) and (not note or self.chk_risk.value)
         self.btn_go.enable(ready)
-        for w in (self.chk_file, self.chk_nam):
+        for w in (self.chk_file, self.chk_nam, self.chk_risk, *self.chk_models.values()):
             w.enable(not self.busy)
         self.btn_file.enable(not self.busy)
         self.btn_out.enable(not self.busy)
@@ -358,28 +412,29 @@ class PatcherApp(tk.Tk):
         if self.chk_nam.value and not self.chk_file.value:
             self.btn_cancel.pack(side="left", padx=(self.px(8), 0), after=self.btn_go)
         self.refresh()
-        args = (self.file if self.chk_file.value else None, self.chk_nam.value, self.out_parent)
+        args = (self.file if self.chk_file.value else None, self.chk_nam.value, self.out_parent, self.model)
         threading.Thread(target=self.work, args=args, daemon=True).start()
 
     def do_cancel(self):
         self.cancel = True
         self.status.configure(text="Cancelling …")
 
-    def work(self, src, nam, out_parent):
+    def work(self, src, nam, out_parent, model):
         patcher.LOG[0] = lambda text: self.post("log", text)
         patcher.PROGRESS[0] = lambda got, total: self.post("progress", got, total)
         log = lambda text: self.post("log", text)
         stock = None
         try:
-            log("MX5 Bridge %s firmware patcher" % VERSION)
+            log("%s %s firmware patcher" % (bridgepatch.BRAND, VERSION))
             if nam and not src:
                 self.post("busy", "Getting the NAM mod installer …")
                 exe, tag, page = naminstaller.fetch(patcher.BASE, log, patcher.PROGRESS[0])
                 self.post("busy", "Waiting for the NAM mod installer …")
-                self.post("banner", "Step 1 of 2 – in the NAM installer window", NAM_STEPS)
+                self.post("banner", "Step 1 of 2 – in the NAM installer window", nam_steps(model["device"]))
                 workdir = os.path.join(patcher.BASE, "NAM installer", "output")
                 src, stock = naminstaller.run(exe, workdir, log, lambda: self.cancel,
-                                              on_window=lambda hwnd: self.post("nam_window", hwnd))
+                                              on_window=lambda hwnd: self.post("nam_window", hwnd),
+                                              device=model["device"])
                 intermediate = src
                 self.post("banner", "Step 2 of 2 – adding the bridge …",
                           "The NAM part is done. The patcher closed the NAM installer on purpose – "
@@ -387,10 +442,11 @@ class PatcherApp(tk.Tk):
             else:
                 intermediate = None
             self.post("busy", "Building the updater …")
-            out, found_nam, missing = patcher.build(src, need_nam=nam, out_parent=out_parent)
+            out, found_nam, missing, found = patcher.build(src, need_nam=nam, out_parent=out_parent,
+                                                           model=model["key"])
             kept = naminstaller.keep_stock(stock, out_parent)
             naminstaller.drop_intermediate(intermediate)
-            self.post("finished", True, out, found_nam, missing, kept)
+            self.post("finished", True, out, found_nam, missing, kept, found)
         except (patcher.Fail, bridgepatch.PatchError, ext4.Ext4Error, naminstaller.NamError) as e:
             self.post("finished", False, str(e))
         except Exception as e:     # Netz, Dateien ... - dem Nutzer zeigen statt still zu sterben
@@ -447,7 +503,8 @@ class PatcherApp(tk.Tk):
                 self.opts.pack(fill="x", before=self.bar)
             self.refresh()
             return
-        out, nam, missing, kept = a
+        out, nam, missing, kept, model = a
+        dev = model["device"]
         self.result = out
         self.prog.configure(mode="determinate", value=100)
         self.write("Done: " + out, "ok")
@@ -462,11 +519,14 @@ class PatcherApp(tk.Tk):
         box.pack(fill="x")
         tk.Label(box, text="Updater ready%s" % (" (with NAM)" if nam else ""), bg=PANEL, fg=ACCENT,
                  font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x")
-        steps = ("1. Connect the MX5 to its power supply and to this computer via USB.\n"
-                 "2. On the MX5: Global Settings › ⋯ (more) › Firmware Update.\n"
-                 "3. Click “Start firmware updater” and then “Install MX5Bridge %s%s”.\n"
-                 "    Do not disconnect the MX5 until it has finished and restarted."
-                 % (VERSION, " + NAM" if nam else ""))
+        steps = ("1. Connect the %s to its power supply and to this computer via USB.\n"
+                 "2. On the %s: Global Settings › ⋯ (more) › Firmware Update.\n"
+                 "3. Click “Start firmware updater” and then “Install %s %s%s”.\n"
+                 "    Do not disconnect the %s until it has finished and restarted."
+                 % (dev, dev, bridgepatch.LABEL, VERSION, " + NAM" if nam else "", dev))
+        if not model["tested"]:
+            steps += ("\n4. Afterwards please run the device diagnosis (HeadRush_Bridge_Diagnose.exe) and attach its "
+                      "log to a GitHub issue – that is what makes the editor work on the %s." % dev)
         if kept:
             steps += "\nKeep “%s” – the unmodified official updater, for emergencies." % os.path.basename(kept)
         if missing:
@@ -527,11 +587,11 @@ class PatcherApp(tk.Tk):
         try:
             subprocess.Popen([exe], cwd=cwd)
         except OSError as e:
-            messagebox.showerror("MX5 Bridge", "Could not start the updater:\n%s" % e, parent=self)
+            messagebox.showerror(bridgepatch.BRAND, "Could not start the updater:\n%s" % e, parent=self)
 
     def on_close(self):
         if self.busy and not messagebox.askyesno(
-                "MX5 Bridge", "The patcher is still working. Quit anyway?", parent=self):
+                bridgepatch.BRAND, "The patcher is still working. Quit anyway?", parent=self):
             return
         self.destroy()
         os._exit(0)     # laufende Arbeits-Threads (Download, Komprimieren) nicht abwarten

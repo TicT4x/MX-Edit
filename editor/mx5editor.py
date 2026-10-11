@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MX5 Editor 0.9 - Editor fuer HeadRush-MX5-Rigs (inoffiziell).
+"""MX-Edit 0.9 (frueher "MX5 Editor") - Editor fuer HeadRush-MX5-Rigs (inoffiziell).
 
 Start:  python mx5editor.py [Ordner mit Rigs]
 Offline: bearbeitet .rig-Dateien direkt (vor jedem Speichern wird gesichert).
@@ -24,18 +24,26 @@ from ui import BG, PANEL, LINE, ACCENT, TEXT, MUTED, DIM, COLOURS, px
 from ui import FONT, FONT_SMALL, FONT_BOLD, FONT_HEAD, FONT_TITLE
 from ui import messagebox   # Meldungen im Stil der Oberflaeche (Overlay), gleiche Aufrufe wie tkinter
 from hardware import HardwarePanel, FootBar, read_tempo, SCENE_MODES, state_name
-from irs import IRDialog
-from nam import NAMDialog, NAMBrowser
+from irs import IRDialog, IRPage
+from nam import NAMPage, NAMBrowser
 import settings
 from tuner import TunerDialog
+from looper import LooperDialog
 from setlists import SetlistManager
 
-APP = "MX5 Editor 0.9"
+APP = U.APP_NAME + " 0.9"
 MIN_BRIDGE = (0, 5)   # Datenbank lesen/schreiben + Umlaute; aeltere Firmware wird abgelehnt
 
 
 class BridgeTooOld(RuntimeError):
     pass
+
+
+class DeviceNotSupported(RuntimeError):
+    """Bruecke laeuft auf einem Pedalboard/Gigboard - der Editor kennt nur die MX5-Hardware."""
+
+
+TESTERS_URL = "https://github.com/TicT4x/MX-Edit-Testing"
 POLL_MS = 150         # kuerzester Abstand der Abfragen (Aenderungen am Geraet -> Editor)
 POLL_RETRY = 80       # ms: naechster Versuch, wenn die Abfrage gerade nicht laufen durfte
 POLL_SHARE = 3        # Abstand >= 3 x Dauer einer Abfrage: hoechstens 1/3 der Leitung fuer das Abfragen
@@ -43,6 +51,8 @@ WRITE_QUIET = 0.4     # s: waehrend eigener Schreibzugriffe (Regler ziehen) nich
 RECONNECT_S = 2.0     # s: Pause zwischen Verbindungsversuchen nach einem Verbindungsverlust
 METER_MS = 15        # Pause zwischen zwei Pegel-Abfragen (Input/Output-Seite; eine Abfrage ~5 ms)
 METER_SLOW_MS = 400   # ... nach einem Fehler oder solange ein Ablauf/der Tuner laeuft
+TUNER_REOPEN_S = 2.0  # so lange nach dem Schliessen des Tuner-Fensters oeffnet es BoardMode "Tuner" nicht neu
+LOOPER_REOPEN_S = 2.0  # dasselbe fuer das Looper-Fenster und BoardMode "Looper"
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKUP_DIR = os.path.join(os.path.expanduser("~"), "MX5Editor_Sicherungen")
 MIX = "Chain"          # Pseudo-Modul: Mischung der parallelen Wege (Pfad /Engine/Patch/Chain/...)
@@ -88,14 +98,16 @@ MODEL_PAGES = load_model_pages()
 class Editor(tk.Tk):
     def __init__(self, folder=None):
         U.dpi_aware()
+        U.app_user_model_id()   # eigene Taskleisten-Gruppe (sonst Python-Symbol)
         super().__init__()
         self.title(APP)
-        try:   # Fenster-/Taskleisten-Icon (werkzeuge/exe_bauen.py erzeugt es; fehlt es, bleibt das Tk-Icon)
-            self.iconbitmap(default=os.path.join(HERE, "mx5editor.ico"))
-        except tk.TclError:
-            pass
+        # Fenster-/Taskleisten-Icon in DPI-gerechter Groesse (mxedit.ico, erzeugt von ui.save_app_icon)
+        ico = os.path.join(HERE, "mxedit.ico")
+        if os.path.exists(ico):
+            U.set_window_icon(self, ico)
         self.prefs = settings.load()   # Einstellungen (settings.py), z. B. 'audition'
         self.ui_scale = self.prefs["ui_scale"]   # beim Start gesetzte Groesse (Aenderung gilt ab Neustart)
+        U.ANIM = self.prefs["animations"]
         U.setup(self, self.ui_scale / 100.0)
         sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()   # groessere Oberflaeche: nicht ueber den Bildschirm
         self.geometry("%dx%d" % (min(px(1480), sw - 40), min(px(820), sh - 80)))
@@ -133,6 +145,11 @@ class Editor(tk.Tk):
         self.settings_dialog = None
         self._nam_auto_told = False  # Hinweis "NAM automatisch abgeschaltet" nur einmal je Sitzung
         self.tuner_dialog = None
+        self._board_view = None    # letzte normale Ansicht am Geraet (BoardMode-Antwort, vom Abgleich)
+        self._tuner_shut = 0.0     # Zeit, zu der das Tuner-Fenster zuletzt schloss
+        self.looper_dialog = None
+        self._board_plain = None   # letzte normale Ansicht ausser "Looper" (Ziel beim Schliessen des Loopers)
+        self._looper_shut = 0.0    # Zeit, zu der das Looper-Fenster zuletzt schloss
         self._colour_entries = []  # Auswahlliste 'Colour' der Bloecke (live, einmal gelesen)
         self._connecting = False   # Verbindungsversuch laeuft (Knopf 'Connect to Device')
         self._connect_err = None   # Hinweis unter dem Knopf nach einem Fehlschlag
@@ -140,8 +157,12 @@ class Editor(tk.Tk):
         self._reconnect_seq = 0    # laufende Nummer der Versuchs-Threads (nie wiederverwendet)
         self.irs_offline = None   # IR-Dateien aus 'Impulse Responses' neben dem Rig-Ordner (offline)
         self.setlist_mgr = None   # Setlist-Manager (setlists.SetlistManager), ersetzt solange die Hauptansicht
+        self.page = None          # offene Seite an Stelle der Hauptansicht (Setlist-Manager, IRPage, NAMPage)
+        self._panes = []          # (Widget, pack_info) der Hauptansicht, solange eine Seite offen ist
+        self._block_waiters = None   # Blockliste wird gelesen (block_prefetch): wartende Aufrufe
         self._build()
         self.after(20, self._pump)
+        U.warm_model_icons(self, models=self.models())   # Blockauswahl oeffnet dann ohne Zeichenpause
         if folder:
             self.open_folder(folder)
         elif self.prefs["auto_connect"]:   # ohne Ordner: gleich verbinden (still, bei Fehlschlag bleibt der Knopf)
@@ -159,7 +180,8 @@ class Editor(tk.Tk):
 
     def _build(self):
         # eigene Titelleiste statt der von Windows (ohne Windows: normale Leiste)
-        self.titlebar = U.TitleBar(self, self.wm_title(), on_close=self.on_close, logo="MX5")
+        self.titlebar = U.TitleBar(self, self.wm_title(), on_close=self.on_close, logo=U.APP_NAME,
+                                   logo_w=118, logo_icon=True)
         if self.titlebar.active:
             self.titlebar.pack(side="top", fill="x")
         # Statuszeile
@@ -178,11 +200,14 @@ class Editor(tk.Tk):
         if self.titlebar.active:   # der Schriftzug sitzt dann in der Titelleiste
             tk.Frame(rail, bg=BG, height=px(10)).pack()
         else:
-            tk.Label(rail, text="MX5", bg=BG, fg=ACCENT, font=("Segoe UI", 13, "bold")).pack(pady=(px(16), px(12)))
+            self._rail_logo = U.ImageTk.PhotoImage(U.app_icon(int(px(34))))
+            tk.Label(rail, image=self._rail_logo, bg=BG).pack(pady=(px(14), px(10)))
         self.rail_rigs = U.RailButton(rail, "rigs", "Rig", command=self.show_rig_view)
         self.rail_rigs.pack()
         self.rail_tuner = U.RailButton(rail, "tuner", "Tuner", command=self.open_tuner)
         self.rail_tuner.pack()
+        self.rail_looper = U.RailButton(rail, "looper", "Looper", command=self.open_looper)
+        self.rail_looper.pack()
         self.rail_sets = U.RailButton(rail, "setlist", "Setlists", command=self.open_setlists)
         self.rail_sets.pack()
         self.rail_irs = U.RailButton(rail, "ir", "IRs", command=self.manage_irs)
@@ -268,9 +293,11 @@ class Editor(tk.Tk):
         top.pack(fill="both", expand=True, pady=px(8))
         actions = tk.Frame(top, bg=PANEL)
         actions.pack(side="right")
-        self.btn_revert = U.Btn(actions, "Discard", command=self.revert, kind="ghost", state="disabled")
+        self.btn_new = U.Btn(actions, "New", command=self.new_rig, kind="ghost", icon="plus", state="disabled")
+        self.btn_new.pack(side="left", padx=(0, px(6)))
+        self.btn_revert = U.Btn(actions, "Discard", command=self.revert, kind="ghost", icon="undo", state="disabled")
         self.btn_revert.pack(side="left", padx=(0, px(6)))
-        self.btn_save = U.Btn(actions, "Save", command=self.save, kind="primary", state="disabled")
+        self.btn_save = U.Btn(actions, "Save", command=self.save, kind="primary", icon="save", state="disabled")
         self.btn_save.pack(side="left", padx=(0, px(6)))
         U.Btn(actions, "⋯", command=self.open_menu, kind="ghost", padx=8, font=("Segoe UI", 13, "bold")).pack(side="left")
         mid = tk.Frame(top, bg=PANEL)
@@ -368,6 +395,7 @@ class Editor(tk.Tk):
         self.presets_offline = self.read_block_files(os.path.join(os.path.dirname(d), "Blocks"))
         self.irs_offline = L.read_ir_folder(os.path.join(os.path.dirname(d), "Impulse Responses"))
         self.fill_list()
+        self.update_new_btn()
         n = sum(len(v) for v in self.presets_offline.values())
         self.status.set("%d rigs in %s%s" % (len(self.files), d, ", %d block presets" % n if n else ""))
 
@@ -524,7 +552,7 @@ class Editor(tk.Tk):
         return index, name, rid
 
     def db_job(self, fn, text, reload=False, restart=False, then=None, refresh=True, load_result=False, confirm=True,
-               restart_action="restart"):
+               restart_action="restart", restart_title=None):
         """fn(br) schreibt in die Datenbank; danach liest das Geraet die aktive Liste neu
         (refresh_lists, ca. 1 s, das geladene Rig bleibt samt Aenderungen; restart=True:
         App-Neustart, noetig fuer Setlist-Aenderungen). reload=True: das geladene Rig danach
@@ -533,25 +561,31 @@ class Editor(tk.Tk):
         load_result=True: fn liefert die ID des Rigs, das danach geladen wird (save_rig_as -
         fn speichert den Stand, darum keine Rueckfrage). confirm=False: der Aufrufer hat schon
         gefragt. restart_action: Aktion der Bruecke, die neu startet (nam-on/nam-off schalten NAM
-        vorher um). Liefert True, wenn der Auftrag gestartet wurde."""
+        vorher um). Ein Neustart zeigt einen Ladebildschirm (restart_title) und behaelt ungespeicherte
+        Aenderungen des geladenen Rigs (live.restart_app keep_edits). Liefert True, wenn der Auftrag
+        gestartet wurde."""
         lr = self.lrig
         if not self.can_write():
             return False
         if self._job:
             self.status.set("Please wait, the device is still busy.")
             return False
-        if confirm and lr.dirty and (reload or restart) and not messagebox.askyesno(
-                APP, "“%s” has unsaved changes on the device that will be lost.\n"
-                     "Continue anyway?%s" % (lr.name, "\n\n(The device app will restart, about 15 s.)" if restart else "")):
+        if confirm and lr.dirty and reload and not restart and not messagebox.askyesno(
+                APP, "“%s” has unsaved changes on the device that will be lost.\nContinue anyway?" % lr.name):
             return False
         setlists, setlist, ids, rig_id = lr.setlists, lr.setlist, lr.setlist_ids, lr.rig_id
-        progress = lambda t: self._inbox.put(lambda: self.status.set(t))
+        screen = None
+        if restart:
+            screen = U.ProgressOverlay(self, restart_title or "Restarting the device app", text,
+                                       "Takes about 15 seconds. Please don’t press anything on the MX5.")
+            say = screen.reporter(self._inbox)
 
         def job(br):
             result = fn(br)
             rid = result if load_result else (rig_id if reload or restart else None)
             if restart:   # lr.setlist darf fn geaendert haben (Setlist umbenannt/geloescht)
-                res = L.restart_app(br, rig_id=rid, setlist=lr.setlist, progress=progress, action=restart_action)
+                res = L.restart_app(br, rig_id=rid, setlist=lr.setlist, progress=say, action=restart_action,
+                                    keep_edits=True)
             elif refresh or load_result:
                 res = L.refresh_lists(br, setlists, setlist, ids, reload_id=rid, reload_row=reload)
             else:
@@ -561,9 +595,21 @@ class Editor(tk.Tk):
 
         def done(res, err):
             if err:
-                messagebox.showwarning(APP, err)
-                self.live_scan_rigs()
+                if screen:
+                    screen.finish(False, "The device app did not come back as expected", err,
+                                  "If the MX5 shows a dialog, please answer it on the display.")
+                    screen.on_close = self.live_scan_rigs
+                else:
+                    messagebox.showwarning(APP, err)
+                    self.live_scan_rigs()
                 return
+            if screen:
+                if res.get("edits_lost"):
+                    screen.finish(True, "The device app is running again", "Your unsaved edits could not be kept: "
+                                  + res["edits_lost"], warn=True)
+                else:
+                    screen.finish(True, "The device app is running again",
+                                  "Your unsaved edits were kept." if res.get("edits_kept") else "", auto_close=900)
             after = (lambda: then(res["result"])) if then else None
             if "rows" in res:
                 self._rig_list_done(res, None)
@@ -767,6 +813,7 @@ class Editor(tk.Tk):
         m.add_command(label="Manage impulse responses …", command=self.open_ir_dialog,
                       state="normal" if (live and getattr(self.session.bridge, "v3", False)) else "disabled")
         m.add_command(label="Tuner …", command=self.open_tuner, state="normal" if live else "disabled")
+        m.add_command(label="Looper …", command=self.open_looper, state="normal" if live else "disabled")
         m.add_command(label="Footswitches & pedals …", command=self.open_hardware,
                       state="normal" if live else "disabled")
         m.add_command(label="Setlist manager …", command=self.open_setlists, state="normal" if w else "disabled")
@@ -880,8 +927,15 @@ class Editor(tk.Tk):
             b.configure(state="normal" if dirty else "disabled")
         self.btn_assign.configure(state="normal" if self.session else "disabled")
 
+    def update_new_btn(self):
+        """Knopf 'New': live mit Schreibzugriff, offline sobald ein Ordner offen ist."""
+        st = "normal" if (self.can_write() if self.session else self.folder) else "disabled"
+        if self.btn_new.cget("state") != st:
+            self.btn_new.configure(state=st)
+
     def draw_chain(self):
         v = self.view
+        self.update_new_btn()
         if v is None:
             if self.session:
                 self.chain.set_chain([], None, True, hint="Reading the rig from the device …")
@@ -915,7 +969,7 @@ class Editor(tk.Tk):
             assign = ("FS %d" % (self.assign - 4), self.assign_module(), others)
         self.chain.set_chain(slots, (self.module, self.half), self.session is not None, v.routing,
                              scene=self.scene is not None, assign=assign)
-        self.rail_rigs.set_active(self.module is not None and not self.scene and not self.assign)
+        self.rail_rigs.set_active(self.module is not None and not self.scene and not self.assign and not self.page)
 
     # ---------------- Scene-Modus ----------------
     def scene_slots(self):
@@ -1278,8 +1332,8 @@ class Editor(tk.Tk):
         self.refresh()
 
     def show_rig_view(self):
-        if self.setlist_mgr:
-            self.close_setlists()
+        if self.page:
+            self.close_page()
             return
         if not self.view:
             return
@@ -1287,10 +1341,67 @@ class Editor(tk.Tk):
             mods = self.view.modules()
             self.pick_module(mods[0] if mods else "Rig")
 
+    # ---- Seiten an Stelle der Hauptansicht (Setlist-Manager, IR- und NAM-Verwaltung) ----
+    def enter_page(self, page, rail):
+        """page (ui.Page / SetlistManager) an Stelle von Rig-Liste, Signalkette und Parameterfeld zeigen."""
+        if self.name_edit is not None:
+            self.end_rename(None)
+        U.ghost_fade(self)   # alte Ansicht blendet zur Seite ueber
+        self._panes = [(w, w.pack_info()) for w in (self.lpanel, self.rpanel, self.center)]
+        for w, _ in self._panes:
+            w.pack_forget()
+        self.page = page
+        page.pack(side="left", fill="both", expand=True, padx=px(8), pady=px(8))
+        rail.set_active(True)
+        self.rail_rigs.set_active(False)
+
+    def leave_page(self, page):
+        """Die Hauptansicht wieder zeigen, wenn page die offene Seite ist (zerstoert sie nicht)."""
+        if page is None or self.page is not page:
+            return
+        U.ghost_fade(self)
+        self.page = None
+        try:
+            page.pack_forget()
+        except tk.TclError:
+            pass
+        for w, info in self._panes:
+            w.pack(**info)
+        self._panes = []
+        for b in (self.rail_sets, self.rail_irs, self.rail_nam):
+            b.set_active(False)
+        self.draw_chain()
+
+    def close_page(self, device=True):
+        """Die offene Seite schliessen (mit allem, was ihr Schliessen am Geraet ausloest)."""
+        page = self.page
+        if page is None:
+            return
+        if page is self.setlist_mgr:
+            self.close_setlists(device=device)
+        elif page.winfo_exists():
+            page.close()
+        self.leave_page(page)   # falls das Schliessen die Seite nicht schon abgemeldet hat
+
+    def switch_page(self, opener):
+        """Eine andere offene Seite schliessen und opener danach ausfuehren - nach dem Geraeteauftrag,
+        den das Schliessen ausloesen kann (Neustart, Auffrischen). True = es war eine andere Seite offen."""
+        if not self.page:
+            return False
+        self.close_page()
+        if self.session:
+            self.when_idle(opener)
+        else:
+            self.after(60, opener)
+        return True
+
     # ---- Setlist-Manager (setlists.py) ----
     def open_setlists(self):
         """Setlist-Manager an Stelle von Rig-Liste, Signalkette und Parameterfeld zeigen."""
         if self.setlist_mgr:
+            return
+        if self.page and self.can_write():
+            self.switch_page(self.open_setlists)
             return
         if not self.can_write():
             messagebox.showinfo(APP, "The setlist manager needs a live connection to the MX5.")
@@ -1298,15 +1409,8 @@ class Editor(tk.Tk):
         if self._job:
             self.status.set("Please wait, the device is still busy.")
             return
-        if self.name_edit is not None:
-            self.end_rename(None)
-        self._panes = [(w, w.pack_info()) for w in (self.lpanel, self.rpanel, self.center)]
-        for w, _ in self._panes:
-            w.pack_forget()
         self.setlist_mgr = SetlistManager(self, self)
-        self.setlist_mgr.pack(side="left", fill="both", expand=True, padx=px(8), pady=px(8))
-        self.rail_sets.set_active(True)
-        self.rail_rigs.set_active(False)
+        self.enter_page(self.setlist_mgr, self.rail_sets)
         self.status.set("Reading setlists from the device …")
         self.setlist_mgr.load()
 
@@ -1320,11 +1424,8 @@ class Editor(tk.Tk):
         if not mgr:
             return
         fx = mgr.effects()
+        self.leave_page(mgr)
         mgr.destroy()
-        for w, info in self._panes:
-            w.pack(**info)
-        self.rail_sets.set_active(False)
-        self.draw_chain()
         if not device or not self.session:
             if fx["restart"]:
                 self.status.set("The MX5 shows the changed setlists after its app restarts.")
@@ -1418,30 +1519,42 @@ class Editor(tk.Tk):
         if self.session:
             self.show_fsbar(True)
 
-    def open_tuner(self):
+    def open_tuner(self, auto=False):
         """Fenster 'Tuner' (nur live): oeffnet die Tuner-Seite am Geraet; das Fenster fragt Note
-        und Cents dann ~30x pro Sekunde ab (tuner.TunerDialog)."""
+        und Cents dann ~30x pro Sekunde ab (tuner.TunerDialog). auto = der Tuner wurde am Geraet
+        geoeffnet (live_sync), dann ohne Warnung bei einem Fehler."""
         if not self.session:
             self.status.set("The tuner is only available in live mode.")
             return
         if self.tuner_dialog and self.tuner_dialog.winfo_exists():
             self.tuner_dialog.raise_()
             return
+        if self.looper_open():
+            self.looper_dialog.close()
+        before = self._board_view
 
         def done(res, err):
             if err:
-                messagebox.showwarning(APP, "Tuner not opened: %s" % err)
+                if auto:
+                    self.status.set("Tuner on the device not shown: %s" % err)
+                else:
+                    messagebox.showwarning(APP, "Tuner not opened: %s" % err)
+                return
+            if not self.session or self.tuner_open():
                 return
             self.tuner_dialog = TunerDialog(self, res)
             self.rail_tuner.set_active(True)
-            self.status.set("Tuner running – the editor polls the device ~30× per second.")
-        self.run_job(L.tuner_open, done, "Opening the tuner on the device …")
+            self.status.set(("Tuner opened on the device" if auto else "Tuner running")
+                            + " – the editor polls the device ~30× per second.")
+        self.run_job(lambda br: L.tuner_open(br, before), done,
+                     "Tuner opened on the device – showing it …" if auto else "Opening the tuner on the device …")
 
     def tuner_dialog_done(self, dlg, device_exited):
         """Beim Schliessen des Tuner-Fensters: Tuner am Geraet verlassen (ausser das Geraet hat ihn
         schon selbst verlassen, z. B. per Fussschalter)."""
         if self.tuner_dialog is dlg:
             self.tuner_dialog = None
+        self._tuner_shut = time.time()
         self.rail_tuner.set_active(False)
         if not self.session:
             return
@@ -1458,6 +1571,61 @@ class Editor(tk.Tk):
 
     def tuner_open(self):
         return bool(self.tuner_dialog and self.tuner_dialog.winfo_exists())
+
+    def open_looper(self, auto=False):
+        """Fenster 'Looper' (nur live): zeigt die Looper-Ansicht am Geraet (auto = dort geoeffnet,
+        live_sync) und bedient den Looper; das Fenster fragt den Zustand selbst ab (looper.LooperDialog)."""
+        if not self.session:
+            self.status.set("The looper is only available in live mode.")
+            return
+        if self.looper_open():
+            self.looper_dialog.raise_()
+            return
+        if self.tuner_open():
+            self.tuner_dialog.close()
+        before = self._board_plain
+
+        def done(res, err):
+            if err:
+                if auto:
+                    self.status.set("Looper on the device not shown: %s" % err)
+                else:
+                    messagebox.showwarning(APP, "Looper not opened: %s" % err)
+                return
+            if not self.session or self.looper_open():
+                return
+            self.looper_dialog = LooperDialog(self, res)
+            self.rail_looper.set_active(True)
+            self.status.set("Looper opened on the device." if auto else "Looper running.")
+        self.run_job(lambda br: L.looper_open(br, before), done,
+                     "Looper opened on the device – showing it …" if auto else "Opening the looper on the device …")
+
+    def looper_dialog_done(self, dlg, device_exited):
+        """Beim Schliessen des Looper-Fensters: Looper-Ansicht am Geraet verlassen (ausser das Geraet
+        hat sie schon selbst verlassen). Der Loop laeuft weiter."""
+        if self.looper_dialog is dlg:
+            self.looper_dialog = None
+        self._looper_shut = time.time()
+        self.rail_looper.set_active(False)
+        if not self.session:
+            return
+        if device_exited:
+            self.status.set("Looper view closed on the device.")
+            return
+
+        def done(res):
+            if isinstance(res, dict) and res.get("ok") is False:
+                self.status.set("Closing the looper: %s" % res.get("err"))
+            else:
+                self.status.set("Looper closed – a running loop keeps playing on the device.")
+        self.session.run(L.looper_close, done)
+
+    def looper_open(self):
+        return bool(self.looper_dialog and self.looper_dialog.winfo_exists())
+
+    def overlay_polls(self):
+        """Tuner oder Looper offen: die fragen selbst ab, der normale Abgleich ruht."""
+        return self.tuner_open() or self.looper_open()
 
     def pick_module(self, m, half=None):
         if self.assign:
@@ -2157,6 +2325,70 @@ class Editor(tk.Tk):
         self.status.set("Saved as a new rig: %s  (run “Sync” on the MX5 if needed)" % path)
         self.refresh()
 
+    def new_rig(self):
+        """Knopf 'New': leeres Rig anlegen (live in der Datenbank, offline als .rig im Ordner)."""
+        if self.session:
+            self.live_new_rig()
+            return
+        if not self.folder or not self.confirm_discard():
+            return
+        name = self.ask_text("New rig", "Name of the new rig:", "NEW RIG", "The rig starts with an empty chain.")
+        if not name or not name.strip():
+            return
+        try:
+            name = L.check_rig_name(name)
+            if any(c in name for c in '\\/:*?"<>|'):
+                raise RigError("The name contains invalid characters")
+            path = os.path.join(self.folder, name + ".rig")
+            if os.path.exists(path):
+                raise RigError("File already exists: %s" % os.path.basename(path))
+            row = {"id": L.new_id(), "content": L.blank_rig_content(name), "author": L.RIG_AUTHOR,
+                   "created_at": int(time.time())}
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write(L.rig_file_json(row))
+        except (OSError, RigError, L.LiveError) as e:
+            messagebox.showerror(APP, str(e))
+            return
+        self.files = sorted(set(self.files) | {os.path.basename(path)})
+        self.fill_list()
+        self.load_rig(path)
+        self.status.set("New rig created: %s" % path)
+
+    def live_new_rig(self):
+        """Leeres Rig in der Datenbank anlegen (in die aktive Setlist, sonst nur All Rigs) und laden;
+        ungespeicherte Aenderungen am geladenen Rig werden vorher abgefragt."""
+        lr = self.lrig
+        if not self.can_write():
+            return
+        if self._job:
+            self.status.set("Please wait, the device is still busy.")
+            return
+        setlist = lr.setlist if lr.setlist != L.ALL_RIGS and lr.setlist in (lr.setlist_ids or {}) else None
+        name = self.ask_text("New rig", "Name of the new rig:", "NEW RIG",
+                             "The rig starts with an empty chain%s." % (" and goes into the setlist “%s”" % setlist
+                                                                        if setlist else ""))
+        if not name or not name.strip():
+            return
+        try:
+            name = L.check_rig_name(name)
+        except L.LiveError as e:
+            messagebox.showwarning(APP, str(e))
+            return
+        sid = lr.setlist_ids.get(setlist) if setlist else None
+
+        def create():
+            self.db_job(lambda br: L.create_rig(br, name, content=L.blank_rig_content(name), setlist_id=sid),
+                        "Creating “%s” …" % name, load_result=True,
+                        then=lambda _: self.status.set("New rig “%s” created and loaded." % name))
+        if lr.dirty:
+            how = self.ask_unsaved("Save before creating “%s”?" % name)
+            if how is None:
+                return
+            if how != "discard":
+                self.live_store(how, then=create)
+                return
+        create()
+
     def revert(self):
         if self.session:
             self.live_revert()
@@ -2220,6 +2452,9 @@ class Editor(tk.Tk):
             version = bridge.ping()
             if bridge.vnum < MIN_BRIDGE:
                 raise BridgeTooOld(version)
+            model = L.device_model(bridge)
+            if model not in (None, "MX5"):
+                raise DeviceNotSupported(model)
         except Exception:
             bridge.close()
             raise
@@ -2258,6 +2493,11 @@ class Editor(tk.Tk):
             self._connect_err = ("The MX5 runs %s – this editor needs bridge firmware %d.%d or newer.\n"
                                  "Please flash MX5Bridge %d.%d (see ANLEITUNG.txt in its folder)."
                                  % ((e,) + MIN_BRIDGE + MIN_BRIDGE))
+        elif isinstance(e, DeviceNotSupported):
+            self._connect_err = ("This is a HeadRush %s. The editor only supports the MX5 so far – it would "
+                                 "load the wrong rigs and press the wrong switches on other devices.\n"
+                                 "You can help: run HeadRush_Bridge_Diagnose.exe and send its log (%s).\n"
+                                 "Editing .rig files without a connection works." % (e, TESTERS_URL))
         else:
             self._connect_err = ("No MX5 found (%s).\nIs it connected via USB and switched on? "
                                  "The MIDI port appears about 10 s after it starts." % e)
@@ -2290,6 +2530,7 @@ class Editor(tk.Tk):
         self.status.set("Connected. Reading the active rig …")
         self.live_reload(then=self.live_scan_rigs)
         self.nam_read()
+        self.block_prefetch()
         self._poll_job = self.after(POLL_MS, self.live_poll)
 
     # ---- Verbindungsverlust (USB gezogen, Geraet aus, App-Neustart am Geraet) ----
@@ -2361,6 +2602,10 @@ class Editor(tk.Tk):
         if not self.session:
             return
         self.after_cancel(self._poll_job)
+        for w in self.winfo_children():   # laufende Ladebildschirme bekommen keine Antwort mehr
+            if isinstance(w, U.ProgressOverlay) and w.running:
+                w.finish(False, "The connection to the MX5 was lost" if lost else "Disconnected",
+                         "The action did not finish." + (" The editor reconnects by itself." if lost else ""))
         if self.tuner_open() and lost:
             self.tuner_dialog.close(quiet=True)
         elif self.tuner_open():
@@ -2376,6 +2621,19 @@ class Editor(tk.Tk):
                 pass
         self.tuner_dialog = None
         self.rail_tuner.set_active(False)
+        if self.looper_open():
+            self.looper_dialog.close(quiet=True)
+            if not lost:
+                for _ in range(50):
+                    if self.session.idle():
+                        break
+                    time.sleep(0.01)
+                try:
+                    L.looper_close(self.session.bridge)
+                except Exception:
+                    pass
+        self.looper_dialog = None
+        self.rail_looper.set_active(False)
         self.close_setlists(device=False)
         self.close_hardware()   # beendet auch den Scene-Modus (Pfeile und Punkt in der Kopfzeile zurueck)
         self.session.close()
@@ -2505,7 +2763,7 @@ class Editor(tk.Tk):
         if not self.session:
             return
         delay = POLL_RETRY
-        if not self._busy and not self._job and self.session.idle() and not self.tuner_open() \
+        if not self._busy and not self._job and self.session.idle() and not self.overlay_polls() \
                 and time.time() - self._last_write >= WRITE_QUIET:
             self.live_sync()
             delay = max(POLL_MS, int(self._sync_s * 1000 * POLL_SHARE))
@@ -2518,7 +2776,8 @@ class Editor(tk.Tk):
             overview = lr.overview_paths()
             chain = self.chain_paths()
             fs = L.fs_display_paths()
-            extra = list(chain) + fs
+            extra = list(chain) + fs + [L.BOARD]
+            board = [None]
             m = self.module
             if m and m in lr.loaded_modules:
                 extra += [lr.path(m, p) for p in self.all_params(m) if lr.path(m, p) not in extra]
@@ -2538,6 +2797,13 @@ class Editor(tk.Tk):
                 if p in overview:
                     changed[0] |= lr.apply_overview(p, info)
                     return
+                if p == L.BOARD:
+                    board[0] = info.get("string") if info.get("ok") else None
+                    if board[0] in L.VIEW_MODES and "index" in info:
+                        self._board_view = info
+                        if board[0] != "Looper":
+                            self._board_plain = info
+                    return
                 if not info.get("ok") or now - self._written.get(p, 0) < WRITE_GRACE:
                     return
                 old = lr.values.get(p)
@@ -2552,6 +2818,12 @@ class Editor(tk.Tk):
 
             def done():
                 self._sync_s = time.time() - now
+                if board[0] == "Tuner" and not self.tuner_open() and not self._job \
+                        and time.time() - self._tuner_shut > TUNER_REOPEN_S:
+                    self.open_tuner(auto=True)   # am Geraet geoeffnet: Tuner-Fenster mitoeffnen
+                elif board[0] == "Looper" and not self.looper_open() and not self._job \
+                        and time.time() - self._looper_shut > LOOPER_REOPEN_S:
+                    self.open_looper(auto=True)  # ebenso den Looper
                 if changed[0]:
                     self.status.set("Rig or chain changed on the device – rereading …")
                     self.live_reload()
@@ -2929,10 +3201,38 @@ class Editor(tk.Tk):
             self.run_job(L.save_rig, done, "Saving “%s” …" % self.lrig.name)
 
     # ---- Bloecke ----
+    def block_prefetch(self):
+        """Blockliste und Preset-Namen gleich nach dem Verbinden im Hintergrund lesen (Warteschlange
+        der Sitzung, kein Job), damit die Blockauswahl beim ersten Oeffnen nicht auf das Geraet wartet.
+        Wer sie vorher braucht, haengt sich an _block_waiters."""
+        session, lr = self.session, self.lrig
+        if not session:
+            return
+        self._block_waiters = []
+
+        def job(br):
+            return {"types": br.entries(L.LiveRig.slot_path(1)), "presets": L.db_preset_names(br)}
+
+        def done(res):
+            if session is not self.session:
+                return
+            waiters, self._block_waiters = self._block_waiters or [], None
+            if isinstance(res, dict) and res.get("ok") is not False:
+                lr.block_types = lr.block_types or res["types"]
+                if lr.presets is None:
+                    lr.presets = res["presets"]
+            for fn in waiters:   # bei einem Fehler lesen sie selbst (eigener Job mit Meldung)
+                fn()
+        session.run(job, done)
+
     def live_block_types(self, slot, then):
         lr = self.lrig
         if lr.block_types:
             then(lr.block_types)
+            return
+        if self._block_waiters is not None:
+            self.status.set("Reading block list …")
+            self._block_waiters.append(lambda: self.live_block_types(slot, then))
             return
 
         def done(res, err):
@@ -2952,6 +3252,9 @@ class Editor(tk.Tk):
         lr = self.lrig
         if lr.presets is not None:
             then(lr.presets or {})
+            return
+        if self._block_waiters is not None:
+            self._block_waiters.append(lambda: self.live_presets(then))
             return
 
         def done(res, err):
@@ -3234,7 +3537,7 @@ class Editor(tk.Tk):
         if not meter.winfo_exists():
             self._meter = None
             return
-        if self._job or self.tuner_open():
+        if self._job or self.overlay_polls():
             self.after(METER_SLOW_MS, lambda: self.meter_tick(token))
             return
 
@@ -3493,12 +3796,18 @@ class Editor(tk.Tk):
                         "NAM is %s." % ("on" if self.nam_active() else "off"))))
 
     def open_nam_dialog(self):
-        """NAM-Modelle des Geraets verwalten (hochladen, umbenennen, sortieren, loeschen)."""
+        """NAM-Modelle des Geraets verwalten (hochladen, umbenennen, sortieren, loeschen) - eigene
+        Seite an Stelle der Hauptansicht (nam.NAMPage)."""
         if not self.can_write():
             return
         if self.nam_dialog and self.nam_dialog.winfo_exists():
-            self.nam_dialog.close()
+            return   # schon offen
         nam = self.lrig.nam
+        if not nam or not nam.get("installed"):
+            messagebox.showinfo(APP, "This firmware has no NAM mod (MX5 Bridge 0.7 built with NAM is needed).")
+            return
+        if self.switch_page(self.open_nam_dialog):
+            return
 
         def job(br):
             st = L.nam_status(br)
@@ -3506,15 +3815,14 @@ class Editor(tk.Tk):
 
         def done(res, err):
             if err:
-                messagebox.showwarning(APP, "Could not read the NAM models:\n%s" % err)
+                page.load_failed("Could not read the NAM models:\n%s" % err)
                 return
             self.lrig.nam, self.lrig.nam_models = res["nam"], res["models"]
-            self.nam_dialog = NAMDialog(self, res)
-            self.rail_nam.set_active(True)
-        if not nam or not nam.get("installed"):
-            messagebox.showinfo(APP, "This firmware has no NAM mod (MX5 Bridge 0.7 built with NAM is needed).")
-            return
-        self.run_job(job, done, "Reading NAM models from the device …")
+            page.loaded(res)
+        # die Seite geht sofort auf und zeigt "Loading …", bis die Liste da ist
+        page = self.nam_dialog = NAMPage(self, None)
+        self.enter_page(page, self.rail_nam)
+        self.fetch(job, done, "Reading NAM models from the device …", alive=lambda: not page.closed)
 
     def nam_browser_done(self, dlg):
         if self.nam_browser is dlg:
@@ -3523,7 +3831,6 @@ class Editor(tk.Tk):
     def manage_nam(self):
         """Symbolleiste 'NAM': Modelle verwalten (nur live mit NAM-Firmware)."""
         if self.nam_dialog and self.nam_dialog.winfo_exists():
-            self.nam_dialog.raise_()
             return
         if not self.can_write():
             self.status.set("NAM models can be managed only in live mode (MX5 Bridge 0.7 with NAM).")
@@ -3535,19 +3842,47 @@ class Editor(tk.Tk):
         die Mod liest den NAM-Ordner nur einmal je App-Start."""
         if self.nam_dialog is dlg:
             self.nam_dialog = None
-            self.rail_nam.set_active(False)
+        self.leave_page(dlg)
         if not self.session:
             return
-        if not dlg.changed:
-            self.nam_read()
-            return
-        if not self.nam_active():
-            self.nam_read(then=lambda: self.status.set("NAM models changed – they are used once NAM is on."))
-            return
-        if not self.db_job(lambda br: None, "Restarting the device app so it loads the NAM models …", restart=True,
-                           then=lambda _: self.nam_read()):
-            self.nam_read()
-            self.status.set("The MX5 uses the changed NAM models after the next restart of the device app.")
+        def go():
+            if not dlg.changed:
+                self.nam_read()
+            elif not self.nam_active():
+                self.nam_read(then=lambda: self.status.set("NAM models changed – they are used once NAM is on."))
+            elif not self.db_job(lambda br: None, "Loading the changed NAM models …", restart=True,
+                                 restart_title="Restarting the device app", then=lambda _: self.nam_read()):
+                self.nam_read()
+                self.status.set("The MX5 uses the changed NAM models after the next restart of the device app.")
+        self.when_idle(go)
+
+    def fetch(self, fn, done, text, alive=lambda: True):
+        """Lesen fuer eine schon offene Seite/Ansicht: run_job, sobald kein anderer Auftrag laeuft
+        (statt abzulehnen, die Seite zeigt so lange ihren Ladehinweis). alive() = False: aufgeben."""
+        session = self.session
+
+        def go():
+            if self.session is not session or not session or not alive():
+                return
+            if self._job:
+                self.after(100, go)
+                return
+            self.run_job(fn, lambda res, err: done(res, err) if alive() else None, text)
+        go()
+
+    def when_idle(self, fn, tries=600):
+        """fn ausfuehren, sobald kein Geraeteauftrag mehr laeuft (z. B. der Neustart nach dem Schliessen
+        des IR-/NAM-Dialogs, waehrend dessen letzter Auftrag noch die Liste liest - db_job lehnte dann
+        ab und der Neustart fiel aus). Immer erst nach einem Moment, damit ein gerade geschlossenes
+        Overlay nicht im Hintergrundbild des naechsten steht."""
+        def check(left):
+            if not self.session:
+                return
+            if self._job and left > 0:
+                self.after(100, lambda: check(left - 1))
+                return
+            fn()
+        self.after(60, lambda: check(tries))
 
     # ---- Einstellungen ----
     def open_settings(self):
@@ -3564,6 +3899,8 @@ class Editor(tk.Tk):
         """Einstellung wurde geaendert (settings.SettingsDialog): sofort anwenden, was ohne Neustart geht."""
         if key == "footswitch_bar" and self.session and not self.hw_panel:
             self.show_fsbar(True)
+        elif key == "animations":
+            U.ANIM = self.prefs["animations"]
 
     def settings_done(self, dlg):
         if self.settings_dialog is dlg:
@@ -3580,32 +3917,58 @@ class Editor(tk.Tk):
         return lbl
 
     def open_ir_dialog(self, m=None, half="A"):
-        """IR-Auswahl fuer Block m (Haelfte A/B) oder, ohne m, die Verwaltung der IR-Dateien.
-        Live kommt die Liste vom Geraet, offline aus 'Impulse Responses'."""
+        """IR-Auswahl fuer Block m (Haelfte A/B, Overlay) oder, ohne m, die Verwaltung der IR-Dateien
+        (eigene Seite). Live kommt die Liste vom Geraet, offline aus 'Impulse Responses'."""
+        if m is None:
+            self.open_ir_page()
+            return
         if self.ir_dialog and self.ir_dialog.winfo_exists():
             self.ir_dialog.close()
         current = None
         if m:
             info = self.param_info(m, "IR2" if half == "B" else "IR")
             current = info.get("string", "") if info else ""
-        on_pick = (lambda folder, name: self.ir_set(m, half, folder, name)) if m else None
+        on_pick = lambda folder, name: self.ir_set(m, half, folder, name)
         if not self.session:
             self.ir_dialog = IRDialog(self, self.irs_offline or L.read_ir_folder(""), current, on_pick)
-            self.rail_irs.set_active(True)
             return
 
         def done(res, err):
             if err:
-                messagebox.showwarning(APP, "Could not read the IR files:\n%s" % err)
-                return
-            self.ir_dialog = IRDialog(self, res, current, on_pick, manage=True, audition=self.prefs.get("audition"))
-            self.rail_irs.set_active(True)
-        self.run_job(L.db_irs, done, "Reading IR files from the device …")
+                dlg.load_failed("Could not read the IR files:\n%s" % err)
+            else:
+                dlg.loaded(res)
+        dlg = self.ir_dialog = IRDialog(self, None, current, on_pick, manage=True, audition=self.prefs.get("audition"))
+        self.fetch(L.db_irs, done, "Reading IR files from the device …", alive=lambda: not dlg.closed)
+
+    def open_ir_page(self):
+        """IR-Dateien verwalten als eigene Seite an Stelle der Hauptansicht (irs.IRPage)."""
+        if self.ir_dialog and self.ir_dialog.winfo_exists():
+            if self.ir_dialog is self.page:
+                return   # schon offen
+            self.ir_dialog.close()
+        if self.switch_page(self.open_ir_page):
+            return
+
+        def show(res):
+            page = self.ir_dialog = IRPage(self, res, manage=self.session is not None)
+            self.enter_page(page, self.rail_irs)
+            return page
+        if not self.session:
+            show(self.irs_offline or L.read_ir_folder(""))
+            return
+
+        def done(res, err):
+            if err:
+                page.load_failed("Could not read the IR files:\n%s" % err)
+            else:
+                page.loaded(res)
+        page = show(None)   # sofort auf, "Loading IRs …" bis die Liste da ist
+        self.fetch(L.db_irs, done, "Reading IR files from the device …", alive=lambda: not page.closed)
 
     def manage_irs(self):
         """Symbolleiste 'IRs': IR-Dateien verwalten (live ab Bruecke 0.3, offline aus dem Ordner)."""
-        if self.ir_dialog and self.ir_dialog.winfo_exists():
-            self.ir_dialog.raise_()
+        if self.ir_dialog and self.ir_dialog is self.page:
             return
         if self.session and not getattr(self.session.bridge, "v3", False):
             self.status.set("Managing IR files needs MX5 Bridge 0.3 or newer.")
@@ -3642,7 +4005,7 @@ class Editor(tk.Tk):
         damit das MX5 sie sieht (es liest den Dateibaum nur beim Start)."""
         if self.ir_dialog is dlg:
             self.ir_dialog = None
-            self.rail_irs.set_active(False)
+        self.leave_page(dlg)
         pick = (lambda: dlg.on_pick(*dlg.pick_args)) if (dlg.on_pick and dlg.pick_args) else (lambda: None)
         if not dlg.changed or not self.session:
             pick()
@@ -3651,9 +4014,12 @@ class Editor(tk.Tk):
             messagebox.showinfo(APP, "The MX5 sees the changed IR files only after the next power-up.")
             pick()
             return
-        # erst der Neustart (die Auswahl darf eine gerade hochgeladene Datei sein), dann die IR setzen
-        self.db_job(lambda br: None, "Restarting the device app so it sees the IR files …", restart=True,
-                    then=lambda _: pick())
+
+        def go():   # erst der Neustart (die Auswahl darf eine gerade hochgeladene Datei sein), dann die IR setzen
+            if not self.db_job(lambda br: None, "Loading the changed IR files …", restart=True,
+                               restart_title="Restarting the device app", then=lambda _: pick()):
+                self.status.set("The MX5 sees the changed IR files after the next restart of the device app.")
+        self.when_idle(go)
 
 
 if __name__ == "__main__":

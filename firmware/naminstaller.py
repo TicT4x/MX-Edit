@@ -18,6 +18,11 @@ OUT_GLOB = 'HeadRush * Firmware Updater (NAM mod).exe'
 MX5_NAME = 'HeadRush MX5 Firmware Updater (NAM mod).exe'
 
 
+def out_name(device):
+    """Ausgabename des Installers fuer ein Geraet ('MX5', 'Pedalboard', 'Gigboard')."""
+    return MX5_NAME.replace('MX5', device)
+
+
 class NamError(Exception):
     pass
 
@@ -111,17 +116,18 @@ def find_window(pid, timeout=10.0, alive=None):
     return None
 
 
-def run(exe, workdir, log, cancelled, on_window=None):
-    """Installer im Arbeitsordner starten und auf seine MX5-Ausgabe warten. cancelled() -> True
+def run(exe, workdir, log, cancelled, on_window=None, device='MX5'):
+    """Installer im Arbeitsordner starten und auf seine Ausgabe fuer device warten. cancelled() -> True
     bricht ab. Sobald die Ausgabe fertig ist, wird der Installer geschlossen: sein Fertig-Bildschirm
     bietet "Open" fuer den reinen NAM-Updater an, und genau den haben Nutzer dann statt des
     Bridge-Updaters geflasht. on_window(hwnd) bekommt sein Fenster (zum Anordnen).
     Liefert (Pfad der "(NAM mod).exe", Pfad der "(stock).exe" oder None)."""
+    want = out_name(device)
     os.makedirs(workdir, exist_ok=True)
     for old in glob.glob(os.path.join(workdir, 'HeadRush * Firmware Updater (*).exe')):
         os.remove(old)
     log('The NAM mod installer opens in its own window. In it:\n'
-        '  1. choose MX5 and the number of NAM instances,\n'
+        '  1. choose %s and the number of NAM instances,\n' % device +
         '  2. click "Install NAM Mod".\n'
         'Then just wait: the patcher closes the NAM installer by itself and adds the bridge.\n'
         'Do NOT click "Open" in the NAM installer - that updater has no bridge.')
@@ -136,12 +142,12 @@ def run(exe, workdir, log, cancelled, on_window=None):
             raise NamError('Cancelled.')
         made = glob.glob(os.path.join(workdir, OUT_GLOB))
         # der Installer schreibt den Modellnamen klein ("HeadRush mx5 ...") - ohne Gross/Klein vergleichen
-        mx5 = [p for p in made if os.path.basename(p).lower() == MX5_NAME.lower()]
+        mx5 = [p for p in made if os.path.basename(p).lower() == want.lower()]
         for p in made:
             if p not in mx5 and p not in told_other:
                 told_other.add(p)
-                log('The NAM installer built "%s" - that is not the MX5. Choose MX5 and click '
-                    '"Install NAM Mod" again.' % os.path.basename(p))
+                log('The NAM installer built "%s" - that is not the %s. Choose %s and click '
+                    '"Install NAM Mod" again.' % (os.path.basename(p), device, device))
         if mx5 and _stable(mx5[0]):
             stock = mx5[0].replace('(NAM mod)', '(stock)')
             # die Stock-Kopie schreibt der Installer direkt danach - kurz darauf warten
@@ -157,10 +163,10 @@ def run(exe, workdir, log, cancelled, on_window=None):
                 log('The NAM installer has built its part. Now adding the bridge ...')
             return mx5[0], (stock if os.path.exists(stock) else None)
         if proc.poll() is not None:
-            made = glob.glob(os.path.join(workdir, MX5_NAME))
+            made = [p for p in glob.glob(os.path.join(workdir, OUT_GLOB)) if os.path.basename(p).lower() == want.lower()]
             if made and _stable(made[0], 0.5):
                 continue
-            raise NamError('The NAM mod installer was closed before it built the MX5 updater.')
+            raise NamError('The NAM mod installer was closed before it built the %s updater.' % device)
         time.sleep(0.5)
 
 

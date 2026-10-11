@@ -1,14 +1,14 @@
-# MX5 Bridge + MX5 Editor (with NAM-Mod Support)
+# MX5 Bridge + MX-Edit (with NAM-Mod Support)
 
 **Unofficial** tooling for the **HeadRush MX5** guitar processor:
 
 - **MX5 Bridge**: a small add-on to the stock MX5 firmware 2.7. It gives the device's internal
   parameter tree, its rig database and its files to a computer over **USB-MIDI (SysEx)**.
-- **MX5 Editor**: a desktop editor for Windows that uses the bridge. It works like the
+- **MX-Edit**: a desktop editor for Windows that uses the bridge. It works like the
   HeadRush web editor, but **live**: every change is heard on the device right away, and changes
   made on the device show up in the editor.
 
-![MX5 Editor, connected live to an MX5 with the NAM mod](docs/editor.png)
+![MX-Edit, connected live to an MX5 with the NAM mod](docs/editor.png)
 
 > **Not affiliated with HeadRush or inMusic.** HeadRush is a trademark of inMusic Brands.
 > Installing modified firmware is **at your own risk**. Read the [installation](#installation)
@@ -23,7 +23,7 @@ More details and troubleshooting: [INSTALL.md](INSTALL.md).
 **0. Back up your rigs.** On the MX5, enable *USB transfer mode* (Global Settings) and copy the
 `Rigs`, `Setlists`, `Blocks` and `Impulse Responses` folders to your PC.
 
-**1. Download** `MX5Bridge_0.7_Patcher.exe` and `MX5Editor_0.9.exe` from the
+**1. Download** `MX5Bridge_0.7_Patcher.exe` and `MX-Edit_0.9.exe` from the
 [latest release](../../releases/latest). Nothing has to be installed, Python is not needed.
 Windows SmartScreen may warn about an unknown publisher: *More info › Run anyway*.
 
@@ -51,7 +51,7 @@ When the patcher says **Updater ready**, you have `MX5Bridge_0.7_Updater` (or
 
 Your rigs, setlists, presets and IRs stay on the device.
 
-**4. Start the editor.** Double-click `MX5Editor_0.9.exe`. About 10 seconds after the MX5 has
+**4. Start the editor.** Double-click `MX-Edit_0.9.exe`. About 10 seconds after the MX5 has
 started, the editor connects by itself. With NAM, manage your `.nam` models with the **NAM**
 button in the editor's left bar.
 
@@ -66,7 +66,7 @@ button in the editor's left bar.
 > longer starts, hold **footswitches 1 + 2** while switching it on (recovery mode).
 > ⚠️ Footswitches **2 + 3** at power-on is a **factory reset** and erases your rigs.
 
-The editor and the patcher are also available as Python source (`MX5Editor_0.9.zip`,
+The editor and the patcher are also available as Python source (`MX-Edit_0.9.zip`,
 `MX5Bridge_0.7_Patcher.zip`), see [INSTALL.md](INSTALL.md#run-from-source-optional).
 
 ## What the editor can do
@@ -84,6 +84,8 @@ The editor and the patcher are also available as Python source (`MX5Editor_0.9.z
   and rig tempo.
 - **Impulse responses**: upload, rename, delete and organise IR files, and audition them while
   browsing.
+- **Looper**: record/overdub, start/stop, peel, clear, reverse, half/double speed and length,
+  loop level, feedback, pre/post position and the footswitch layout, with a live position ring.
 - **Tuner** and **input/output level meters**.
 - **Backup / restore** of everything (rigs, setlists, block presets) as the same `.rig`,
   `.setlist` and `.block` files the MX5 writes in USB transfer mode.
@@ -131,7 +133,7 @@ neither Python nor Linux/WSL. It can also run the NAM mod's own installer for yo
 ## Repository layout
 
 ```
-editor/            MX5 Editor (Python/tkinter) + bridge.py client
+editor/            MX-Edit (Python/tkinter) + bridge.py client
 editor/werkzeuge/  test program, regression test, catalog builder (developer tools)
 firmware/          bridge firmware: patcher, device files (mod/), build scripts
 docs/PROTOCOL.md   SysEx protocol and useful device property paths
@@ -156,7 +158,7 @@ This only works with custom firmware. I wouldn't advise installing random stuff 
 
 ## Credits & licences
 
-- MX5 Bridge and MX5 Editor: [MIT licence](LICENSE).
+- MX5 Bridge and MX-Edit: [MIT licence](LICENSE).
 - [`firmware/bin/sqlite3`](firmware/bin): a static ARM build of [SQLite](https://sqlite.org)
   (public domain), built with `firmware/tools/build-sqlite3.sh`.
 - NAM support uses the [HeadRush NAM mod](https://github.com/lolgab/headrush-nam-mod) by lolgab

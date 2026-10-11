@@ -41,7 +41,7 @@ gadget_up() {
 		mkdir -p strings/0x409 || exit 1
 		cat /tmp/evil-serial-number > strings/0x409/serialnumber 2>/dev/null
 		echo "HeadRush" > strings/0x409/manufacturer || exit 1
-		echo "HeadRush MX5 Bridge" > strings/0x409/product || exit 1
+		echo "HeadRush @DEVICE@ Bridge" > strings/0x409/product || exit 1
 		mkdir -p configs/c.1/strings/0x409 || exit 1
 		echo "MIDI" > configs/c.1/strings/0x409/configuration || exit 1
 		echo 100 > configs/c.1/MaxPower || exit 1
@@ -93,7 +93,7 @@ daemon)
 			echo "MX5 Bridge @VERSION@ ist aktiv."
 			echo
 			echo "USB-MIDI ohne USB-Audio abschalten: in diesem Ordner eine Datei"
-			echo "usb_midi_aus.txt anlegen und das MX5 neu starten."
+			echo "usb_midi_aus.txt anlegen und das @DEVICE@ neu starten."
 		} > "$DIR/firmware_aktiv.txt"
 		sync
 	fi

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""MX5 Bridge firmware patcher - builds the bridge updater from the OFFICIAL HeadRush MX5 2.7
-updater on the user's own computer (like the NAM mod does), so no HeadRush code is shipped.
+"""MX5 Bridge firmware patcher - builds the bridge updater from the OFFICIAL HeadRush 2.7
+updater (MX5; Pedalboard/Gigboard experimental - model from the FIT header, --model) on the user's own computer (like the NAM mod does), so no HeadRush code is shipped.
 
 Usage:
     python patcher.py                      download the official updater from inMusic, patch it
@@ -21,9 +21,7 @@ FROZEN = getattr(sys, 'frozen', False)
 BASE = os.path.dirname(os.path.abspath(sys.executable)) if FROZEN else HERE
 import bridgepatch, ext4, fitpatch, sevenzip, xzblocks
 
-OFFICIAL_URL = ('https://cdn.inmusicbrands.com/HeadRush/FW/Aug24_Firmware_Updates/MX5%20v2.7/'
-                'Windows%20Updater/HeadRush%20MX5%202.7%20Firmware%20Updater%20-%20Win.exe.zip')
-STOCK_SHA1 = '82b5639ceaba94d3c07b8880694d5de2e21b9f43'      # Update.img im Updater 2.7
+MODEL_KEYS = [m['key'] for m in bridgepatch.offered()]   # mx5 (+ pedalboard, gigboard in der Testausgabe)
 UPDATER_FILES = ('FirmwareUpdater.exe', 'libusb-1.0.dll', 'Background.png')
 SIG7Z = b"7z\xbc\xaf\x27\x1c"
 
@@ -46,11 +44,11 @@ class Fail(Exception):
 
 
 # ---- Eingabe besorgen ----
-def download(dest):
-    say('Downloading the official HeadRush MX5 2.7 updater from inMusic ...')
-    say('  ' + OFFICIAL_URL)
+def download(dest, model):
+    say('Downloading the official HeadRush %s 2.7 updater from inMusic ...' % model['device'])
+    say('  ' + model['url'])
     tmp = dest + '.part'
-    with urllib.request.urlopen(OFFICIAL_URL, timeout=60) as r, open(tmp, 'wb') as f:
+    with urllib.request.urlopen(model['url'], timeout=60) as r, open(tmp, 'wb') as f:
         total = int(r.headers.get('Content-Length') or 0)
         got, last = 0, 0
         while True:
@@ -143,7 +141,14 @@ def unpack(src, work):
 
 
 # ---- Patchen ----
-def patch(raw, nam_info=None, need_nam=False):
+def model_of(raw):
+    """Modell aus dem FIT-Kopf des Update.img ('compatible' = inmusic,hg04 / mg01 / hg02)."""
+    _, props = fitpatch.parse(raw)
+    _, _, _, off, ln = fitpatch.get(props, '', 'compatible')
+    return bridgepatch.model_of_fit(raw[off:off + ln].rstrip(b'\0').decode('ascii', 'replace'))
+
+
+def patch(raw, nam_info=None, need_nam=False, device=None):
     if not fitpatch.verify(raw):
         raise Fail('Update.img is damaged (checksum mismatch)')
     say('Unpacking the root file system ...')
@@ -156,7 +161,7 @@ def patch(raw, nam_info=None, need_nam=False):
             return fs.cat(p)
         except FileNotFoundError:
             return b''
-    files, nam = bridgepatch.plan(cat, nam_info, log=say)
+    files, nam = bridgepatch.plan(cat, nam_info, log=say, device=device)
     if need_nam and not nam:
         raise Fail('This file does not contain the NAM mod. Choose the "(NAM mod).exe" made by the NAM '
                    'installer, or untick "Use a firmware file I already have" so the patcher runs the NAM installer.')
@@ -186,67 +191,115 @@ def patch(raw, nam_info=None, need_nam=False):
     return new, nam
 
 
-def config_json(nam):
-    title = 'MX5Bridge %s%s' % (bridgepatch.VERSION, ' + NAM' if nam else '')
+def config_json(nam, device='MX5', original=None):
+    """Config.json des Updaters. original: die des offiziellen Updaters (Text) - dann bleibt alles
+    ausser Titel und Startknopf wie bei HeadRush (beim Gigboard steht z. B. "HeadRush Gigboard "
+    mit Leerzeichen als deviceName; ob der Updater das Geraet daran erkennt, ist unbekannt)."""
+    title = '%s %s%s' % (bridgepatch.LABEL, bridgepatch.VERSION, ' + NAM' if nam else '')
+    if original:
+        try:
+            cfg = json.loads(original)
+            cfg['config']['appName'] = 'HeadRush %s v2.7 + %s (unofficial)' % (device, title)
+            cfg['config']['startButtonText'] = 'Install %s' % title
+            return json.dumps(cfg, indent=4, ensure_ascii=False) + '\n'
+        except (ValueError, KeyError, TypeError):
+            pass
     cfg = {"config": {
-        "appName": "HeadRush MX5 v2.7 + %s (unofficial)" % title,
+        "appName": "HeadRush %s v2.7 + %s (unofficial)" % (device, title),
         "startButtonText": "Install %s" % title,
-        "deviceName": "HeadRush MX5",
-        "notConnectedTitle": "HEADRUSH MX5 IS NOT DETECTED",
-        "notConnectedSubtitle": "Put the HeadRush MX5 into firmware update mode and connect it to this computer via USB",
-        "notConnectedDescription": "To put the HeadRush MX5 into firmware update mode, go to the \u201cglobal settings\u201d "
-                                   "page, tap the more actions button (\u2026), and tap \u201cfirmware update\u201d. ",
-        "notPoweredTitle": "HEADRUSH MX5 IS NOT PLUGGED IN",
+        "deviceName": "HeadRush %s" % device,
+        "notConnectedTitle": "HEADRUSH %s IS NOT DETECTED" % device.upper(),
+        "notConnectedSubtitle": "Put the HeadRush %s into firmware update mode and connect it to this computer via USB" % device,
+        "notConnectedDescription": "To put the HeadRush %s into firmware update mode, go to the \u201cglobal settings\u201d "
+                                   "page, tap the more actions button (\u2026), and tap \u201cfirmware update\u201d. " % device,
+        "notPoweredTitle": "HEADRUSH %s IS NOT PLUGGED IN" % device.upper(),
         "notPoweredSubtitle": "Please connect the power supply and retry",
-        "doNotSwitchOff": "Do not power off or disconnect the HeadRush MX5",
+        "doNotSwitchOff": "Do not power off or disconnect the HeadRush %s" % device,
         "startButtonY": 0.75, "startButtonWidth": 0.6, "startButtonHeight": 0.07,
         "allowUpdateOnBattery": True, "forceUpdate": False}}
     return json.dumps(cfg, indent=4, ensure_ascii=False) + '\n'
 
 
-def install_hint(out, nam):
+def install_hint(out, nam, device='MX5'):
     return ('To install:\n'
-            '  1. Connect the MX5 to power and USB.\n'
-            '  2. On the MX5: Global Settings > ... (more) > Firmware Update.\n'
-            '  3. Run FirmwareUpdater.exe in %s and click "Install MX5Bridge %s%s".\n'
+            '  1. Connect the %s to power and USB.\n'
+            '  2. On the %s: Global Settings > ... (more) > Firmware Update.\n'
+            '  3. Run FirmwareUpdater.exe in %s and click "Install %s %s%s".\n'
             '     Do not disconnect until it has finished.'
-            % (out, bridgepatch.VERSION, ' + NAM' if nam else ''))
+            % (device, device, out, bridgepatch.LABEL, bridgepatch.VERSION, ' + NAM' if nam else ''))
 
 
-def build(src=None, out=None, need_nam=False, out_parent=None):
+def risk_note(model):
+    """Warnung fuer Modelle, auf denen die Bruecke noch nicht geprueft ist (None = MX5)."""
+    if model['tested']:
+        return None
+    rec = ('If it does not start any more: %s and flash the official updater.' % model['recovery']
+           if model['recovery'] else
+           'The %s has NO recovery mode - if the firmware does not start, it cannot be re-flashed '
+           'with a footswitch combination.' % model['device'])
+    return ('EXPERIMENTAL: the bridge has not been tested on a real HeadRush %s yet. '
+            'The firmware changes are the same as on the tested MX5, but you are one of the first testers. %s'
+            % (model['device'], rec))
+
+
+def updater_name(model):
+    """Dateiname des geladenen Original-Updaters neben Skript/EXE."""
+    return 'HeadRush_%s_2.7_Updater.zip' % model['device']
+
+
+def build(src=None, out=None, need_nam=False, out_parent=None, model=None):
     """Updater bauen. src: Eingabe (None = offiziellen Updater laden bzw. den schon geladenen
     nehmen), out: Ausgabeordner (None = neben Skript/EXE). need_nam: Eingabe muss die NAM-Mod
     enthalten (GUI: Haken NAM + eigene Datei). out_parent: Ordner, in dem der Ausgabeordner
-    MX5Bridge_<v>[_NAM]_Updater angelegt wird (Standard neben Skript/EXE). Liefert (Ausgabeordner, nam, fehlende Dateien);
-    Fehler als Fail/PatchError/Ext4Error."""
+    MX5Bridge_<v>[_<Geraet>][_NAM]_Updater angelegt wird (Standard neben Skript/EXE; beim MX5
+    ohne Geraetenamen wie bisher). model: 'mx5'/'pedalboard'/'gigboard' - fuer den Download
+    (Standard MX5) und als Pruefung einer eigenen Datei (None = aus der Datei erkennen).
+    Liefert (Ausgabeordner, nam, fehlende Dateien, Modell); Fehler als Fail/PatchError/Ext4Error."""
+    want = bridgepatch.model(model) if model else None
     work = tempfile.mkdtemp(prefix='mx5bridge_')
     try:
         if not src:
-            src = os.path.join(BASE, 'HeadRush_MX5_2.7_Updater.zip')
+            want = want or bridgepatch.model('mx5')
+            src = os.path.join(BASE, updater_name(want))
             if os.path.exists(src):
                 say('Using the already downloaded %s' % os.path.basename(src))
             else:
-                download(src)
+                download(src, want)
         if not os.path.exists(src):
             raise Fail('Not found: %s' % src)
         folder = unpack(os.path.abspath(src), work)
         raw = open(os.path.join(folder, 'Update.img'), 'rb').read()
+        if not fitpatch.verify(raw):
+            raise Fail('Update.img is damaged (checksum mismatch)')
+        found = model_of(raw)
+        if found['key'] not in MODEL_KEYS:
+            raise Fail('This firmware is for the HeadRush %s. Support for it is still being tested – use the '
+                       'testing patcher from %s.' % (found['device'], bridgepatch.TESTING_URL))
+        if want and found['key'] != want['key']:
+            raise Fail('This firmware is for the HeadRush %s, not the %s.' % (found['device'], want['device']))
         sha = hashlib.sha1(raw).hexdigest()
-        if sha == STOCK_SHA1:
-            say('Found the official HeadRush MX5 2.7 firmware.')
+        if sha == found['sha1']:
+            say('Found the official HeadRush %s 2.7 firmware.' % found['device'])
         else:
             say('Update.img is not the plain official 2.7 firmware (sha1 %s) - that is fine for an '
                 'updater made by the NAM mod; anything else is refused below if it does not match.' % sha[:12])
+        note = risk_note(found)
+        if note:
+            say('\n' + note + '\n')
         nam_info = None
         info = os.path.abspath(src) + '.nam.txt'     # Herkunft von tools/nam-mod.sh
         if os.path.exists(info):
             nam_info = open(info, encoding='ascii').read()
-        new, nam = patch(raw, nam_info, need_nam)
+        new, nam = patch(raw, nam_info, need_nam, found['device'])
 
-        out = out or os.path.join(out_parent or BASE, 'MX5Bridge_%s%s_Updater' % (bridgepatch.VERSION, '_NAM' if nam else ''))
+        tag = '' if found['key'] == 'mx5' else '_' + found['device']
+        out = out or os.path.join(out_parent or BASE, '%s_%s%s%s_Updater' % (bridgepatch.FILE_TAG, bridgepatch.VERSION, tag,
+                                                                            '_NAM' if nam else ''))
         os.makedirs(out, exist_ok=True)
         open(os.path.join(out, 'Update.img'), 'wb').write(new)
-        open(os.path.join(out, 'Config.json'), 'w', encoding='utf-8', newline='\n').write(config_json(nam))
+        orig = os.path.join(folder, 'Config.json')
+        orig = open(orig, encoding='utf-8-sig').read() if os.path.exists(orig) else None
+        open(os.path.join(out, 'Config.json'), 'w', encoding='utf-8', newline='\n').write(config_json(nam, found['device'], orig))
         missing = []
         for name in UPDATER_FILES:
             p = os.path.join(folder, name)
@@ -254,27 +307,32 @@ def build(src=None, out=None, need_nam=False, out_parent=None):
                 shutil.copy(p, os.path.join(out, name))
             else:
                 missing.append(name)
-        return out, nam, missing
+        return out, nam, missing, found
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
 
 def main():
-    ap = argparse.ArgumentParser(description='Build the MX5 Bridge firmware updater from the official HeadRush MX5 2.7 updater.')
+    ap = argparse.ArgumentParser(description='Build the ' + bridgepatch.BRAND + ' firmware updater from the official HeadRush 2.7 '
+                                             'updater (%s).' % ', '.join(MODEL_KEYS))
     ap.add_argument('input', nargs='?', help='official updater (.zip/.exe), NAM mod updater (.exe), folder or Update.img; '
                                              'omitted = download the official updater')
     ap.add_argument('--out', help='output folder (default: MX5Bridge_<version>_Updater next to this script)')
+    ap.add_argument('--model', choices=MODEL_KEYS, help='device to download the updater for (default mx5); with an '
+                                                        'input file: refuse it if it is for another device')
     a = ap.parse_args()
-    say('MX5 Bridge %s firmware patcher (unofficial - use at your own risk)\n' % bridgepatch.VERSION)
+    say('%s %s firmware patcher (unofficial - use at your own risk)\n' % (bridgepatch.BRAND, bridgepatch.VERSION))
     try:
-        out, nam, missing = build(a.input, a.out)
+        out, nam, missing, found = build(a.input, a.out, model=a.model)
     except (Fail, bridgepatch.PatchError, ext4.Ext4Error) as e:
         say('\nERROR: %s' % e)
         return 1
     say('\nDone: %s' % out)
     if missing:
         say('Copy these files from the official HeadRush updater into that folder: ' + ', '.join(missing))
-    say('\n' + install_hint('the folder above', nam))
+    say('\n' + install_hint('the folder above', nam, found['device']))
+    if risk_note(found):
+        say('\n' + risk_note(found))
     return 0
 
 

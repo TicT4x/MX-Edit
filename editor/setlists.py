@@ -24,7 +24,7 @@ from ui import BG, PANEL, CARD, CARD_HI, CARD_LO, ACCENT, ACCENT_TXT, TEXT, MUTE
 from ui import FONT, FONT_SMALL, FONT_BOLD, FONT_HEAD, FONT_TINY, messagebox
 
 MISSING = "– missing rig –"
-APP = "MX5 Editor"   # Titel der Meldungen (wird im Overlay nicht angezeigt)
+APP = U.APP_NAME   # Titel der Meldungen (wird im Overlay nicht angezeigt)
 
 
 def rig_colour(index):
@@ -217,7 +217,7 @@ class RigRows(tk.Canvas):
                                  fill=ACCENT_TXT if i in self.sel else ACCENT)
                 right -= px(18)
             name = it["name"]
-            while name and U.text_size(name, FONT)[0] > right - x - px(24):
+            while len(name) > 1 and U.text_size(name, FONT)[0] > right - x - px(24):
                 name = name[:-2] + "…"
             self.create_text(x + px(22), cy, text=name, anchor="w", fill=fg, font=FONT)
         if not n and self.empty_text:
@@ -390,7 +390,9 @@ class SetlistManager(tk.Frame):
         self.tgt.configure(yscrollcommand=tsb.set)
         self.tgt.pack(side="left", fill="both", expand=True)
         tsb.pack(side="right", fill="y")
-        self.tgt.empty_text = "Reading setlists from the device …"
+        self.src.empty_text = "Loading rigs …"
+        # geht sofort auf; bis die Datenbank gelesen ist, liegt der Ladehinweis ueber der Setlist
+        self.loading = U.Loading(mid, "Loading rigs and setlists …")
         for w in (self.src, self.tgt):
             w.bind("<Delete>", lambda e: self.remove_selected())
             w.bind("<BackSpace>", lambda e: self.remove_selected())
@@ -462,6 +464,8 @@ class SetlistManager(tk.Frame):
             if isinstance(res, dict) and res.get("ok") is False:
                 self.tgt.empty_text = "Could not read the setlists: %s" % res.get("err")
                 self.tgt.redraw()
+                if self.loading is not None:
+                    self.loading.fail("Could not read the setlists:\n%s" % res.get("err"))
                 return
             self.rows = {r["id"]: r for r in res["rigs"]}
             self.all_ids = [r["id"] for r in res["rigs"]]
@@ -475,7 +479,11 @@ class SetlistManager(tk.Frame):
                 self.target = active if active in ids else (ids[0] if ids else None)
             if self.source is not None and self.source not in ids:
                 self.source = None
+            self.src.empty_text = ""
             self.refresh_all()
+            if self.loading is not None:
+                self.loading.done()
+                self.loading = None
             self.ed.status.set("Setlist manager: %d setlists, %d rigs." % (len(self.sets), len(self.all_ids)))
         self.ed.session.run(read, done)
 

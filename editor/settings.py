@@ -16,6 +16,8 @@ DEFAULTS = {
     "footswitch_bar": True,
     # Groesse der Oberflaeche in Prozent zusaetzlich zur Windows-Skalierung (gilt ab dem naechsten Start)
     "ui_scale": 100,
+    # Ueberblenden von Dialogen, Menues und Seiten (ui.ghost_fade)
+    "animations": True,
     # beim Start ohne Ordner gleich mit dem MX5 verbinden
     "auto_connect": True,
     # MIDI-Ports fest waehlen ("" = automatisch ueber die Namenssuche in bridge.py)
@@ -116,6 +118,9 @@ class SettingsDialog(U.Overlay):
                  "The three footswitches below the signal chain (live mode). When hidden, footswitches and pedals "
                  "open from the ⋯ menu (“Footswitches & pedals …”).",
                  lambda f: self.toggle(f, "footswitch_bar"))
+        self.row("Animations",
+                 "Dialogs, menus and pages fade in and out. Turn off for an instant switch.",
+                 lambda f: self.toggle(f, "animations"))
         self.lbl_scale = None
         self.row("Interface size",
                  "Scales text and controls on top of the Windows display scaling.", None)
