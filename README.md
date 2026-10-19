@@ -1,6 +1,7 @@
 # MX5 Bridge + MX-Edit (with NAM-Mod Support)
 
-**Unofficial** tooling for the **HeadRush MX5** guitar processor:
+**Unofficial** tooling for the **HeadRush MX5** guitar processor – and, as a beta, the
+**HeadRush Pedalboard** ([details](#headrush-pedalboard-beta)):
 
 - **MX5 Bridge**: a small add-on to the stock MX5 firmware 2.7. It gives the device's internal
   parameter tree, its rig database and its files to a computer over **USB-MIDI (SysEx)**.
@@ -16,8 +17,8 @@
 
 ## Installation
 
-You need a HeadRush **MX5 on firmware 2.7**, its power supply, a USB cable and a Windows 10/11
-PC. It takes about 15 minutes. There is also a [video guide on YouTube](https://youtu.be/6ivzolrPEZA?si=BKzsChsaO2G2xgYX).
+You need a HeadRush **MX5 on firmware 2.7** (Pedalboard: see
+[below](#headrush-pedalboard-beta)), its power supply, a USB cable and a Windows 10/11 PC. It takes about 15 minutes. There is also a [video guide on YouTube](https://youtu.be/6ivzolrPEZA?si=BKzsChsaO2G2xgYX).
 More details and troubleshooting: [INSTALL.md](INSTALL.md).
 
 **0. Back up your rigs.** On the MX5, enable *USB transfer mode* (Global Settings) and copy the
@@ -66,6 +67,29 @@ button in the editor's left bar.
 > longer starts, hold **footswitches 1 + 2** while switching it on (recovery mode).
 > ⚠️ Footswitches **2 + 3** at power-on is a **factory reset** and erases your rigs.
 
+### HeadRush Pedalboard (beta)
+
+The Pedalboard is supported **as a beta**. Testers have confirmed that the bridge runs on it, and
+MX-Edit was adapted from their diagnosis logs, but I don't own a Pedalboard, so the editor has not
+been run on a real one by me. Please [report](../../issues) what works and what doesn't.
+
+- **Downloads:** take `MX5Bridge_0.7_Patcher.exe` and `MX-Edit_0.9.6-beta…exe` from the newest
+  **pre-release** on the [releases page](../../releases) (the *latest* release is MX5 only).
+- **Patcher:** under **Device**, choose **Pedalboard (beta)**. It downloads the official
+  *HeadRush Pedalboard 2.7* updater and creates `HeadRush_Bridge_0.7_Pedalboard_Updater`. The
+  button in the firmware updater is called **Install HeadRush Bridge 0.7**. Flash it like in step 3
+  (on the Pedalboard: *Global Settings › ⋯ › Firmware Update*).
+- **Editor:** connects to the port *Headrush Pedalboard* and shows **PEDALBOARD BETA** at the bottom
+  right. It works on **All Rigs** – Pedalboard setlists hold *songs*, which are not supported yet,
+  so the setlist manager, *New* rig and *Restore everything* are switched off. The 8 assignable
+  footswitches are shown in two rows where they sit on the device.
+- **NAM mod:** not tested together with the bridge on the Pedalboard yet.
+- **Back to stock:** run the official HeadRush Pedalboard 2.7 updater. If the device no longer
+  starts, hold **footswitches 1 + 8** while switching it on (recovery mode). Don't try other
+  footswitch combinations at power-on – one of them may be a factory reset.
+- The **Gigboard** is not supported (no diagnosis log so far). Owners can help with the tools in
+  the [testing repository](https://github.com/TicT4x/MX-Edit-Testing).
+
 The editor and the patcher are also available as Python source (`MX-Edit_0.9.zip`,
 `MX5Bridge_0.7_Patcher.zip`), see [INSTALL.md](INSTALL.md#run-from-source-optional).
 
@@ -113,8 +137,8 @@ Developers: the protocol is described in [docs/PROTOCOL.md](docs/PROTOCOL.md), a
 This project **does not ship any HeadRush firmware**. The **patcher** works like the NAM mod
 installer:
 
-1. It downloads the **official** HeadRush MX5 2.7 updater from inMusic's server (or uses a copy
-   you already have).
+1. It downloads the **official** HeadRush MX5 (or Pedalboard) 2.7 updater from inMusic's server
+   (or uses a copy you already have).
 2. It adds the bridge files to that firmware **on your computer**.
 3. It writes a ready-to-run updater folder that uses HeadRush's own `FirmwareUpdater.exe`.
 
@@ -126,7 +150,7 @@ neither Python nor Linux/WSL. It can also run the NAM mod's own installer for yo
 
 | | |
 |---|---|
-| Device | HeadRush **MX5** with firmware **2.7** (other HeadRush models are not supported) |
+| Device | HeadRush **MX5** with firmware **2.7**; HeadRush **Pedalboard** 2.7 as a beta (Gigboard: not supported) |
 | Computer | Windows 10/11. The editor uses Windows-only window code. The patcher's source version also runs on Linux/macOS (Python 3 only) |
 | Python | not needed for the `.exe` files. For the source versions: 3.9 or newer, editor with `mido`, `python-rtmidi`, `pillow` |
 
@@ -150,12 +174,13 @@ device. It is a hobby project: expect rough edges, and keep a backup of your rig
 (*⋯ › Back up everything* in the editor).
 
 - Windows only (10/11) for now
-- Made for the MX5. **HeadRush Pedalboard: beta** (since MX-Edit 0.9.6) – built from testers' diagnosis
-  logs, never run by me on a real Pedalboard. The editor works on *All Rigs* there (Pedalboard setlists hold
-  songs, which it does not support yet); chain, parameters, block presets, saving, the 8 footswitches,
-  pedals, tuner, looper and IRs should work. The bridge firmware for the Pedalboard comes from the
-  [testing repository](https://github.com/TicT4x/MX-Edit-Testing) – please report what works there.
-  Gigboard: not supported yet (no diagnosis log so far).
+- Made for the MX5. **HeadRush Pedalboard: beta** (patcher and MX-Edit 0.9.6 beta) – the bridge
+  runs on it (confirmed by testers), the editor was built from their diagnosis logs and has not been
+  run by me on a real Pedalboard. It works on *All Rigs* there (Pedalboard setlists hold songs, which
+  it does not support yet); chain, parameters, block presets, saving, the 8 footswitches, pedals,
+  tuner, looper and IRs should work. See [HeadRush Pedalboard (beta)](#headrush-pedalboard-beta) and
+  please [report](../../issues) what works.
+- Gigboard: not supported yet (no diagnosis log so far).
 
 ## Disclaimer
 

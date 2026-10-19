@@ -30,7 +30,7 @@ def nam_steps(device):
 
 
 # Geraete in der Reihenfolge der Auswahl (bridgepatch.MODELS: MX5 geprueft, die anderen experimentell)
-MODELS = bridgepatch.offered()      # Hauptausgabe: nur MX5 (dann ohne Geraetekarte)
+MODELS = bridgepatch.offered()      # Hauptausgabe: MX5 + Pedalboard (Beta), Testausgabe auch Gigboard
 NAM_URL = "https://github.com/lolgab/headrush-nam-mod"
 VERSION = bridgepatch.VERSION
 
@@ -181,10 +181,13 @@ class PatcherApp(tk.Tk):
         tk.Label(head, text=logo, bg=BG, fg=ACCENT, font=("Segoe UI", 22, "bold")).pack(side="left")
         tk.Label(head, text="  Bridge %s · Firmware Patcher" % VERSION, bg=BG, fg=TEXT,
                  font=("Segoe UI", 16)).pack(side="left", pady=(px(4), 0))
-        if len(MODELS) > 1:
+        if bridgepatch.TESTING:
             intro = ("Builds a firmware updater for the HeadRush MX5, Pedalboard or Gigboard (firmware 2.7) with the "
                      "%s from the official HeadRush updater. Pedalboard and Gigboard are experimental. "
                      "Unofficial – use at your own risk." % bridgepatch.BRAND)
+        elif len(MODELS) > 1:
+            intro = ("Builds a firmware updater for the HeadRush MX5 or the Pedalboard (beta), firmware 2.7, with "
+                     "the bridge from the official HeadRush updater. Unofficial – use at your own risk.")
         else:
             intro = ("Builds a firmware updater for the HeadRush MX5 (firmware 2.7) with the MX5 Bridge "
                      "from the official HeadRush updater. Unofficial – use at your own risk.")
@@ -212,7 +215,7 @@ class PatcherApp(tk.Tk):
         row.pack(fill="x", pady=(px(10), 0))
         self.chk_models = {}
         for m in MODELS:
-            label = m["device"] + ("" if m["tested"] else " (experimental)")
+            label = m["device"] + (" (experimental)" if not m["tested"] else " (beta)" if m.get("beta") else "")
             chk = Check(row, label, command=lambda m=m: self.pick_model(m))
             chk.pack(side="left", padx=(0, px(22)))
             self.chk_models[m["key"]] = chk
@@ -220,6 +223,8 @@ class PatcherApp(tk.Tk):
         self.note_model = tk.Label(c, text="", bg=WARN_BG, fg=WARN, font=("Segoe UI", 10), anchor="w",
                                    justify="left", wraplength=px(600), padx=px(12), pady=px(8))
         self.chk_risk = Check(c, "I understand the risk and want to help testing", command=self.refresh)
+        self.note_beta = tk.Label(c, text="", bg=CARD, fg=TEXT, font=("Segoe UI", 10), anchor="w",
+                                  justify="left", wraplength=px(600), padx=px(12), pady=px(8))
 
         c = self.card(self.opts, "Firmware")
         self.chk_file = Check(c, "Use a firmware file I already have", command=self.refresh)
@@ -306,6 +311,12 @@ class PatcherApp(tk.Tk):
         else:
             self.note_model.pack_forget()
             self.chk_risk.pack_forget()
+        beta = patcher.beta_note(self.model)
+        if beta:
+            self.note_beta.configure(text=beta)
+            self.note_beta.pack(fill="x", pady=(px(10), 0))
+        else:
+            self.note_beta.pack_forget()
         self.lbl_nam_steps.configure(text=nam_steps(dev))
         if use_file:
             self.file_row.pack(fill="x", pady=(px(8), 0), before=self.note_file)
@@ -523,7 +534,10 @@ class PatcherApp(tk.Tk):
                  "2. On the %s: Global Settings › ⋯ (more) › Firmware Update.\n"
                  "3. Click “Start firmware updater” and then “Install %s %s%s”.\n"
                  "    Do not disconnect the %s until it has finished and restarted."
-                 % (dev, dev, bridgepatch.LABEL, VERSION, " + NAM" if nam else "", dev))
+                 % (dev, dev, bridgepatch.label(dev), VERSION, " + NAM" if nam else "", dev))
+        if model.get("beta"):
+            steps += ("\n4. Then connect it to MX-Edit 0.9.6 beta or newer. %s support is a beta – please "
+                      "report what works and what doesn’t on GitHub (github.com/TicT4x/MX-Edit/issues)." % dev)
         if not model["tested"]:
             steps += ("\n4. Afterwards please run the device diagnosis (HeadRush_Bridge_Diagnose.exe) and attach its "
                       "log to a GitHub issue – that is what makes the editor work on the %s." % dev)

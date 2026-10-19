@@ -3,6 +3,14 @@
 You need about 15 minutes, a HeadRush **MX5 on firmware 2.7**, its power supply, a USB cable and
 a Windows 10/11 computer.
 
+> **HeadRush Pedalboard (beta):** the same steps work for the Pedalboard 2.7, with these
+> differences: download the patcher and MX-Edit from the newest **pre-release** on the
+> [releases page](../../releases); in the patcher choose **Device › Pedalboard (beta)**; the result is
+> `HeadRush_Bridge_0.7_Pedalboard_Updater` with the button **Install HeadRush Bridge 0.7**. The
+> editor works on *All Rigs* only (Pedalboard setlists/songs are not supported yet). Recovery mode:
+> **footswitches 1 + 8** at power-on. The NAM mod has not been tested together with the bridge on
+> the Pedalboard. Please [report](../../issues) what works and what doesn't.
+
 > ⚠️ **Unofficial firmware, at your own risk.** The patcher only adds files to the official
 > firmware, and the steps below have been tested many times. Still, a firmware update can always
 > fail. Section 4 explains how to get back to the stock firmware. **Back up your rigs first** (step 1).
@@ -156,7 +164,8 @@ the free space and the backup age. `quit` exits.
 ## 4. Going back to the stock firmware
 
 - **Normal way:** put the MX5 into firmware update mode (*Global Settings › ⋯ › Firmware
-  Update*) and run the **official** HeadRush MX5 2.7 updater.
+  Update*) and run the **official** HeadRush MX5 2.7 updater (Pedalboard: the official Pedalboard
+  2.7 updater; recovery there with **footswitches 1 + 8** at power-on).
 - **If the device no longer starts:** hold **footswitches 1 and 2** while switching it on. This
   is the recovery update mode. Then run the official updater.
 - ⚠️ Footswitches **2 and 3** at power-on is a **factory reset**. It erases your own rigs.

@@ -195,7 +195,7 @@ def config_json(nam, device='MX5', original=None):
     """Config.json des Updaters. original: die des offiziellen Updaters (Text) - dann bleibt alles
     ausser Titel und Startknopf wie bei HeadRush (beim Gigboard steht z. B. "HeadRush Gigboard "
     mit Leerzeichen als deviceName; ob der Updater das Geraet daran erkennt, ist unbekannt)."""
-    title = '%s %s%s' % (bridgepatch.LABEL, bridgepatch.VERSION, ' + NAM' if nam else '')
+    title = '%s %s%s' % (bridgepatch.label(device), bridgepatch.VERSION, ' + NAM' if nam else '')
     if original:
         try:
             cfg = json.loads(original)
@@ -226,7 +226,7 @@ def install_hint(out, nam, device='MX5'):
             '  2. On the %s: Global Settings > ... (more) > Firmware Update.\n'
             '  3. Run FirmwareUpdater.exe in %s and click "Install %s %s%s".\n'
             '     Do not disconnect until it has finished.'
-            % (device, device, out, bridgepatch.LABEL, bridgepatch.VERSION, ' + NAM' if nam else ''))
+            % (device, device, out, bridgepatch.label(device), bridgepatch.VERSION, ' + NAM' if nam else ''))
 
 
 def risk_note(model):
@@ -240,6 +240,16 @@ def risk_note(model):
     return ('EXPERIMENTAL: the bridge has not been tested on a real HeadRush %s yet. '
             'The firmware changes are the same as on the tested MX5, but you are one of the first testers. %s'
             % (model['device'], rec))
+
+
+def beta_note(model):
+    """Hinweis fuer Modelle, deren Unterstuetzung noch Beta ist (Pedalboard), sonst None."""
+    if not model.get('beta'):
+        return None
+    return ('BETA: the bridge runs on the HeadRush %s (tested by users), and MX-Edit supports it as a beta '
+            '(MX-Edit 0.9.6 beta or newer; setlists/songs are not supported yet). Back up your rigs first. '
+            'If the device does not start any more: %s and flash the official updater. '
+            'Please report what works and what doesn\u2019t on GitHub.' % (model['device'], model['recovery']))
 
 
 def updater_name(model):
@@ -283,7 +293,7 @@ def build(src=None, out=None, need_nam=False, out_parent=None, model=None):
         else:
             say('Update.img is not the plain official 2.7 firmware (sha1 %s) - that is fine for an '
                 'updater made by the NAM mod; anything else is refused below if it does not match.' % sha[:12])
-        note = risk_note(found)
+        note = risk_note(found) or beta_note(found)
         if note:
             say('\n' + note + '\n')
         nam_info = None
@@ -293,7 +303,7 @@ def build(src=None, out=None, need_nam=False, out_parent=None, model=None):
         new, nam = patch(raw, nam_info, need_nam, found['device'])
 
         tag = '' if found['key'] == 'mx5' else '_' + found['device']
-        out = out or os.path.join(out_parent or BASE, '%s_%s%s%s_Updater' % (bridgepatch.FILE_TAG, bridgepatch.VERSION, tag,
+        out = out or os.path.join(out_parent or BASE, '%s_%s%s%s_Updater' % (bridgepatch.file_tag(found['device']), bridgepatch.VERSION, tag,
                                                                             '_NAM' if nam else ''))
         os.makedirs(out, exist_ok=True)
         open(os.path.join(out, 'Update.img'), 'wb').write(new)

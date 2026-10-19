@@ -45,6 +45,7 @@ class DeviceNotSupported(RuntimeError):
 
 
 TESTERS_URL = "https://github.com/TicT4x/MX-Edit-Testing"
+ISSUES_URL = "https://github.com/TicT4x/MX-Edit/issues"   # Rueckmeldungen zur Pedalboard-Beta
 POLL_MS = 150         # kuerzester Abstand der Abfragen (Aenderungen am Geraet -> Editor)
 POLL_RETRY = 80       # ms: naechster Versuch, wenn die Abfrage gerade nicht laufen durfte
 POLL_SHARE = 3        # Abstand >= 3 x Dauer einer Abfrage: hoechstens 1/3 der Leitung fuer das Abfragen
@@ -2562,7 +2563,7 @@ class Editor(tk.Tk):
                          "tuner, looper and IRs should work, but nobody has tried it on a %s yet. "
                          "Setlists (songs) are not supported yet – the editor works on All Rigs.\n"
                          "Back up your rigs first (⋯ › Back up everything …) and please report what works "
-                         "and what doesn’t: %s" % (dev.name, dev.name, TESTERS_URL)))
+                         "and what doesn’t: %s" % (dev.name, dev.name, ISSUES_URL)))
         self.fsbar.relayout()   # Schalter in Reihen wie am Geraet
         self.update_new_btn()
 
