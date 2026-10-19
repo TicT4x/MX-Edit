@@ -170,7 +170,8 @@ class FootswitchTile(tk.Canvas):
         for l in lines:
             self.create_text(x + w / 2, ty, text=l, fill=fg, font=FONT_BOLD)
             ty += px(14)
-        self.create_text(x + w / 2, ty + px(2), text=sub, fill=fg, font=FONT_TINY)
+        self.create_text(x + w / 2, ty - px(5), text=sub, fill=fg, font=FONT_TINY, width=w - px(12),
+                         justify="center", anchor="n")
         self.regions.append((x, y, x + w, y + h, kind, arg))
 
     # ---- Maus ----
@@ -218,11 +219,34 @@ class FootswitchTile(tk.Canvas):
         ent.bind("<FocusOut>", lambda e: done(False))
 
 
+class FixedTile(tk.Canvas):
+    """Fest belegter Schalter (Pedalboard: Rig auf/ab, Looper, Tempo) an seinem Platz - nur Anzeige."""
+    W = 64
+
+    def __init__(self, parent, text):
+        super().__init__(parent, bg=parent.cget("bg"), highlightthickness=0, width=px(self.W), height=px(60))
+        self.text = text
+        self.bind("<Configure>", lambda e: self.redraw())
+
+    def redraw(self):
+        self.delete("all")
+        W, H = self.winfo_width(), self.winfo_height()
+        if W < 10 or H < 10:
+            return
+        U.rrect(self, 0, 0, W, H, px(8), CARD_LO)
+        self.create_text(W / 2, H / 2, text=self.text, fill=DIM, font=FONT_SMALL, width=W - px(8), justify="center")
+
+
 class FootBar(U.Panel):
-    """Zugeklapptes Hardware-Feld: die drei Fussschalter wie auf dem Display, rechts 'Zuweisen'."""
+    """Zugeklapptes Hardware-Feld: die Fussschalter wie auf dem Display, rechts 'Zuweisen'. Angeordnet
+    wie am Geraet (live.DEV.layout): MX5 eine Reihe zu drei, Pedalboard zwei Reihen zu sechs, die fest
+    belegten Schalter (Rig auf/ab, Looper, Tempo) nur als schmale Anzeige an ihrer Stelle."""
     HEIGHT = 58
-    SWITCH = 42      # Hoehe eines Schalters (logische Pixel)
+    SWITCH = 42      # Hoehe eines Schalters (logische Pixel), eine Reihe
+    SWITCH_ROWS = 36   # Hoehe je Reihe bei mehreren Reihen
+    ROW_GAP = 6
     GAP = 8
+    FIXED = 0.55     # Breite eines fest belegten Schalters relativ zu einem zuweisbaren
     DARK = 0.28      # Farbanteil eines nicht leuchtenden Schalters
 
     def __init__(self, editor, parent):
@@ -230,6 +254,7 @@ class FootBar(U.Panel):
         self.ed = editor
         self.data = None          # {n: {text, colour, on}} (live.fs_display)
         self.hover = None         # Nummer des Schalters unter der Maus
+        self.rows = None          # Reihenzahl, fuer die das Feld gerade ausgelegt ist
         f = self.inner
         self.btn_assign = U.Btn(f, "Assign", command=editor.open_hardware, state="disabled")
         self.btn_assign.pack(side="right", padx=(px(12), px(4)))
@@ -240,31 +265,58 @@ class FootBar(U.Panel):
         self.canvas.bind("<Motion>", self._motion)
         self.canvas.bind("<Leave>", lambda e: self._hover(None))
         self.canvas.bind("<Button-1>", self._click)
+        self.relayout()
+
+    def relayout(self):
+        """Hoehe an die Reihenzahl des verbundenen Geraets anpassen (nach dem Verbinden)."""
+        rows = len(L.DEV.layout)
+        if rows == self.rows:
+            return
+        self.rows = rows
+        ch = px(self.SWITCH) if rows == 1 else rows * px(self.SWITCH_ROWS) + (rows - 1) * px(self.ROW_GAP)
+        pad = px((self.HEIGHT - self.SWITCH) // 2)
+        self.canvas.configure(height=ch)
+        self.canvas.pack_configure(pady=pad)
+        self.configure(height=ch + 2 * pad)
+        self.redraw()
 
     def set(self, data):
+        self.relayout()
         self.data = data
         self.redraw()
 
-    def _switch_at(self, x):
-        W = self.canvas.winfo_width()
-        k = len(L.FS_NUMBERS)
-        w = (W - (k - 1) * px(self.GAP)) / k
-        for i, n in enumerate(L.FS_NUMBERS):
-            x0 = i * (w + px(self.GAP))
-            if x0 <= x <= x0 + w:
-                return n
+    def _cells(self):
+        """[(x, y, w, h, eintrag)] - eintrag = FootSwitch-Nummer oder Text eines fest belegten Schalters."""
+        W, H = self.canvas.winfo_width(), self.canvas.winfo_height()
+        rows = L.DEV.layout
+        rh = (H - (len(rows) - 1) * px(self.ROW_GAP)) / len(rows)
+        out = []
+        for r, row in enumerate(rows):
+            weights = [self.FIXED if isinstance(it, str) else 1 for it in row]
+            unit = (W - (len(row) - 1) * px(self.GAP)) / sum(weights)
+            x, y = 0, r * (rh + px(self.ROW_GAP))
+            for it, wt in zip(row, weights):
+                out.append((x, y, unit * wt, rh, it))
+                x += unit * wt + px(self.GAP)
+        return out
+
+    def _switch_at(self, x, y):
+        for x0, y0, w, h, it in self._cells():
+            if not isinstance(it, str) and x0 <= x <= x0 + w and y0 <= y <= y0 + h:
+                return it
         return None
 
     def _motion(self, e):
-        self._hover(self._switch_at(e.x))
+        self._hover(self._switch_at(e.x, e.y))
 
     def _hover(self, n):
         if n != self.hover:
             self.hover = n
+            self.canvas.configure(cursor="hand2" if n is not None else "")
             self.redraw()
 
     def _click(self, e):
-        n = self._switch_at(e.x)
+        n = self._switch_at(e.x, e.y)
         if n is not None and self.data:
             self.ed.press_footswitch(n)
 
@@ -274,14 +326,15 @@ class FootBar(U.Panel):
         W, H = c.winfo_width(), c.winfo_height()
         if W < 20 or H < 10:
             return
-        k = len(L.FS_NUMBERS)
-        w = (W - (k - 1) * px(self.GAP)) / k
-        for i, n in enumerate(L.FS_NUMBERS):
-            x = i * (w + px(self.GAP))
+        for x, y, w, h, n in self._cells():
+            if isinstance(n, str):   # fest belegt: nur wo er am Geraet sitzt
+                U.rrect(c, x, y, w, h, px(7), CARD_LO)
+                c.create_text(x + w / 2, y + h / 2, text=n, fill=DIM, font=FONT_SMALL)
+                continue
             d = (self.data or {}).get(n)
             if not d:
-                U.rrect(c, x, 0, w, H, px(7), CARD_LO)
-                c.create_text(x + w / 2, H / 2, text="FS %d" % L.fs_label(n), fill=DIM, font=FONT_BOLD)
+                U.rrect(c, x, y, w, h, px(7), CARD_LO)
+                c.create_text(x + w / 2, y + h / 2, text="FS %d" % L.fs_label(n), fill=DIM, font=FONT_BOLD)
                 continue
             colour = COLOURS.get(d["colour"])
             lit = d["on"] and colour and d["colour"] != "Off"
@@ -292,14 +345,14 @@ class FootBar(U.Panel):
             else:
                 fill, fg = CARD, MUTED
             outline = "#ffffff" if self.hover == n else None
-            U.rrect(c, x, 0, w, H, px(7), fill, outline, 1 if outline else 0)
+            U.rrect(c, x, y, w, h, px(7), fill, outline, 1 if outline else 0)
             # kleine LED links wie am Geraet: hell bei leuchtendem, dunkel bei abgedunkeltem Schalter
             led = px(8)
-            U.circle(c, x + px(12) + led / 2, H / 2, led,
+            U.circle(c, x + px(12) + led / 2, y + h / 2, led,
                      U.blend(colour, "#ffffff", 0.35) if lit else U.blend(colour or CARD_HI, PANEL, 0.1))
             text = (d["text"] or "").upper() or "–"
             lines = U.wrap_words(text, max(6, int((w - px(40)) / px(8))), 1)
-            c.create_text(x + px(12) + led + px(8) + (w - px(28) - led) / 2, H / 2, text=lines[0], fill=fg,
+            c.create_text(x + px(12) + led + px(8) + (w - px(28) - led) / 2, y + h / 2, text=lines[0], fill=fg,
                           font=FONT_CARD_BIG)
 
 
@@ -311,7 +364,7 @@ class HardwarePanel(U.Panel):
 
     def __init__(self, editor, parent, tempo):
         super().__init__(parent, fill=PANEL, r=10,
-                         height=px(self.HEIGHT if len(L.FS_NUMBERS) <= 4 else self.HEIGHT_TWO_ROWS))
+                         height=px(self.HEIGHT if len(L.DEV.layout) == 1 else self.HEIGHT_TWO_ROWS))
         self.ed = editor
         self.tempo = tempo
         self.sel = (L.FS_NUMBERS[0], 1)   # Schalter + Zustand, fuer den die Palette gilt
@@ -397,15 +450,16 @@ class HardwarePanel(U.Panel):
         hw = self.hw
         tiles = tk.Frame(body, bg=PANEL)
         tiles.pack(fill="both", expand=True)
-        nums = list(L.FS_NUMBERS)
-        per_row = len(nums) if len(nums) <= 4 else (len(nums) + 1) // 2
-        rows = [nums[i:i + per_row] for i in range(0, len(nums), per_row)]
-        for r, row_nums in enumerate(rows):
+        for r, items in enumerate(L.DEV.layout):   # Reihen und Plaetze wie am Geraet
             row = tk.Frame(tiles, bg=PANEL)
             row.pack(fill="both", expand=True, pady=(px(6) if r else 0, 0))
-            for n in row_nums:
+            for i, n in enumerate(items):
+                pad = (0, px(8) if i < len(items) - 1 else 0)
+                if isinstance(n, str):   # fest belegter Schalter: schmal, nur Anzeige
+                    FixedTile(row, n).pack(side="left", fill="y", padx=pad)
+                    continue
                 t = FootswitchTile(row, n, self)
-                t.pack(side="left", fill="both", expand=True, padx=(0, px(8) if n != row_nums[-1] else 0))
+                t.pack(side="left", fill="both", expand=True, padx=pad)
                 t.set(hw["fs"][n] if hw else None, self.tile_sel(n))
                 self.tiles[n] = t
         bottom = tk.Frame(body, bg=PANEL)

@@ -2563,6 +2563,7 @@ class Editor(tk.Tk):
                          "Setlists (songs) are not supported yet – the editor works on All Rigs.\n"
                          "Back up your rigs first (⋯ › Back up everything …) and please report what works "
                          "and what doesn’t: %s" % (dev.name, dev.name, TESTERS_URL)))
+        self.fsbar.relayout()   # Schalter in Reihen wie am Geraet
         self.update_new_btn()
 
     # ---- Verbindungsverlust (USB gezogen, Geraet aus, App-Neustart am Geraet) ----

@@ -75,9 +75,11 @@ RELOAD_WAIT = 0.4     # LoadRig auf das geladene Rig (ohne Dirty): gemessen 0,2 
 #              bleibt leer - der Editor nutzt dort nur All Rigs.
 #   Looper     AltLooperFS gibt es am Pedalboard nicht (eigene Looper-Schalter FS1-11).
 class Device:
-    def __init__(self, name, bank_show, bank_step, fs, raw, buttons, setlists=True, alt_looper=True,
+    def __init__(self, name, bank_show, bank_step, fs, raw, buttons, layout, setlists=True, alt_looper=True,
                  new_rig=True, beta=False):
         self.name = name
+        self.layout = layout         # Schalter wie am Geraet: Reihen (oben zuerst) aus FootSwitch-Nummern
+                                     # und Texten fuer fest belegte Schalter (nur Anzeige)
         self.buttons = buttons       # Fussschalter mit Display-Text (ButtonText1..n = RawFootswitches/FS1..n)
         self.bank_show = bank_show   # Rigs je Bank-Anzeige (RigName1..n, LoadRig1..n)
         self.bank_step = bank_step   # Plaetze je NextBank/PrevBank
@@ -90,9 +92,12 @@ class Device:
 
 
 DEVICES = {
-    "MX5": Device("MX5", 3, 3, (5, 6, 7), {5: 1, 6: 2, 7: 3}, 3),
+    "MX5": Device("MX5", 3, 3, (5, 6, 7), {5: 1, 6: 2, 7: 3}, 3, [[5, 6, 7]]),
+    # Pedalboard: zwei Reihen zu sechs, oben FS1-6, unten FS7-12 (Stomp: FS1 Rig auf, FS7 Rig ab,
+    # FS6 Looper, FS12 Tempo - Beschriftungen aus dem Diagnose-Log)
     "Pedalboard": Device("Pedalboard", 8, 4, tuple(range(1, 9)),
                          {n: n + 1 if n <= 4 else n + 3 for n in range(1, 9)}, 12,
+                         [["Rig ↑", 1, 2, 3, 4, "Looper"], ["Rig ↓", 5, 6, 7, 8, "Tempo"]],
                          setlists=False, alt_looper=False, new_rig=False, beta=True),
 }
 DEV = DEVICES["MX5"]
