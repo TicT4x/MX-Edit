@@ -398,7 +398,7 @@ class Test:
             if board.get("string") != "Stomp":
                 self.br.set(L.BOARD, "index", modes.index("Stomp"))
                 time.sleep(0.3)
-            disp = L.press_footswitch(self.br, n - 4)
+            disp = L.press_footswitch(self.br, n)
             time.sleep(0.3)
             on = {m: bool(self.br.get(L.LiveRig.path(m, "On")).get("state")) for m in want}
             wrong = [m for m, md in want.items() if on[m] != (md == L.SCENE_ON)]

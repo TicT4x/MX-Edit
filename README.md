@@ -150,7 +150,12 @@ device. It is a hobby project: expect rough edges, and keep a backup of your rig
 (*⋯ › Back up everything* in the editor).
 
 - Windows only (10/11) for now
-- MX5 only for now. Pedalboard and Gigboard would possibly work in the future, but I don't own one, so I can't test it
+- Made for the MX5. **HeadRush Pedalboard: beta** (since MX-Edit 0.9.6) – built from testers' diagnosis
+  logs, never run by me on a real Pedalboard. The editor works on *All Rigs* there (Pedalboard setlists hold
+  songs, which it does not support yet); chain, parameters, block presets, saving, the 8 footswitches,
+  pedals, tuner, looper and IRs should work. The bridge firmware for the Pedalboard comes from the
+  [testing repository](https://github.com/TicT4x/MX-Edit-Testing) – please report what works there.
+  Gigboard: not supported yet (no diagnosis log so far).
 
 ## Disclaimer
 

@@ -59,6 +59,59 @@ SETTLE = 0.5          # nach dem Laden: Kette und Parameter fertig werden lassen
                       # (gemessen 30.09.2026: +0,1 s reichte schon, 0 von 30)
 RELOAD_WAIT = 0.4     # LoadRig auf das geladene Rig (ohne Dirty): gemessen 0,2 s bis zum frischen Stand
 
+
+# ---- Geraeteprofil ----
+#
+# Was sich zwischen MX5 und Pedalboard unterscheidet (Pedalboard aus den Diagnose-Logs vom
+# 11./13.10.2026, am Geraet selbst nie vom Editor gefahren - Beta):
+#   Baenke     MX5: RigName1-3, NextBank blaettert um 3. Pedalboard: RigName1-8 (zwei Reihen an
+#              FS2-5 und FS8-11), NextBank/PrevBank blaettern um 4 - die letzte Seite zeigte
+#              Platz 25-28 + 4x [EMPTY], Bank auf -> 21-28 (28 Rigs, Reihenfolge rowid wie am MX5).
+#   Schalter   MX5: FootSwitch5-7 an RawFootswitches/FS1-3. Pedalboard: FootSwitch1-8, in Stomp an
+#              FS2-5 (1-4) und FS8-11 (5-8); FS1/FS7 Rig auf/ab, FS6 Looper, FS12 Tempo.
+#   Dialoge    ButtonText<k> gehoert zum Schalter FS<k> (MX5 3, Pedalboard 12) - Knoepfe werden
+#              ueber ihre Beschriftung gesucht (dialog_press), nicht ueber feste Nummern.
+#   Setlists   Pedalboard-Setlists enthalten Songs (setlist_songs/setlist_song_rigs), setlist_rigs
+#              bleibt leer - der Editor nutzt dort nur All Rigs.
+#   Looper     AltLooperFS gibt es am Pedalboard nicht (eigene Looper-Schalter FS1-11).
+class Device:
+    def __init__(self, name, bank_show, bank_step, fs, raw, buttons, setlists=True, alt_looper=True,
+                 new_rig=True, beta=False):
+        self.name = name
+        self.buttons = buttons       # Fussschalter mit Display-Text (ButtonText1..n = RawFootswitches/FS1..n)
+        self.bank_show = bank_show   # Rigs je Bank-Anzeige (RigName1..n, LoadRig1..n)
+        self.bank_step = bank_step   # Plaetze je NextBank/PrevBank
+        self.fs = fs                 # Nummern der zuweisbaren Fussschalter (FootSwitch<n>)
+        self.raw = raw               # {n: RawFootswitches-Nummer in der Stomp-Ansicht}
+        self.setlists = setlists     # Setlists aus setlist_rigs (False: nur All Rigs)
+        self.alt_looper = alt_looper
+        self.new_rig = new_rig       # blank_rig_content passt (Aufbau eines MX5-Rigs)
+        self.beta = beta
+
+
+DEVICES = {
+    "MX5": Device("MX5", 3, 3, (5, 6, 7), {5: 1, 6: 2, 7: 3}, 3),
+    "Pedalboard": Device("Pedalboard", 8, 4, tuple(range(1, 9)),
+                         {n: n + 1 if n <= 4 else n + 3 for n in range(1, 9)}, 12,
+                         setlists=False, alt_looper=False, new_rig=False, beta=True),
+}
+DEV = DEVICES["MX5"]
+FS_NUMBERS = DEV.fs
+
+
+def set_device(model):
+    """Profil fuer das verbundene Geraet einstellen (None/unbekannt = MX5). Gilt fuer den ganzen
+    Prozess - der Editor ist immer nur mit einem Geraet verbunden."""
+    global DEV, FS_NUMBERS
+    DEV = DEVICES.get(model) or DEVICES["MX5"]
+    FS_NUMBERS = DEV.fs
+    return DEV
+
+
+def fs_label(n):
+    """Nummer, unter der der Schalter FootSwitch<n> angezeigt wird (MX5: 5-7 -> 1-3)."""
+    return FS_NUMBERS.index(n) + 1 if n in FS_NUMBERS else n
+
 # Knotentypen im Live-Modus
 L_NUMBER, L_BOOL, L_ENUM, L_TEXT = "number", "bool", "enum", "text"
 
@@ -235,9 +288,11 @@ def strings(br, paths):
 
 
 def read_bank(br):
-    """Die drei Rigs der aktuell angezeigten Bank: [(name, farbe)]."""
-    v = strings(br, ["%s/RigName%d" % (PC, n) for n in (1, 2, 3)] + ["%s/RigColour%d" % (PC, n) for n in (1, 2, 3)])
-    return [(v[i], v[i + 3][:-2] if v[i + 3].endswith("_D") else v[i + 3]) for i in range(3)]
+    """Die Rigs der aktuell angezeigten Bank (MX5 drei, Pedalboard acht): [(name, farbe)]."""
+    k = DEV.bank_show
+    v = strings(br, ["%s/RigName%d" % (PC, n) for n in range(1, k + 1)] +
+                ["%s/RigColour%d" % (PC, n) for n in range(1, k + 1)])
+    return [(v[i], v[i + k][:-2] if v[i + k].endswith("_D") else v[i + k]) for i in range(k)]
 
 
 def _step(br, path, read, before):
@@ -279,9 +334,39 @@ def rig_status(br):
 
 
 def dialog_buttons(br):
-    """Beschriftung der drei Fussschalter, wenn am MX5 ein Dialog offen ist, sonst None."""
-    v = strings(br, [BOARD] + [BTN % n for n in (1, 2, 3)])
+    """Beschriftung der Fussschalter (ButtonText1..n, MX5 3, Pedalboard 12), wenn am Geraet ein
+    Dialog offen ist, sonst None. Knopf k haengt am Schalter RawFootswitches/FS<k>."""
+    v = strings(br, [BOARD] + [BTN % n for n in range(1, DEV.buttons + 1)])
     return v[1:] if v[0] == "FreeText" else None
+
+
+def dialog_key(buttons, *labels):
+    """Nummer (1-basiert) des ersten Knopfs, dessen Beschriftung einer von labels ist (ohne Gross-/
+    Kleinschreibung), sonst None."""
+    low = [(b or "").strip().lower() for b in buttons or []]
+    for label in labels:
+        if label in low:
+            return low.index(label) + 1
+    return None
+
+
+def dialog_press(br, buttons, *labels):
+    """Den Dialogknopf mit einer der Beschriftungen druecken; LiveError, wenn es ihn nicht gibt."""
+    k = dialog_key(buttons, *labels)
+    if not k:
+        raise LiveError("A dialog is open on the %s (%s). Please answer it on the display."
+                        % (DEV.name, " | ".join(b for b in buttons if b)))
+    press(br, FS % k)
+    return k
+
+
+def _save_key(buttons):
+    """Knopf 'save' des Speichern-Dialogs (cancel | save | save_new_rig) oder None."""
+    for i, b in enumerate(buttons or []):
+        t = (b or "").strip().lower()
+        if t.startswith("save") and "new" not in t:
+            return i + 1
+    return None
 
 
 def discard_dialog(br):
@@ -290,9 +375,7 @@ def discard_dialog(br):
     b = dialog_buttons(br)
     if not b:
         return False
-    if b[2].strip().lower() != "discard":
-        raise LiveError("A dialog is open on the MX5 (%s). Please answer it on the display." % " | ".join(b))
-    press(br, FS % 3)
+    dialog_press(br, b, "discard")
     return True
 
 
@@ -363,12 +446,14 @@ def _bank_names(br):
 def bank_names(rows, bank):
     """Namen der Bank 'bank' (0-basiert) der Rig-Liste rows, wie die Bank-Anzeige sie zeigt:
     ohne Werks-Nummer, freie Plaetze der letzten Bank als '[EMPTY]'."""
-    names = [display_name(r["name"]) for r in rows[bank * 3:bank * 3 + 3]]
-    return names + [EMPTY_RIG] * (3 - len(names))
+    start = bank * DEV.bank_step
+    names = [display_name(r["name"]) for r in rows[start:start + DEV.bank_show]]
+    return names + [EMPTY_RIG] * (DEV.bank_show - len(names))
 
 
 def bank_count(rows):
-    return max(1, (len(rows) + 2) // 3)
+    """Anzahl der Bank-Stellungen (je NextBank DEV.bank_step Plaetze weiter)."""
+    return max(1, (len(rows) + DEV.bank_step - 1) // DEV.bank_step)
 
 
 def goto_bank(br, rows, target):
@@ -395,8 +480,8 @@ def goto_bank(br, rows, target):
         time.sleep(0.1)
     cur = _bank_names(br)
     if cur != want:
-        raise LiveError("The rig list on the MX5 differs from the editor's (bank %d shows %s) - "
-                        "please reread the rig list." % (target + 1, " | ".join(cur)))
+        raise LiveError("The rig list on the %s differs from the editor's (bank %d shows %s) - "
+                        "please reread the rig list." % (DEV.name, target + 1, " | ".join(cur)))
 
 
 def _prog(row):
@@ -472,8 +557,8 @@ def load_rig(br, rows, index, discard=False, fast=True):
                 via("prog")
                 br.cursor = (rid, index) if [r["id"] for r in rows].count(rid) == 1 else None
                 return st
-        goto_bank(br, rows, index // 3)
-        press(br, "%s/LoadRig%d" % (PC, index % 3 + 1))
+        goto_bank(br, rows, index // DEV.bank_step)
+        press(br, "%s/LoadRig%d" % (PC, index % DEV.bank_step + 1))
         if same:   # Neuladen desselben Rigs: am Status erst spaet zu erkennen
             time.sleep(RELOAD_WAIT)
         st = wait_for(br, loaded, discard=discard and before["dirty"])
@@ -487,8 +572,8 @@ def load_rig(br, rows, index, discard=False, fast=True):
         if dropped and not same and st["id"] == before["id"]:
             keep_changes(br)
         if before["dirty"]:
-            raise LiveError("The MX5 did not switch. Is it asking on the display about unsaved "
-                            "changes? Then confirm there.")
+            raise LiveError("The %s did not switch. Is it asking on the display about unsaved "
+                            "changes? Then confirm there." % DEV.name)
         raise LiveError("Rig '%s' was not loaded (loaded is '%s')." % (display_name(target["name"]), st["name"]))
     return st
 
@@ -543,8 +628,8 @@ def enter_setlist(br, setlists, name, setlist_ids, discard=False, active=False):
                 keep_changes(br)
                 st = rig_status(br)
             if st["dirty"]:
-                raise LiveError("The MX5 did not switch the setlist. Is it asking on the display about "
-                                "unsaved changes? Then confirm there.")
+                raise LiveError("The %s did not switch the setlist. Is it asking on the display about "
+                                "unsaved changes? Then confirm there." % DEV.name)
             for _ in range(10):   # Name und ID werden nacheinander aktualisiert
                 st2 = rig_status(br)
                 if st2 == st:
@@ -552,7 +637,8 @@ def enter_setlist(br, setlists, name, setlist_ids, discard=False, active=False):
                 st = st2
                 time.sleep(0.1)
     _wait_stable(br, read_bank)   # die Bank-Anzeige wird verzoegert umgestellt
-    restore_board(br, mode)
+    if DEV.setlists or (mode or {}).get("string") not in ("Set", "SetRig"):
+        restore_board(br, mode)   # Pedalboard: nicht zurueck in die Song-Ansicht einer Setlist
     br.cursor = (st["id"], 0)   # Geraete-Zeiger fuer jump: erster Platz, auch wenn das Rig woanders steht
     return {"setlists": setlists, "setlist": name, "sure": True, "status": st, "rows": rows,
             "setlist_ids": setlist_ids}
@@ -933,6 +1019,8 @@ def read_rig_list(br):
     Namensreihenfolge der Datenbank, und seek_setlist findet eine Setlist auch sonst. Ist die
     aktive Liste erkannt, wird sie neu betreten (enter_setlist active=True), damit der Zeiger fuer
     jump bekannt ist."""
+    if not DEV.setlists:   # Pedalboard: Setlists bestehen aus Songs - nur All Rigs (laedt nichts)
+        return enter_setlist(br, [], ALL_RIGS, {}, active=True)
     cursor = read_set_cursor(br)
     sets = db_setlists(br)
     names = [n for _, n in sets]
@@ -986,7 +1074,7 @@ def open_save_dialog(br, timeout=2.0):
     retry = time.time() + timeout / 2
     while True:
         b = dialog_buttons(br)
-        if b and b[1].strip().lower().startswith("save"):
+        if _save_key(b):
             return b
         if retry and time.time() >= retry and not b:
             retry = None
@@ -997,22 +1085,24 @@ def open_save_dialog(br, timeout=2.0):
     for _ in range(20):   # 2 s nachsehen
         time.sleep(0.1)
         late = dialog_buttons(br)
-        if late and late[1].strip().lower().startswith("save"):
-            press(br, FS % 1)   # Cancel
+        if _save_key(late):
+            cancel_dialog(br, late)
             break
-    raise LiveError("The save dialog did not appear on the MX5 in time%s - nothing was saved."
-                    % (" (open: %s)" % " | ".join(b) if b else ""))
+    raise LiveError("The save dialog did not appear on the %s in time%s - nothing was saved."
+                    % (DEV.name, " (open: %s)" % " | ".join(x for x in b if x) if b else ""))
 
 
 def save_rig(br):
-    """Speichern-Dialog oeffnen und 'save' (FS2) druecken. Liefert den Rig-Status."""
-    open_save_dialog(br)
-    press(br, FS % 2)
+    """Speichern-Dialog oeffnen und 'save' druecken (MX5: FS2). Liefert den Rig-Status."""
+    press(br, FS % _save_key(open_save_dialog(br)))
     return wait_for(br, lambda s: not s["dirty"])
 
 
-def cancel_dialog(br):
-    press(br, FS % 1)
+def cancel_dialog(br, buttons=None):
+    """Offenen Dialog mit Cancel schliessen (MX5: FS1); ohne Cancel-Knopf passiert nichts."""
+    k = dialog_key(buttons if buttons is not None else dialog_buttons(br), "cancel")
+    if k:
+        press(br, FS % k)
 
 
 # ---- Rig-Datenbank schreiben (Bruecke 0.4) ----
@@ -1231,11 +1321,11 @@ def save_rig_as(br, name, setlist_id=None, prog=None):
             raise LiveError("Program number %d already belongs to rig '%s'." % (prog, owner))
     st = rig_status(br)
     if not st["id"]:
-        raise LiveError("No rig is loaded on the MX5.")
+        raise LiveError("No rig is loaded on the %s." % DEV.name)
     old = db_rig(br, st["id"])
     st = save_rig(br)
     if st["dirty"]:
-        raise LiveError("The MX5 did not save. Is a dialog open on the display?")
+        raise LiveError("The %s did not save. Is a dialog open on the display?" % DEV.name)
     content = content_with_name(db_rig(br, old["id"])["content"], name)
     rid = new_id()
     sql = ("insert into rigs (id, name, content, show_order, author, is_readonly, color, created_at, prog_num) "
@@ -1628,9 +1718,9 @@ def stash_edits(br, rig_id):
         return None
     old = db_rig(br, rig_id)
     if int(old.get("is_readonly") or 0):
-        raise LiveError("“%s” is read-only on the MX5, so its unsaved edits could not be kept." % old.get("name"))
+        raise LiveError("“%s” is read-only on the %s, so its unsaved edits could not be kept." % (old.get("name"), DEV.name))
     if save_rig(br)["dirty"]:
-        raise LiveError("The MX5 did not save its unsaved edits. Was a dialog open on the display?")
+        raise LiveError("The %s did not save its unsaved edits. Was a dialog open on the display?" % DEV.name)
     live = db_rig(br, rig_id)["content"]
     if live != old["content"]:
         _set_rig_content(br, rig_id, old["content"])
@@ -1679,8 +1769,9 @@ def restart_app(br, rig_id=None, setlist=None, progress=None, timeout=90, action
             time.sleep(1)
     say("App is running again, waiting for the dialog ...", 0.62)
     while time.time() < end:
-        if br.get(BOARD).get("string") == "FreeText" and "Yes" in dialog_buttons(br):
-            press(br, FS % 2)   # No = nichts wiederherstellen
+        b = br.get(BOARD).get("string") == "FreeText" and dialog_buttons(br)
+        if b and dialog_key(b, "yes") and dialog_key(b, "no"):
+            press(br, FS % dialog_key(b, "no"))   # No = nichts wiederherstellen (MX5: FS2)
             for _ in range(20):
                 if br.get(BOARD).get("string") != "FreeText":
                     break
@@ -2507,20 +2598,20 @@ def looper_parse(res):
 #   = gezeigter Text (Beschriftung, sonst Blockname), FootSwitchColour<n> = gezeigte Farbe
 #   (folgt bei zwei Zustaenden dem aktiven, SceneState<n> = 0/1), FootSwitch<n> state = leuchtet
 #   (zuletzt ausgeloeste Scene bzw. Block an). Ein Druck geht in der Stomp-Ansicht ueber
-#   RedirCtrl/RawFootswitches/FS1-3 (press_footswitch).
+#   RedirCtrl/RawFootswitches/FS1-3 (press_footswitch). Pedalboard: FootSwitch1-8 an FS2-5/FS8-11
+#   (Geraeteprofil oben, FS_NUMBERS/DEV.raw).
 
 HW_FS, HW_PEDAL = "Footswitches", "Pedals"
 HW_MODULES = [HW_FS, HW_PEDAL]
 FSW = "/Engine/FootSwitch"
 PEDAL = "/Engine/Pedal%d"
-FS_NUMBERS = (5, 6, 7)
 SCENE_UNCHANGED, SCENE_ON, SCENE_OFF = 0, 1, 2
 NO_SCENE_PRESET = "No Preset"
 FS_DISPLAY = ("FootSwitchText%d", "FootSwitchColour%d", "FootSwitch%d")
 
 
 def fs_display_paths():
-    """Die neun Anzeige-Properties der drei Fussschalter (Text, Farbe, leuchtet)."""
+    """Die Anzeige-Properties der Fussschalter (Text, Farbe, leuchtet; MX5 3 x 3)."""
     return ["%s/%s" % (FSW, k % n) for n in FS_NUMBERS for k in FS_DISPLAY]
 
 
@@ -2535,13 +2626,14 @@ def fs_display(values):
     return out or None
 
 
-def press_footswitch(br, k):
-    """Fussschalter k (1-3) am Geraet druecken wie ein Tritt auf den Schalter - nur in der
-    Stomp-Ansicht, sonst wuerde der Druck einen Dialogknopf treffen. Liefert die neue Anzeige."""
+def press_footswitch(br, n):
+    """Fussschalter FootSwitch<n> (MX5 5-7) am Geraet druecken wie ein Tritt auf den Schalter
+    (RawFootswitches laut DEV.raw) - nur in der Stomp-Ansicht, sonst wuerde der Druck einen
+    Dialogknopf treffen. Liefert die neue Anzeige."""
     board = (br.get(BOARD) or {}).get("string")
     if board != "Stomp":
         raise LiveError("The device currently shows '%s', not the stomp view." % board)
-    press(br, FS % k, hold=0.06, wait=0.2)
+    press(br, FS % DEV.raw[n], hold=0.06, wait=0.2)
     return br.get_many(fs_display_paths())
 
 

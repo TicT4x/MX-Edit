@@ -40,7 +40,8 @@ class BridgeTooOld(RuntimeError):
 
 
 class DeviceNotSupported(RuntimeError):
-    """Bruecke laeuft auf einem Pedalboard/Gigboard - der Editor kennt nur die MX5-Hardware."""
+    """Bruecke laeuft auf einem Geraet ohne Profil in live.DEVICES (Gigboard) - der Editor kennt dessen
+    Hardware nicht. Das Pedalboard hat seit 2026-10-19 ein Beta-Profil."""
 
 
 TESTERS_URL = "https://github.com/TicT4x/MX-Edit-Testing"
@@ -135,6 +136,7 @@ class Editor(tk.Tk):
         self._meter = None        # (Modul, ui.LevelMeter) der Input-/Output-Seite
         self._meter_token = 0     # beendet eine alte Pegel-Abfrageschleife
         self.hw_panel = None      # Feld 'Hardware' unter dem Signalpfad (hardware.HardwarePanel)
+        self._beta_told = False   # Hinweis zur Geraete-Beta (Pedalboard) schon gezeigt
         self.fsbar = None         # zugeklappte Form davon: die drei Fussschalter + 'Zuweisen' (hardware.FootBar)
         self.scene = None         # (Fussschalter 5-7, Zustand 1-2): Scene, die im Signalpfad bearbeitet wird
         self.assign = None        # Fussschalter 5-7 im Toggle-Modus, dessen Block im Signalpfad gewaehlt wird
@@ -513,7 +515,7 @@ class Editor(tk.Tk):
                                    swatch=COLOURS.get(cname, COLOURS["Off"]))
                 m.add_cascade(label="Colour", menu=cm)
                 m.add_command(label="Program number …", command=lambda: self.live_set_prognum(i))
-                if lr.setlists and lr.setlist_ids:
+                if lr.setlists and lr.setlist_ids and L.DEV.setlists:
                     sm = U.menu(self)
                     for sname in lr.setlists:
                         if sname in lr.setlist_ids:
@@ -783,7 +785,11 @@ class Editor(tk.Tk):
             for name in lr.setlist_choices():
                 mark = "●  " if name == lr.setlist else "    "
                 m.add_command(label=mark + name, command=lambda n=name: self.on_pick_setlist(n))
-            if self.can_write():
+            if not L.DEV.setlists:
+                m.add_separator()
+                m.add_command(label="Setlists (songs) are not supported on the %s yet" % L.DEV.name,
+                              state="disabled")
+            elif self.can_write():
                 own = lr.setlist != L.ALL_RIGS and lr.setlist in (lr.setlist_ids or {})
                 m.add_separator()
                 m.add_command(label="Setlist manager …", command=self.open_setlists)
@@ -809,14 +815,16 @@ class Editor(tk.Tk):
         m.add_separator()
         m.add_command(label="Copy rig files to the device …", command=self.live_import_rigs,
                       state="normal" if w else "disabled")
-        m.add_command(label="Restore everything …", command=self.live_restore_all, state="normal" if w else "disabled")
+        m.add_command(label="Restore everything …", command=self.live_restore_all,
+                      state="normal" if w and L.DEV.setlists else "disabled")
         m.add_command(label="Manage impulse responses …", command=self.open_ir_dialog,
                       state="normal" if (live and getattr(self.session.bridge, "v3", False)) else "disabled")
         m.add_command(label="Tuner …", command=self.open_tuner, state="normal" if live else "disabled")
         m.add_command(label="Looper …", command=self.open_looper, state="normal" if live else "disabled")
         m.add_command(label="Footswitches & pedals …", command=self.open_hardware,
                       state="normal" if live else "disabled")
-        m.add_command(label="Setlist manager …", command=self.open_setlists, state="normal" if w else "disabled")
+        m.add_command(label="Setlist manager …", command=self.open_setlists,
+                      state="normal" if w and L.DEV.setlists else "disabled")
         nam = self.lrig.nam if live and self.lrig else None
         if nam and nam.get("installed"):
             m.add_separator()
@@ -843,7 +851,7 @@ class Editor(tk.Tk):
         if self.scene:
             self.lbl_chain.configure(text="Scene: click = choose state and preset · double-click = – / On / Off")
         elif self.assign:
-            self.lbl_chain.configure(text="Toggle: click a block to assign it to footswitch %d" % (self.assign - 4))
+            self.lbl_chain.configure(text="Toggle: click a block to assign it to footswitch %d" % L.fs_label(self.assign))
         else:
             self.lbl_chain.configure(text="Click = edit · double-click = on/off · drag = move (onto the trash can = remove)%s"
                                           % ("  · empty slot = insert block" if live else ""))
@@ -929,7 +937,7 @@ class Editor(tk.Tk):
 
     def update_new_btn(self):
         """Knopf 'New': live mit Schreibzugriff, offline sobald ein Ordner offen ist."""
-        st = "normal" if (self.can_write() if self.session else self.folder) else "disabled"
+        st = "normal" if (self.can_write() and L.DEV.new_rig if self.session else self.folder) else "disabled"
         if self.btn_new.cget("state") != st:
             self.btn_new.configure(state=st)
 
@@ -965,8 +973,8 @@ class Editor(tk.Tk):
             for n, d in self.lrig.hw["fs"].items():
                 m = d["module"].get("string", "") if d["mode"].get("string") != "Scene" else ""
                 if n != self.assign and m and self.slot_of(m) is not None:
-                    others[m] = "FS %d" % (n - 4)
-            assign = ("FS %d" % (self.assign - 4), self.assign_module(), others)
+                    others[m] = "FS %d" % L.fs_label(n)
+            assign = ("FS %d" % L.fs_label(self.assign), self.assign_module(), others)
         self.chain.set_chain(slots, (self.module, self.half), self.session is not None, v.routing,
                              scene=self.scene is not None, assign=assign)
         self.rail_rigs.set_active(self.module is not None and not self.scene and not self.assign and not self.page)
@@ -985,7 +993,7 @@ class Editor(tk.Tk):
     def scene_name(self, n, state):
         """'Fußschalter 1 · Scene B' (zwei Zustaende) bzw. 'Fußschalter 1 · Scene'."""
         d = self.lrig.hw["fs"].get(n) if self.lrig and self.lrig.hw else None
-        return "Footswitch %d · %s" % (n - 4, state_name(d, state) if d else "Scene %s" % "AB"[state - 1])
+        return "Footswitch %d · %s" % (L.fs_label(n), state_name(d, state) if d else "Scene %s" % "AB"[state - 1])
 
     def exit_fs_mode(self):
         """Scene- bzw. Zuweisungs-Modus verlassen (runder x-Knopf im Signalpfad)."""
@@ -1045,8 +1053,8 @@ class Editor(tk.Tk):
         self.assign = n
         if n:
             self.scene = None
-            self._fs_badge("TOGGLE  ·  FS %d · choose block" % (n - 4))
-            self.status.set("Footswitch %d (Toggle): click a block in the signal chain to assign it." % (n - 4))
+            self._fs_badge("TOGGLE  ·  FS %d · choose block" % L.fs_label(n))
+            self.status.set("Footswitch %d (Toggle): click a block in the signal chain to assign it." % L.fs_label(n))
         else:
             self._fs_badge(None)
             if self.view:
@@ -1067,7 +1075,7 @@ class Editor(tk.Tk):
         n = self.assign
         d = self.lrig.hw["fs"][n]
         if module not in d["modules"]:
-            self.status.set("%s is not in the choice list of footswitch %d." % (module, n - 4))
+            self.status.set("%s is not in the choice list of footswitch %d." % (module, L.fs_label(n)))
             return
         self.hw_set("%s/ModuleList%d" % (L.FSW, n), "index", d["modules"].index(module))
 
@@ -1083,7 +1091,7 @@ class Editor(tk.Tk):
         self.label(g, "Block", 0)
         U.Dropdown(g, [self.block_title(x) for x in d["modules"]], self.block_title(d["module"].get("string", "")), width=22,
                    on_pick=lambda i: self.hw_set("%s/ModuleList%d" % (fsw, n), "index", i),
-                   title="Block for footswitch %d" % (n - 4)).grid(row=0, column=1, sticky="w")
+                   title="Block for footswitch %d" % L.fs_label(n)).grid(row=0, column=1, sticky="w")
         self.label(g, "Function", 1)
         U.Dropdown(g, d["operations"], d["operation"].get("string", ""), width=16,
                    on_pick=lambda i: self.hw_set("%s/OperationList%d" % (fsw, n), "index", i),
@@ -1406,6 +1414,9 @@ class Editor(tk.Tk):
         if not self.can_write():
             messagebox.showinfo(APP, "The setlist manager needs a live connection to the MX5.")
             return
+        if not L.DEV.setlists:
+            messagebox.showinfo(APP, "Setlists (songs) of the %s are not supported yet." % L.DEV.name)
+            return
         if self._job:
             self.status.set("Please wait, the device is still busy.")
             return
@@ -1467,11 +1478,12 @@ class Editor(tk.Tk):
         elif not show:
             self.fsbar.pack_forget()
 
-    def press_footswitch(self, k):
-        """Klick auf einen Schalter der Leiste: Fussschalter k (1-3) am Geraet druecken und die
+    def press_footswitch(self, n):
+        """Klick auf einen Schalter der Leiste: Fussschalter FootSwitch<n> am Geraet druecken und die
         Anzeige (Schalter, Kette, Parameter) nachziehen."""
         if not self.session or self._job:
             return
+        k = L.fs_label(n)
 
         def done(res, err):
             if err:
@@ -1482,7 +1494,7 @@ class Editor(tk.Tk):
             self.fsbar.set(self.lrig.fs_display())
             self.status.set("Footswitch %d pressed" % k)
             self.live_sync()
-        self.run_job(lambda br: L.press_footswitch(br, k), done, "Pressing footswitch %d …" % k)
+        self.run_job(lambda br: L.press_footswitch(br, n), done, "Pressing footswitch %d …" % k)
 
     def open_hardware(self):
         """Feld 'Hardware' unter dem Signalpfad ein- bzw. ausblenden (nur live)."""
@@ -1729,7 +1741,7 @@ class Editor(tk.Tk):
             if module is None:
                 return
             n = self.assign
-            menu.add_command(label="Assign footswitch %d" % (n - 4), command=lambda: self.assign_block(module))
+            menu.add_command(label="Assign footswitch %d" % L.fs_label(n), command=lambda: self.assign_block(module))
             if self.assign_module() == module:
                 menu.add_command(label="Remove assignment", command=lambda: self.assign_block("Unassigned"))
             menu.tk_popup(event.x_root, event.y_root)
@@ -1881,7 +1893,7 @@ class Editor(tk.Tk):
         if self.assign:
             self.draw_preset_row(None)
             n = self.assign
-            self.param_title.configure(text="Footswitch %d" % (n - 4))
+            self.param_title.configure(text="Footswitch %d" % L.fs_label(n))
             target = self.assign_module()
             self.param_sub.configure(text="Toggle  ·  switches %s" % (target or "nichts"))
             self.param_sub.pack(fill="x", pady=(0, px(8)), before=self.psep)
@@ -2453,8 +2465,9 @@ class Editor(tk.Tk):
             if bridge.vnum < MIN_BRIDGE:
                 raise BridgeTooOld(version)
             model = L.device_model(bridge)
-            if model not in (None, "MX5"):
+            if model is not None and model not in L.DEVICES:
                 raise DeviceNotSupported(model)
+            L.set_device(model)
         except Exception:
             bridge.close()
             raise
@@ -2494,7 +2507,8 @@ class Editor(tk.Tk):
                                  "Please flash MX5Bridge %d.%d (see ANLEITUNG.txt in its folder)."
                                  % ((e,) + MIN_BRIDGE + MIN_BRIDGE))
         elif isinstance(e, DeviceNotSupported):
-            self._connect_err = ("This is a HeadRush %s. The editor only supports the MX5 so far – it would "
+            self._connect_err = ("This is a HeadRush %s. The editor supports the MX5 (and the Pedalboard as a "
+                                 "beta) so far – it would "
                                  "load the wrong rigs and press the wrong switches on other devices.\n"
                                  "You can help: run HeadRush_Bridge_Diagnose.exe and send its log (%s).\n"
                                  "Editing .rig files without a connection works." % (e, TESTERS_URL))
@@ -2525,6 +2539,7 @@ class Editor(tk.Tk):
         self.rig = None
         self.folder = None
         self.set_mode_badge(version)
+        self.apply_device(version)
         self.fill_list()
         self.show_fsbar(True)
         self.status.set("Connected. Reading the active rig …")
@@ -2532,6 +2547,23 @@ class Editor(tk.Tk):
         self.nam_read()
         self.block_prefetch()
         self._poll_job = self.after(POLL_MS, self.live_poll)
+
+    def apply_device(self, version):
+        """Oberflaeche an das verbundene Geraet anpassen (live.DEV): Pedalboard-Beta ohne Setlists
+        (der Setlist-Knopf meldet das), einmal je Programmstart ein Hinweis, was die Beta kann."""
+        dev = L.DEV
+        if dev.beta:
+            self.set_mode_badge("%s   ·   %s BETA" % (version, dev.name.upper()))
+            if not self._beta_told:
+                self._beta_told = True
+                self.after(300, lambda: messagebox.showinfo(
+                    APP, "HeadRush %s support is a beta.\n"
+                         "Editing the signal chain, parameters, block presets, saving, footswitches, pedals, "
+                         "tuner, looper and IRs should work, but nobody has tried it on a %s yet. "
+                         "Setlists (songs) are not supported yet – the editor works on All Rigs.\n"
+                         "Back up your rigs first (⋯ › Back up everything …) and please report what works "
+                         "and what doesn’t: %s" % (dev.name, dev.name, TESTERS_URL)))
+        self.update_new_btn()
 
     # ---- Verbindungsverlust (USB gezogen, Geraet aus, App-Neustart am Geraet) ----
     def connection_lost(self):

@@ -135,7 +135,7 @@ class FootswitchTile(tk.Canvas):
         if scene:
             self._switch(W - px(6), y, states, "states")
         ly = px(self.HEAD) + px(14)
-        name = label.upper() if label else "Footswitch %d" % (self.n - 4)
+        name = label.upper() if label else "Footswitch %d" % L.fs_label(self.n)
         self.create_text(W / 2, ly, text=name, fill=TEXT if label else DIM, font=FONT_CARD_BIG)
         self.regions.append((px(6), px(self.HEAD), W - px(6), ly + px(12), "label", None))
         # Koerper
@@ -247,7 +247,8 @@ class FootBar(U.Panel):
 
     def _switch_at(self, x):
         W = self.canvas.winfo_width()
-        w = (W - 2 * px(self.GAP)) / 3
+        k = len(L.FS_NUMBERS)
+        w = (W - (k - 1) * px(self.GAP)) / k
         for i, n in enumerate(L.FS_NUMBERS):
             x0 = i * (w + px(self.GAP))
             if x0 <= x <= x0 + w:
@@ -265,7 +266,7 @@ class FootBar(U.Panel):
     def _click(self, e):
         n = self._switch_at(e.x)
         if n is not None and self.data:
-            self.ed.press_footswitch(n - 4)
+            self.ed.press_footswitch(n)
 
     def redraw(self):
         c = self.canvas
@@ -273,13 +274,14 @@ class FootBar(U.Panel):
         W, H = c.winfo_width(), c.winfo_height()
         if W < 20 or H < 10:
             return
-        w = (W - 2 * px(self.GAP)) / 3
+        k = len(L.FS_NUMBERS)
+        w = (W - (k - 1) * px(self.GAP)) / k
         for i, n in enumerate(L.FS_NUMBERS):
             x = i * (w + px(self.GAP))
             d = (self.data or {}).get(n)
             if not d:
                 U.rrect(c, x, 0, w, H, px(7), CARD_LO)
-                c.create_text(x + w / 2, H / 2, text="FS %d" % (n - 4), fill=DIM, font=FONT_BOLD)
+                c.create_text(x + w / 2, H / 2, text="FS %d" % L.fs_label(n), fill=DIM, font=FONT_BOLD)
                 continue
             colour = COLOURS.get(d["colour"])
             lit = d["on"] and colour and d["colour"] != "Off"
@@ -304,10 +306,12 @@ class FootBar(U.Panel):
 class HardwarePanel(U.Panel):
     """Feld 'Hardware' im Hauptfenster (unter dem Signalpfad)."""
     HEIGHT = 300
+    HEIGHT_TWO_ROWS = 440   # Pedalboard: acht Schalter in zwei Reihen
     WIDE = 1180   # ab dieser Breite (logische Pixel) Fussschalter und Pedale nebeneinander
 
     def __init__(self, editor, parent, tempo):
-        super().__init__(parent, fill=PANEL, r=10, height=px(self.HEIGHT))
+        super().__init__(parent, fill=PANEL, r=10,
+                         height=px(self.HEIGHT if len(L.FS_NUMBERS) <= 4 else self.HEIGHT_TWO_ROWS))
         self.ed = editor
         self.tempo = tempo
         self.sel = (L.FS_NUMBERS[0], 1)   # Schalter + Zustand, fuer den die Palette gilt
@@ -393,11 +397,17 @@ class HardwarePanel(U.Panel):
         hw = self.hw
         tiles = tk.Frame(body, bg=PANEL)
         tiles.pack(fill="both", expand=True)
-        for n in L.FS_NUMBERS:
-            t = FootswitchTile(tiles, n, self)
-            t.pack(side="left", fill="both", expand=True, padx=(0, px(8) if n != L.FS_NUMBERS[-1] else 0))
-            t.set(hw["fs"][n] if hw else None, self.tile_sel(n))
-            self.tiles[n] = t
+        nums = list(L.FS_NUMBERS)
+        per_row = len(nums) if len(nums) <= 4 else (len(nums) + 1) // 2
+        rows = [nums[i:i + per_row] for i in range(0, len(nums), per_row)]
+        for r, row_nums in enumerate(rows):
+            row = tk.Frame(tiles, bg=PANEL)
+            row.pack(fill="both", expand=True, pady=(px(6) if r else 0, 0))
+            for n in row_nums:
+                t = FootswitchTile(row, n, self)
+                t.pack(side="left", fill="both", expand=True, padx=(0, px(8) if n != row_nums[-1] else 0))
+                t.set(hw["fs"][n] if hw else None, self.tile_sel(n))
+                self.tiles[n] = t
         bottom = tk.Frame(body, bg=PANEL)
         bottom.pack(fill="x", pady=(px(6), 0))
         cell = px(24)
@@ -411,7 +421,7 @@ class HardwarePanel(U.Panel):
             U.rrect(pal, i * cell + px(2), px(2), cell - px(2), cell - px(2), px(5), COLOURS[name],
                     "#ffffff" if sel else None, 2 if sel else 0)
         pal.bind("<Button-1>", self.pick_colour)
-        what = "Footswitch %d" % (n - 4)
+        what = "Footswitch %d" % L.fs_label(n)
         if hw and state_name(hw["fs"][n], state) != "Scene":
             what += " · " + state_name(hw["fs"][n], state)
         tk.Label(bottom, text="Colour for %s" % what if hw else "Reading assignments from the device …", bg=PANEL, fg=DIM,

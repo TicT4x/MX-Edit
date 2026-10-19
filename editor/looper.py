@@ -457,14 +457,17 @@ class LooperDialog(U.Overlay):
         self.seg_loc = U.Segmented(grid, ["Pre (before the chain)", "Post (after the chain)"],
                                    on_pick=lambda i: self.write(L.LOOPER_LOC, "index", i))
         self.seg_loc.grid(row=2, column=1, columnspan=2, sticky="w", pady=(px(8), 0))
-        tk.Label(grid, text="Footswitches", bg=PANEL, fg=MUTED, font=FONT_SMALL, anchor="w").grid(
-            row=3, column=0, sticky="w", pady=(px(8), 0))
-        fs = tk.Frame(grid, bg=PANEL)
-        fs.grid(row=3, column=1, columnspan=2, sticky="w", pady=(px(8), 0))
-        self.seg_alt = U.Segmented(fs, ["Main", "Alt"], on_pick=lambda i: self.write(L.LOOPER_ALT_FS, "state", i))
-        self.seg_alt.pack(side="left")
-        self.lbl_fs = tk.Label(fs, text="", bg=PANEL, fg=DIM, font=FONT_SMALL, anchor="w")
-        self.lbl_fs.pack(side="left", padx=(px(10), 0))
+        self.seg_alt = None   # Main|Alt gibt es nur am MX5 (Pedalboard: eigene Looper-Schalter)
+        if L.DEV.alt_looper:
+            tk.Label(grid, text="Footswitches", bg=PANEL, fg=MUTED, font=FONT_SMALL, anchor="w").grid(
+                row=3, column=0, sticky="w", pady=(px(8), 0))
+            fs = tk.Frame(grid, bg=PANEL)
+            fs.grid(row=3, column=1, columnspan=2, sticky="w", pady=(px(8), 0))
+            self.seg_alt = U.Segmented(fs, ["Main", "Alt"],
+                                       on_pick=lambda i: self.write(L.LOOPER_ALT_FS, "state", i))
+            self.seg_alt.pack(side="left")
+            self.lbl_fs = tk.Label(fs, text="", bg=PANEL, fg=DIM, font=FONT_SMALL, anchor="w")
+            self.lbl_fs.pack(side="left", padx=(px(10), 0))
 
         row = tk.Frame(b, bg=PANEL)
         row.pack(fill="x", pady=(px(14), 0))
@@ -583,7 +586,7 @@ class LooperDialog(U.Overlay):
             self.lbl_fb.configure(text="%d %%" % round(info["feedback"]))
         if info.get("loc") in ("Pre", "Post") and fresh(L.LOOPER_LOC):
             self.seg_loc.set(0 if info["loc"] == "Pre" else 1)
-        if fresh(L.LOOPER_ALT_FS):
+        if self.seg_alt and fresh(L.LOOPER_ALT_FS):
             self.seg_alt.set(1 if info.get("alt") else 0)
             self.lbl_fs.configure(text="FS2 undo (peel) · FS3 back to Main" if info.get("alt")
                                   else "FS1 start/stop · FS2 record/overdub · FS3 Alt")
