@@ -1,4 +1,4 @@
-# MX5 Bridge + MX-Edit (with NAM-Mod Support)
+# MX5 & Pedalboard Bridge + MX-Edit (with NAM-Mod Support)
 
 **Unofficial** tooling for the **HeadRush MX5** guitar processor – and, as a beta, the
 **HeadRush Pedalboard** ([details](#headrush-pedalboard-beta)):
