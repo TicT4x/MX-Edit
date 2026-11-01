@@ -45,6 +45,8 @@ jobs:
         shell: bash
         run: |
           EV=$(sed -n 's/^APP = U.APP_NAME + " \([0-9.]*\)".*/\1/p' editor/mx5editor.py)
+          TAG="${{ github.event.release.tag_name }}"
+          if [ -n "$TAG" ]; then EV="${TAG#v}"; fi   # release v0.9.6-beta.4 -> MX-Edit_0.9.6-beta.4_...
           BV=$(sed -n "s/^VERSION = '\([0-9.]*\)'.*/\1/p" firmware/bridgepatch.py)
           mkdir dist
           if [ "$RUNNER_OS" = macOS ]; then
