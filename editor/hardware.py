@@ -32,7 +32,7 @@ from ui import FONT, FONT_SMALL, FONT_TINY, FONT_BOLD
 SCENE_MODES = ["–", "On", "Off"]          # live.SCENE_UNCHANGED / SCENE_ON / SCENE_OFF
 TEMPO = L.ENGINE + "/Rig/Tempo"
 TEMPO_MODE = L.ENGINE + "/Rig/TempoFromMaster"
-FONT_CARD_BIG = ("Segoe UI", 11, "bold")
+FONT_CARD_BIG = (U.SANS, 11, "bold")
 TABS = ["Footswitches", "Pedals", "Tempo"]
 
 
@@ -84,7 +84,7 @@ class FootswitchTile(tk.Canvas):
         self.bind("<Configure>", lambda e: self.redraw())
         self.bind("<Button-1>", self._click)
         self.bind("<Double-Button-1>", self._double)
-        self.bind("<Button-3>", self._menu)
+        U.bind_right(self, self._menu)
 
     def set(self, d, sel):
         self.data, self.sel = d, sel
@@ -377,7 +377,7 @@ class HardwarePanel(U.Panel):
         tk.Label(head, text="Hardware", bg=PANEL, fg=TEXT, font=FONT_BOLD).pack(side="left", padx=(0, px(14)))
         self.tabs = U.Segmented(head, TABS, 0, on_pick=self.show_tab, padx=10)
         self.head_tempo = tk.Frame(head, bg=PANEL)   # breites Fenster: Tempo in der Kopfzeile
-        U.Btn(head, "✕", command=self.close, kind="ghost", padx=6, pady=0, font=("Segoe UI", 12)).pack(side="right")
+        U.Btn(head, "✕", command=self.close, kind="ghost", padx=6, pady=0, font=(U.SANS, 12)).pack(side="right")
         self.lbl_info = tk.Label(head, text="", bg=PANEL, fg=DIM, font=FONT_SMALL)
         self.lbl_info.pack(side="right", padx=(0, px(10)))
         self.body = tk.Frame(f, bg=PANEL)

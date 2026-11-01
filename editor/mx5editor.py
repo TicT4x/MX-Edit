@@ -193,7 +193,7 @@ class Editor(tk.Tk):
         self.status = tk.StringVar(value="“Live” connects to the device, “Folder” opens .rig files.")
         tk.Label(status, textvariable=self.status, bg=BG, fg=MUTED, font=FONT_SMALL, anchor="w",
                  padx=px(14), pady=px(4)).pack(side="left", fill="x", expand=True)
-        self.lbl_mode = tk.Label(status, text="OFFLINE", bg=BG, fg=MUTED, font=("Segoe UI", 9, "bold"), padx=px(14))
+        self.lbl_mode = tk.Label(status, text="OFFLINE", bg=BG, fg=MUTED, font=(U.SANS, 9, "bold"), padx=px(14))
         self.lbl_mode.pack(side="right")
 
         # Symbolleiste links
@@ -283,7 +283,7 @@ class Editor(tk.Tk):
         self.params.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self._pwin = self.canvas.create_window((0, 0), window=self.params, anchor="nw")
         self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfigure(self._pwin, width=e.width))
-        self.bind_all("<MouseWheel>", self._wheel)
+        U.bind_wheel(self, self._wheel, all=True)
 
         # Mitte: Kopfzeile mit Rig-Name und Aktionen, darunter die Signalkette
         center = tk.Frame(self, bg=BG)
@@ -302,7 +302,7 @@ class Editor(tk.Tk):
         self.btn_revert.pack(side="left", padx=(0, px(6)))
         self.btn_save = U.Btn(actions, "Save", command=self.save, kind="primary", icon="save", state="disabled")
         self.btn_save.pack(side="left", padx=(0, px(6)))
-        U.Btn(actions, "⋯", command=self.open_menu, kind="ghost", padx=8, font=("Segoe UI", 13, "bold")).pack(side="left")
+        U.Btn(actions, "⋯", command=self.open_menu, kind="ghost", padx=8, font=(U.SANS, 13, "bold")).pack(side="left")
         mid = tk.Frame(top, bg=PANEL)
         mid.pack(side="left", fill="x", expand=True)
         name_row = tk.Frame(mid, bg=PANEL)
@@ -351,7 +351,7 @@ class Editor(tk.Tk):
     def _wheel(self, e):
         """Mausrad an die Liste oder das Parameterfeld unter dem Zeiger weiterreichen."""
         w = self.winfo_containing(e.x_root, e.y_root)
-        step = int(-e.delta / 120)
+        step = U.wheel_step(e)
         while w is not None:
             if w is self.riglist:
                 self.riglist.yview_scroll(step, "units")

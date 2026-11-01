@@ -19,6 +19,12 @@ BG, PANEL, CARD, LINE = "#0b0b0e", "#141519", "#1c1d23", "#2a2b33"
 TEXT, MUTED, DIM = "#e8e8ea", "#9a9ba3", "#5f6069"
 ACCENT, ACCENT_HI, ACCENT_TXT, DANGER = "#1fc9a1", "#43dcb8", "#07110e", "#e5484d"
 WARN, WARN_BG = "#f5a524", "#2a2112"
+MAC, WIN = sys.platform == "darwin", sys.platform == "win32"
+SANS = "Segoe UI" if WIN else ("Helvetica Neue" if MAC else "DejaVu Sans")
+MONO = "Consolas" if WIN else ("Menlo" if MAC else "DejaVu Sans Mono")
+# was der NAM-Installer auf diesem System baut (naminstaller.SUFFIX) - fuer die Texte
+NAM_OUT = {".exe": "Firmware Updater (NAM mod).exe", ".app": "2.7 Firmware Updater (NAM mod).app"}.get(
+    naminstaller.SUFFIX)
 NAM_STEPS = ("1.  Choose MX5 and the number of NAM instances.\n"
              "2.  Click “Install NAM Mod”.\n"
              "3.  Wait. Do NOT click “Open” in the NAM installer – that updater has no bridge.\n"
@@ -27,6 +33,14 @@ NAM_STEPS = ("1.  Choose MX5 and the number of NAM instances.\n"
 
 def nam_steps(device):
     return NAM_STEPS.replace("Choose MX5", "Choose %s" % device)
+
+
+def open_path(p):
+    """Datei/Ordner mit dem Standardprogramm des Systems oeffnen (Explorer, Finder, Dateimanager)."""
+    if WIN:
+        os.startfile(p)
+    else:
+        subprocess.Popen(["open" if MAC else "xdg-open", p])
 
 
 # Geraete in der Reihenfolge der Auswahl (bridgepatch.MODELS: MX5 geprueft, die anderen experimentell)
@@ -54,7 +68,7 @@ class Check(tk.Frame):
         s = self.size = int(20 * parent.winfo_toplevel().scale)
         self.box = tk.Canvas(self, width=s, height=s, bg=bg, highlightthickness=0, cursor="hand2")
         self.box.pack(side="left", anchor="n", pady=(2, 0))
-        self.lbl = tk.Label(self, text=text, bg=bg, fg=TEXT, font=("Segoe UI", 11), cursor="hand2",
+        self.lbl = tk.Label(self, text=text, bg=bg, fg=TEXT, font=(SANS, 11), cursor="hand2",
                             anchor="w", justify="left")
         self.lbl.pack(side="left", padx=(10, 0), fill="x")
         for w in (self.box, self.lbl):
@@ -96,7 +110,7 @@ class Btn(tk.Label):
     def __init__(self, parent, text, command, primary=False, bg=PANEL):
         self.colors = (ACCENT, ACCENT_HI, ACCENT_TXT) if primary else (CARD, LINE, TEXT)
         super().__init__(parent, text=text, bg=self.colors[0], fg=self.colors[2], cursor="hand2",
-                         font=("Segoe UI", 11, "bold" if primary else "normal"), padx=18, pady=7)
+                         font=(SANS, 11, "bold" if primary else "normal"), padx=18, pady=7)
         self.command = command
         self.enabled = True
         self.bind("<Enter>", lambda e: self.enabled and self.configure(bg=self.colors[1]))
@@ -113,6 +127,8 @@ class PatcherApp(tk.Tk):
     def __init__(self, preset=None):
         dpi_aware()
         super().__init__()
+        if MAC:   # aqua rechnet mit 72 dpi: auf 96 wie Windows, sonst wird alles ein Viertel kleiner
+            self.tk.call("tk", "scaling", 96.0 / 72.0)
         self.scale = self.winfo_fpixels("1i") / 96.0
         px = lambda v: int(v * self.scale)
         self.px = px
@@ -121,7 +137,7 @@ class PatcherApp(tk.Tk):
         self.geometry("%dx%d" % (px(720), px(820)))
         self.minsize(px(600), px(640))
         ico = os.path.join(HERE, "patcher.ico")
-        if os.path.exists(ico):
+        if WIN and os.path.exists(ico):
             try:
                 self.iconbitmap(default=ico)
             except tk.TclError:
@@ -159,11 +175,11 @@ class PatcherApp(tk.Tk):
     def card(self, parent, title):
         f = tk.Frame(parent, bg=PANEL, padx=self.px(20), pady=self.px(16))
         f.pack(fill="x", pady=(0, self.px(12)))
-        tk.Label(f, text=title.upper(), bg=PANEL, fg=MUTED, font=("Segoe UI", 9, "bold"), anchor="w").pack(fill="x")
+        tk.Label(f, text=title.upper(), bg=PANEL, fg=MUTED, font=(SANS, 9, "bold"), anchor="w").pack(fill="x")
         return f
 
     def note(self, parent, text="", fg=MUTED, link=None):
-        l = tk.Label(parent, text=text, bg=PANEL, fg=fg, font=("Segoe UI", 10), anchor="w", justify="left",
+        l = tk.Label(parent, text=text, bg=PANEL, fg=fg, font=(SANS, 10), anchor="w", justify="left",
                      wraplength=self.px(620))
         l.pack(fill="x", pady=(self.px(6), 0))
         if link:
@@ -178,9 +194,9 @@ class PatcherApp(tk.Tk):
         head = tk.Frame(root, bg=BG)
         head.pack(fill="x", pady=(0, px(14)))
         logo = bridgepatch.BRAND.split()[0]          # "MX5" bzw. "HeadRush" (Testausgabe)
-        tk.Label(head, text=logo, bg=BG, fg=ACCENT, font=("Segoe UI", 22, "bold")).pack(side="left")
+        tk.Label(head, text=logo, bg=BG, fg=ACCENT, font=(SANS, 22, "bold")).pack(side="left")
         tk.Label(head, text="  Bridge %s · Firmware Patcher" % VERSION, bg=BG, fg=TEXT,
-                 font=("Segoe UI", 16)).pack(side="left", pady=(px(4), 0))
+                 font=(SANS, 16)).pack(side="left", pady=(px(4), 0))
         if bridgepatch.TESTING:
             intro = ("Builds a firmware updater for the HeadRush MX5, Pedalboard or Gigboard (firmware 2.7) with the "
                      "%s from the official HeadRush updater. Pedalboard and Gigboard are experimental. "
@@ -192,16 +208,16 @@ class PatcherApp(tk.Tk):
             intro = ("Builds a firmware updater for the HeadRush MX5 (firmware 2.7) with the MX5 Bridge "
                      "from the official HeadRush updater. Unofficial – use at your own risk.")
         tk.Label(root, text=intro,
-                 bg=BG, fg=MUTED, font=("Segoe UI", 10), anchor="w", justify="left",
+                 bg=BG, fg=MUTED, font=(SANS, 10), anchor="w", justify="left",
                  wraplength=px(660)).pack(fill="x", pady=(0, px(14)))
 
         # Gross sichtbar, solange der NAM-Installer laeuft (Nutzer flashten sonst dessen Updater)
         self.banner = tk.Frame(root, bg=WARN_BG, padx=px(20), pady=px(16), highlightthickness=2,
                                highlightbackground=WARN)
-        self.banner_title = tk.Label(self.banner, text="", bg=WARN_BG, fg=WARN, font=("Segoe UI", 14, "bold"),
+        self.banner_title = tk.Label(self.banner, text="", bg=WARN_BG, fg=WARN, font=(SANS, 14, "bold"),
                                      anchor="w", justify="left", wraplength=px(640))
         self.banner_title.pack(fill="x")
-        self.banner_text = tk.Label(self.banner, text="", bg=WARN_BG, fg=TEXT, font=("Segoe UI", 11),
+        self.banner_text = tk.Label(self.banner, text="", bg=WARN_BG, fg=TEXT, font=(SANS, 11),
                                     anchor="w", justify="left", wraplength=px(640))
         self.banner_text.pack(fill="x", pady=(px(8), 0))
 
@@ -220,17 +236,17 @@ class PatcherApp(tk.Tk):
             chk.pack(side="left", padx=(0, px(22)))
             self.chk_models[m["key"]] = chk
         self.chk_models[self.model["key"]].set(True)
-        self.note_model = tk.Label(c, text="", bg=WARN_BG, fg=WARN, font=("Segoe UI", 10), anchor="w",
+        self.note_model = tk.Label(c, text="", bg=WARN_BG, fg=WARN, font=(SANS, 10), anchor="w",
                                    justify="left", wraplength=px(600), padx=px(12), pady=px(8))
         self.chk_risk = Check(c, "I understand the risk and want to help testing", command=self.refresh)
-        self.note_beta = tk.Label(c, text="", bg=CARD, fg=TEXT, font=("Segoe UI", 10), anchor="w",
+        self.note_beta = tk.Label(c, text="", bg=CARD, fg=TEXT, font=(SANS, 10), anchor="w",
                                   justify="left", wraplength=px(600), padx=px(12), pady=px(8))
 
         c = self.card(self.opts, "Firmware")
         self.chk_file = Check(c, "Use a firmware file I already have", command=self.refresh)
         self.chk_file.pack(fill="x", pady=(px(10), 0))
         self.file_row = tk.Frame(c, bg=PANEL)
-        self.lbl_file = tk.Label(self.file_row, text="", bg=CARD, fg=TEXT, font=("Segoe UI", 10), anchor="w", width=1,
+        self.lbl_file = tk.Label(self.file_row, text="", bg=CARD, fg=TEXT, font=(SANS, 10), anchor="w", width=1,
                                  padx=px(10), pady=px(6))
         self.lbl_file.pack(side="left", fill="x", expand=True)
         self.btn_file = Btn(self.file_row, "Choose …", self.choose_file)
@@ -243,8 +259,8 @@ class PatcherApp(tk.Tk):
         self.note_nam = self.note(c)
         self.nam_howto = tk.Frame(c, bg=WARN_BG, padx=px(14), pady=px(10))
         tk.Label(self.nam_howto, text="How it works – a second window (the NAM installer) opens:", bg=WARN_BG,
-                 fg=WARN, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x")
-        self.lbl_nam_steps = tk.Label(self.nam_howto, text=NAM_STEPS, bg=WARN_BG, fg=TEXT, font=("Segoe UI", 10),
+                 fg=WARN, font=(SANS, 10, "bold"), anchor="w").pack(fill="x")
+        self.lbl_nam_steps = tk.Label(self.nam_howto, text=NAM_STEPS, bg=WARN_BG, fg=TEXT, font=(SANS, 10),
                                       anchor="w", justify="left", wraplength=px(600))
         self.lbl_nam_steps.pack(fill="x", pady=(px(4), 0))
         self.note(c, "NAM mod by lolgab (GPLv3) · github.com/lolgab/headrush-nam-mod", link=NAM_URL)
@@ -252,7 +268,7 @@ class PatcherApp(tk.Tk):
         c = self.card(self.opts, "Output")
         row = tk.Frame(c, bg=PANEL)
         row.pack(fill="x", pady=(px(10), 0))
-        self.lbl_out = tk.Label(row, text="", bg=CARD, fg=TEXT, font=("Segoe UI", 10), anchor="w", width=1,
+        self.lbl_out = tk.Label(row, text="", bg=CARD, fg=TEXT, font=(SANS, 10), anchor="w", width=1,
                                 padx=px(10), pady=px(6))
         self.lbl_out.pack(side="left", fill="x", expand=True)
         self.btn_out = Btn(row, "Change …", self.choose_out)
@@ -263,7 +279,7 @@ class PatcherApp(tk.Tk):
         self.btn_go = Btn(bar, "Build updater", self.start, primary=True, bg=BG)
         self.btn_go.pack(side="left")
         self.btn_cancel = Btn(bar, "Cancel", self.do_cancel, bg=BG)
-        self.status = tk.Label(bar, text="", bg=BG, fg=MUTED, font=("Segoe UI", 10), anchor="w")
+        self.status = tk.Label(bar, text="", bg=BG, fg=MUTED, font=(SANS, 10), anchor="w")
         self.status.pack(side="left", padx=(px(14), 0), fill="x", expand=True)
 
         st = ttk.Style(self)
@@ -277,7 +293,7 @@ class PatcherApp(tk.Tk):
         self.done = None
         logf = self.logf = tk.Frame(root, bg=PANEL, padx=px(2), pady=px(2))
         logf.pack(fill="both", expand=True, pady=(px(10), 0))
-        self.log = tk.Text(logf, bg=PANEL, fg=MUTED, font=("Consolas", 9), relief="flat", wrap="word",
+        self.log = tk.Text(logf, bg=PANEL, fg=MUTED, font=(MONO, 9), relief="flat", wrap="word",
                            height=8, padx=px(10), pady=px(8), insertbackground=TEXT, state="disabled",
                            highlightthickness=0)
         sb = ttk.Scrollbar(logf, command=self.log.yview)
@@ -322,11 +338,13 @@ class PatcherApp(tk.Tk):
             self.file_row.pack(fill="x", pady=(px(8), 0), before=self.note_file)
             self.lbl_file.configure(text=self.file or "No file chosen", fg=TEXT if self.file else DIM)
             if nam:
-                txt = ("Choose the “HeadRush %s Firmware Updater (NAM mod).exe” that the NAM installer made. "
-                       "To let the patcher run the NAM installer instead, untick this box." % dev)
+                made = "“HeadRush %s %s”" % (dev, NAM_OUT) if NAM_OUT else "“Update_nam.img”"
+                txt = ("Choose the %s that the NAM installer made. "
+                       "To let the patcher run the NAM installer instead, untick this box." % made)
             else:
-                txt = ("Choose the official “HeadRush %s 2.7 Firmware Updater” (.exe or the .zip from HeadRush). "
-                       "An updater made by the NAM installer works too – NAM is then kept." % dev)
+                kind = ".app or the .zip" if MAC else ".exe or the .zip"
+                txt = ("Choose the official “HeadRush %s 2.7 Firmware Updater” (%s from HeadRush). "
+                       "An updater made by the NAM installer works too – NAM is then kept." % (dev, kind))
         else:
             self.file_row.pack_forget()
             txt = ("The NAM installer downloads the official firmware itself." if nam else
@@ -355,7 +373,8 @@ class PatcherApp(tk.Tk):
     def choose_file(self):
         p = filedialog.askopenfilename(
             parent=self, title="Choose the firmware updater",
-            filetypes=[("HeadRush firmware updater", "*.exe *.zip"), ("Update.img", "*.img"), ("All files", "*.*")])
+            filetypes=[("HeadRush firmware updater", "*.app *.zip" if MAC else "*.exe *.zip"), ("Update.img", "*.img"),
+                       ("All files", "*")])
         if p:
             self.file = os.path.normpath(p)
             self.refresh()
@@ -529,12 +548,27 @@ class PatcherApp(tk.Tk):
         box = tk.Frame(self.done, bg=PANEL, padx=px(20), pady=px(14))
         box.pack(fill="x")
         tk.Label(box, text="Updater ready%s" % (" (with NAM)" if nam else ""), bg=PANEL, fg=ACCENT,
-                 font=("Segoe UI", 12, "bold"), anchor="w").pack(fill="x")
-        steps = ("1. Connect the %s to its power supply and to this computer via USB.\n"
-                 "2. On the %s: Global Settings › ⋯ (more) › Firmware Update.\n"
-                 "3. Click “Start firmware updater” and then “Install %s %s%s”.\n"
-                 "    Do not disconnect the %s until it has finished and restarted."
-                 % (dev, dev, bridgepatch.label(dev), VERSION, " + NAM" if nam else "", dev))
+                 font=(SANS, 12, "bold"), anchor="w").pack(fill="x")
+        app = patcher.LAST_APP[0]
+        upd = app or os.path.join(out, "FirmwareUpdater.exe")
+        title = "%s %s%s" % (bridgepatch.label(dev), VERSION, " + NAM" if nam else "")
+        if WIN or app:
+            steps = ("1. Connect the %s to its power supply and to this computer via USB.\n"
+                     "2. On the %s: Global Settings › ⋯ (more) › Firmware Update.\n"
+                     "3. Click “Start firmware updater” and then “Install %s”.\n"
+                     "    Do not disconnect the %s until it has finished and restarted."
+                     % (dev, dev, title, dev))
+            if app:
+                steps += ("\nIf macOS refuses to open the updater: right-click it in the folder › Open, or allow it "
+                          "under System Settings › Privacy & Security.")
+        else:   # Linux: HeadRush hat keinen Linux-Updater - der Ordner ist der Windows-Updater
+            steps = ("HeadRush has no firmware updater for Linux – this folder is the Windows updater.\n"
+                     "1. Copy the folder to a Windows PC (or use a Windows virtual machine with the USB device "
+                     "passed through).\n"
+                     "2. Connect the %s to its power supply and via USB; on the %s: Global Settings › ⋯ (more) › "
+                     "Firmware Update.\n"
+                     "3. Run FirmwareUpdater.exe and click “Install %s”. Do not disconnect the %s until it has "
+                     "finished and restarted." % (dev, dev, title, dev))
         if model.get("beta"):
             steps += ("\n4. Then connect it to MX-Edit 0.9.6 beta or newer. %s support is a beta – please "
                       "report what works and what doesn’t on GitHub (github.com/TicT4x/MX-Edit/issues)." % dev)
@@ -545,22 +579,22 @@ class PatcherApp(tk.Tk):
             steps += "\nKeep “%s” – the unmodified official updater, for emergencies." % os.path.basename(kept)
         if missing:
             steps = ("Copy these files from the official updater into the folder first: %s\n\n" % ", ".join(missing)) + steps
-        tk.Label(box, text="Saved in " + out, bg=PANEL, fg=MUTED, font=("Segoe UI", 9), anchor="w",
+        tk.Label(box, text="Saved in " + out, bg=PANEL, fg=MUTED, font=(SANS, 9), anchor="w",
                  justify="left", wraplength=px(620)).pack(fill="x", pady=(px(2), 0))
-        tk.Label(box, text=steps, bg=PANEL, fg=TEXT, font=("Segoe UI", 10), anchor="w", justify="left",
+        tk.Label(box, text=steps, bg=PANEL, fg=TEXT, font=(SANS, 10), anchor="w", justify="left",
                  wraplength=px(620)).pack(fill="x", pady=(px(6), px(10)))
         if nam:
             tk.Label(box, text="This updater contains NAM and the bridge. Do not use the NAM installer’s "
                                "“(NAM mod)” updater – it has no bridge.", bg=WARN_BG, fg=WARN,
-                     font=("Segoe UI", 10, "bold"), anchor="w", justify="left", wraplength=px(600),
+                     font=(SANS, 10, "bold"), anchor="w", justify="left", wraplength=px(600),
                      padx=px(12), pady=px(8)).pack(fill="x", pady=(0, px(10)))
         row = tk.Frame(box, bg=PANEL)
         row.pack(fill="x")
-        upd = os.path.join(out, "FirmwareUpdater.exe")
-        b = Btn(row, "Start firmware updater", lambda: self.launch(upd, out), primary=True)
-        b.pack(side="left")
-        b.enable(os.path.exists(upd))
-        Btn(row, "Open folder", lambda: os.startfile(out)).pack(side="left", padx=(px(8), 0))
+        if WIN or app:
+            b = Btn(row, "Start firmware updater", lambda: self.launch(upd, out), primary=True)
+            b.pack(side="left")
+            b.enable(os.path.exists(upd))
+        Btn(row, "Open folder", lambda: open_path(out)).pack(side="left", padx=(px(8), 0) if WIN or app else 0)
         Btn(row, "Show details", self.toggle_details).pack(side="right")
         Btn(row, "Change options", self.show_options).pack(side="right", padx=(0, px(8)))
         self.refresh()
@@ -599,7 +633,7 @@ class PatcherApp(tk.Tk):
 
     def launch(self, exe, cwd):
         try:
-            subprocess.Popen([exe], cwd=cwd)
+            subprocess.Popen(["open", exe] if exe.endswith(".app") else [exe], cwd=cwd)
         except OSError as e:
             messagebox.showerror(bridgepatch.BRAND, "Could not start the updater:\n%s" % e, parent=self)
 

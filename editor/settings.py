@@ -30,7 +30,13 @@ AUTO_PORT = "Automatic"
 
 
 def path():
-    base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    """Windows %APPDATA%, macOS ~/Library/Application Support, Linux $XDG_CONFIG_HOME bzw. ~/.config."""
+    if U.WIN:
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+    elif U.MAC:
+        base = os.path.expanduser("~/Library/Application Support")
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
     return os.path.join(base, "MX5Editor", "einstellungen.json")
 
 
@@ -123,7 +129,7 @@ class SettingsDialog(U.Overlay):
                  lambda f: self.toggle(f, "animations"))
         self.lbl_scale = None
         self.row("Interface size",
-                 "Scales text and controls on top of the Windows display scaling.", None)
+                 "Scales text and controls on top of the system display scaling.", None)
         sf = tk.Frame(b, bg=PANEL)
         sf.pack(fill="x", pady=(0, px(4)))
         U.Segmented(sf, ["%d %%" % v for v in SCALES], SCALES.index(p["ui_scale"]),

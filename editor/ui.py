@@ -9,7 +9,7 @@ durch px(). tkinter kann keine geglaetteten Rundungen zeichnen, darum werden
 abgerundete Flaechen, Kreise und Symbole mit Pillow 4-fach ueberabgetastet
 gerendert und als Bilder auf Canvas-Flaechen gelegt (Cache in _IMAGES).
 """
-import ctypes, sys, time, tkinter as tk
+import ctypes, os, sys, time, tkinter as tk
 from tkinter import ttk, font as tkfont
 
 try:
@@ -35,13 +35,22 @@ DIM = "#4a4d56"
 KNOB = "#d9dadd"
 DANGER = "#d9443c"
 
-FONT = ("Segoe UI", 10)
-FONT_SMALL = ("Segoe UI", 9)
-FONT_TINY = ("Segoe UI", 7)
-FONT_BOLD = ("Segoe UI", 10, "bold")
-FONT_HEAD = ("Segoe UI", 12, "bold")
-FONT_TITLE = ("Segoe UI", 16, "bold")
-FONT_CARD = ("Segoe UI", 8, "bold")
+# Plattform: Windows ist die Hauptplattform; macOS (Tk "aqua") und Linux (X11) bekommen eigene
+# Schriften, Kuerzel und Maustasten (siehe Helfer unten), die Windows-Extras fallen dort weg.
+WIN = sys.platform == "win32"
+MAC = sys.platform == "darwin"
+SANS = "Segoe UI" if WIN else ("Helvetica Neue" if MAC else "DejaVu Sans")
+MONO = "Consolas" if WIN else ("Menlo" if MAC else "DejaVu Sans Mono")
+MOD = "Command" if MAC else "Control"            # Tastenkuerzel: <Command-z> statt <Control-z>
+MOD_MASK = 0x0008 if MAC else 0x0004             # event.state: Cmd (aqua: Mod1) bzw. Strg
+
+FONT = (SANS, 10)
+FONT_SMALL = (SANS, 9)
+FONT_TINY = (SANS, 7)
+FONT_BOLD = (SANS, 10, "bold")
+FONT_HEAD = (SANS, 12, "bold")
+FONT_TITLE = (SANS, 16, "bold")
+FONT_CARD = (SANS, 8, "bold")
 
 # Blockfarben des Geraets (Naeherung an die Anzeige), in der Reihenfolge von MacroColour
 COLOUR_ORDER = ["Green", "Dark Green", "Yellow", "Orange", "Red", "Pink", "Purple", "Blue", "Light Blue",
@@ -59,6 +68,38 @@ SS = 4                  # Ueberabtastung beim Rendern
 
 def px(n):
     return int(round(n * S))
+
+
+def bind_right(w, fn, add=None):
+    """Rechtsklick binden: Windows/Linux Taste 3, macOS (Tk 8.6 aqua) meldet die rechte Taste
+    als Taste 2 - dort beide."""
+    w.bind("<Button-3>", fn, add=add)
+    if MAC:
+        w.bind("<Button-2>", fn, add=add)
+
+
+def wheel_step(e):
+    """Mausrad-Ereignis -> Zeilen (positiv = nach unten). Windows und Tk 9: delta in 120er-Schritten,
+    macOS mit Tk 8.6: kleine Werte je Rastung, Linux mit Tk 8.6: Tasten 4/5 ohne delta."""
+    if getattr(e, "num", None) == 4:
+        return -1
+    if getattr(e, "num", None) == 5:
+        return 1
+    d = getattr(e, "delta", 0) or 0
+    if abs(d) >= 120:
+        return int(-d / 120)
+    if MAC:
+        return -d
+    return -1 if d > 0 else 1 if d < 0 else 0
+
+
+def bind_wheel(w, fn, all=False):
+    """fn(e) fuer das Mausrad auf allen Plattformen binden (all=True: bind_all)."""
+    b = w.bind_all if all else w.bind
+    b("<MouseWheel>", fn)
+    if not WIN and not MAC:
+        b("<Button-4>", fn)
+        b("<Button-5>", fn)
 
 
 APP_NAME = "MX-Edit"
@@ -118,11 +159,16 @@ def set_window_icon(top, ico):
     """Fenster-Icons in der Groesse setzen, die Windows fuer die aktuelle DPI erwartet (Tk selbst
     gibt nur 16 und 32 px weiter - die Taskleiste rechnet bei 125 % 32 px auf 40 hoch, das wird
     unscharf). Wird nach jedem neuen Wrapper-Fenster wiederholt (<Map>)."""
+    if not WIN:   # .ico nimmt nur Windows-Tk; sonst ein Bild (Linux: Fenster, macOS: Dock beim Start mit python)
+        try:
+            top._icon_photo = ImageTk.PhotoImage(app_icon(256))
+            top.iconphoto(True, top._icon_photo)
+        except Exception:
+            pass
+        return
     try:
         top.iconbitmap(default=ico)          # Tk-Standard, auch fuer weitere Toplevels
     except tk.TclError:
-        return
-    if sys.platform != "win32":
         return
     u32 = ctypes.windll.user32
     u32.LoadImageW.restype = ctypes.c_void_p
@@ -162,6 +208,9 @@ def setup(root, scale=1.0):
     Einstellung 'Interface size' zusaetzlich zur Windows-Skalierung: 'tk scaling' vergroessert die
     Punkt-Schriften, und px() folgt ueber winfo_fpixels."""
     global S, _ROOT
+    if MAC:   # aqua rechnet mit 72 dpi (1 Punkt = 1 Pixel): auf 96 dpi wie Windows bringen, sonst wird alles
+        # um ein Viertel kleiner (Retina verdoppelt macOS selbst)
+        root.tk.call("tk", "scaling", 96.0 / 72.0)
     if scale != 1.0:
         root.tk.call("tk", "scaling", float(root.tk.call("tk", "scaling")) * scale)
     S = root.winfo_fpixels("1i") / 96.0
@@ -630,10 +679,10 @@ class TitleBar(tk.Frame):
                 n = int(px(20))
                 self._logo_img = ImageTk.PhotoImage(app_icon(n))
                 ll = tk.Label(lf, text=" " + logo, image=self._logo_img, compound="left", bg=BG, fg=TEXT,
-                              font=("Segoe UI", 11, "bold"))
+                              font=(SANS, 11, "bold"))
                 ll.pack(side="left", padx=(px(18), 0))
             else:
-                ll = tk.Label(lf, text=logo, bg=BG, fg=ACCENT, font=("Segoe UI", 13, "bold"))
+                ll = tk.Label(lf, text=logo, bg=BG, fg=ACCENT, font=(SANS, 13, "bold"))
                 ll.pack(expand=True)
             drag += [lf, ll]
         self.lbl = tk.Label(self, text=title, bg=bg, fg=fg, font=font, anchor="w")
@@ -776,9 +825,16 @@ class _Popup(tk.Toplevel):
         super().__init__(parent)
         self.withdraw()
         self.overrideredirect(True)
+        if MAC:   # aqua: durchsichtiges Fenster statt Transparenzfarbe
+            try:
+                self.wm_attributes("-transparent", True)
+                self.KEY = "systemTransparent"
+            except tk.TclError:
+                pass
         self.configure(bg=self.KEY)
         try:
-            self.wm_attributes("-transparentcolor", self.KEY)
+            if WIN:
+                self.wm_attributes("-transparentcolor", self.KEY)
             self.wm_attributes("-topmost", True)
         except tk.TclError:
             pass
@@ -1243,13 +1299,15 @@ def grab(widget):
         if w < 2 or h < 2 or Image is None:
             return None
         drop_ghosts()
-        if sys.platform == "win32":
+        if WIN:
             try:
                 with _Dib(w, h) as d:
                     d.blt_from(widget)
                     return d.image()
             except Exception:
                 pass
+        elif MAC or os.environ.get("WAYLAND_DISPLAY") or not os.environ.get("DISPLAY"):
+            return None   # macOS fragt fuer Bildschirmfotos nach Freigabe, Wayland liefert keins: Dialoge ohne Unschaerfe
         from PIL import ImageGrab
         x, y = widget.winfo_rootx(), widget.winfo_rooty()
         return ImageGrab.grab(bbox=(x, y, x + w, y + h), all_screens=True).convert("RGB")
@@ -1670,7 +1728,7 @@ class Loading(tk.Canvas):
         cx, cy = W / 2, max(n, H * 0.42)
         if self.err:
             circle(self, cx, cy, n, blend(DANGER, self.bgc, 0.22))
-            self.create_text(cx, cy, text="!", fill=DANGER, font=("Segoe UI", 14, "bold"))
+            self.create_text(cx, cy, text="!", fill=DANGER, font=(SANS, 14, "bold"))
             self.create_text(cx, cy + n / 2 + px(14), text=self.err, fill=MUTED, font=FONT, anchor="n",
                              justify="center", width=max(px(120), min(W - px(40), px(560))))
             return
@@ -1721,7 +1779,7 @@ def ask(parent, text, buttons, title=None, icon="question", detail=None, cancel=
     ic = tk.Canvas(row, width=px(34), height=px(34), bg=PANEL, highlightthickness=0)
     ic.pack(side="left", anchor="n", padx=(0, px(14)))
     circle(ic, px(17), px(17), px(34), blend(col, PANEL, 0.22))
-    ic.create_text(px(17), px(17), text=sym, fill=col, font=("Segoe UI", 13, "bold"))
+    ic.create_text(px(17), px(17), text=sym, fill=col, font=(SANS, 13, "bold"))
     tf = tk.Frame(row, bg=PANEL)
     tf.pack(side="left", fill="x", expand=True)
     head, _, rest = text.partition("\n")
@@ -1866,7 +1924,7 @@ class ProgressOverlay(Overlay):
         self.ic.delete("all")
         circle(self.ic, n / 2, n / 2, n, blend(col, PANEL, 0.22))
         self.ic.create_text(n / 2, n / 2, text="✓" if ok and not warn else "!", fill=col,
-                            font=("Segoe UI", 15, "bold"))
+                            font=(SANS, 15, "bold"))
         self._draw_bar(colour=col)
         if ok and auto_close and not warn:
             self.after(auto_close, self.cancel)
@@ -2540,7 +2598,7 @@ class RigList(tk.Canvas):
         self.bind("<Button-1>", self._click)
         self.bind("<B1-Motion>", self._drag_motion)
         self.bind("<ButtonRelease-1>", self._release)
-        self.bind("<Button-3>", self._rclick)
+        bind_right(self, self._rclick)
         self.bind("<Motion>", self._motion)
         self.bind("<Leave>", lambda e: self._set_hover(None))
 
@@ -2875,7 +2933,7 @@ class ChainCanvas(tk.Canvas):
         self.bind("<B1-Motion>", self._drag_motion)
         self.bind("<ButtonRelease-1>", self._release)
         self.bind("<Double-Button-1>", self._double)
-        self.bind("<Button-3>", self._rclick)
+        bind_right(self, self._rclick)
 
     def set_chain(self, slots, selected, live, routing="S", hint="", scene=False, assign=None, connect=None,
                   connect_err=None):
@@ -2918,9 +2976,9 @@ class ChainCanvas(tk.Canvas):
         self.XG = self.p(18)                           # Zusatzabstand vor/nach parallelen Zweigen
         self.IOW, self.IOH = self.p(46), self.p(60)   # Eingang/Ausgang: kleiner, mittig auf der Signallinie
         self.EW = self.p(58)                           # leerer Platz: schlankeres Kaestchen
-        self.f_tiny = ("Segoe UI", max(7, int(round(7 * k))))
-        self.f_card = ("Segoe UI", max(8, int(round(8 * k))), "bold")
-        self.f_plus = ("Segoe UI", max(12, int(round(16 * k))))
+        self.f_tiny = (SANS, max(7, int(round(7 * k))))
+        self.f_card = (SANS, max(8, int(round(8 * k))), "bold")
+        self.f_plus = (SANS, max(12, int(round(16 * k))))
 
     @staticmethod
     def _col_xs(cols, cw, gap, xg):
@@ -3739,7 +3797,7 @@ class ModelSelector(OverlayDialog):
         self.grid.bind("<Configure>", lambda e: self.fill())
         self.grid.bind("<Button-1>", self._click)
         self.grid.bind("<Double-Button-1>", lambda e: (self._click(e), self.ok()))
-        self.grid.bind("<MouseWheel>", lambda e: self.grid.yview_scroll(int(-e.delta / 120), "units"))
+        bind_wheel(self.grid, lambda e: self.grid.yview_scroll(wheel_step(e), "units"))
         if self.presets:
             pf = tk.Frame(self.body, bg=PANEL, width=px(230))
             pf.pack(side="left", fill="y", padx=(px(12), px(4)), pady=(px(4), px(12)))
@@ -3752,7 +3810,7 @@ class ModelSelector(OverlayDialog):
             psb.pack(side="right", fill="y")
             self.plist.bind("<Button-1>", self._click_preset)
             self.plist.bind("<Double-Button-1>", lambda e: (self._click_preset(e), self.ok()))
-            self.plist.bind("<MouseWheel>", lambda e: self.plist.yview_scroll(int(-e.delta / 120), "units"))
+            bind_wheel(self.plist, lambda e: self.plist.yview_scroll(wheel_step(e), "units"))
         self.bind("<Return>", lambda e: self.ok())
         self.paint_cats()
         self.fill()

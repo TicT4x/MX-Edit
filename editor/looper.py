@@ -46,7 +46,7 @@ LANES_ROWS = 4          # feste Hoehe der Ebenen-Flaeche in Zeilen (der Dialog s
 ROW_H, ROW_GAP, ROW_MIN = 34, 4, 10   # Zeilenhoehe, Abstand, kleinste Hoehe bei vielen Ebenen (px)
 EASE = 0.28             # Anteil des Wegs je Bild beim Gleiten/Auf- und Zuklappen der Zeilen
 REC_RENDER_S = 0.06     # eine wachsende Aufnahme-Zeile hoechstens so oft neu rendern
-LANE_FONT_SMALL = ("Segoe UI", 8)   # Beschriftung flacher Zeilen (nicht fett, damit nichts springt)
+LANE_FONT_SMALL = (U.SANS, 8)   # Beschriftung flacher Zeilen (nicht fett, damit nichts springt)
 
 
 def _mult(text):
@@ -405,7 +405,7 @@ class LooperDialog(U.Overlay):
         self.ring_pct = self.ring.create_text(s / 2, s / 2 + px(13), text="", fill=MUTED, font=FONT_SMALL)
         info = tk.Frame(top, bg=PANEL)
         info.pack(side="left", fill="both", expand=True, padx=(px(22), 0))
-        self.lbl_len = tk.Label(info, text="", bg=PANEL, fg=TEXT, font=("Segoe UI", 28, "bold"), anchor="w")
+        self.lbl_len = tk.Label(info, text="", bg=PANEL, fg=TEXT, font=(U.SANS, 28, "bold"), anchor="w")
         self.lbl_len.pack(fill="x", pady=(px(4), 0))
         self.lbl_info = tk.Label(info, text="", bg=PANEL, fg=MUTED, font=FONT_SMALL, anchor="w", justify="left")
         self.lbl_info.pack(fill="x")

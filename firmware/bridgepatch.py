@@ -25,18 +25,23 @@ NAME = 'f_midi'
 # (Diagnose-Logs von Testern), Editor-Unterstuetzung ist aber noch Beta (Patcher: "Beta"-Hinweis
 # statt Risiko-Haken), recovery = Wiederherstellung per Fussschalter beim Einschalten.
 # Pedalboard seit 2026-10-19 in der Hauptausgabe (Bruecke 0.7 lief laut Diagnose-Logs vom 11./13.10.).
+# url = Windows-Updater (7z-SFX), mac_url = macOS-Updater (Zip mit .app, gleiches Update.img - beim MX5
+# am 2026-11-01 geprueft; URLs wie in app/main.c der NAM-Mod).
 CDN = 'https://cdn.inmusicbrands.com/HeadRush/FW/Aug24_Firmware_Updates/'
 MODELS = {
     'hg04': dict(key='mx5', device='MX5', tested=True, beta=False, recovery='hold footswitches 1 and 2 while powering on',
                  sha1='82b5639ceaba94d3c07b8880694d5de2e21b9f43',
-                 url=CDN + 'MX5%20v2.7/Windows%20Updater/HeadRush%20MX5%202.7%20Firmware%20Updater%20-%20Win.exe.zip'),
+                 url=CDN + 'MX5%20v2.7/Windows%20Updater/HeadRush%20MX5%202.7%20Firmware%20Updater%20-%20Win.exe.zip',
+                 mac_url=CDN + 'MX5%20v2.7/MacOS%20Updater/HeadRush%20MX5%202.7%20Firmware%20Updater%20-%20Mac.zip'),
     'mg01': dict(key='pedalboard', device='Pedalboard', tested=True, beta=True,
                  recovery='hold footswitches 1 and 8 while powering on',
                  sha1='482b46433688b8364f5f70281741f21841f1ffe5',
-                 url=CDN + 'Pedalboard%20v2.7/Windows%20Updater/HeadRush%20Pedalboard%202.7%20Firmware%20Updater%20-%20Win.exe.zip'),
+                 url=CDN + 'Pedalboard%20v2.7/Windows%20Updater/HeadRush%20Pedalboard%202.7%20Firmware%20Updater%20-%20Win.exe.zip',
+                 mac_url=CDN + 'Pedalboard%20v2.7/MacOS%20Updater/HeadRush%20Pedalboard%202.7%20Firmware%20Updater%20-%20Mac.zip'),
     'hg02': dict(key='gigboard', device='Gigboard', tested=False, beta=False, recovery=None,
                  sha1='9c081790b57e749c5f4a5fc64d914c2a04009869',
-                 url=CDN + 'Gigboard%20v2.7/Windows%20Updater/HeadRush%20Gigboard%202.7%20Firmware%20Updater%20-%20Win.exe.zip'),
+                 url=CDN + 'Gigboard%20v2.7/Windows%20Updater/HeadRush%20Gigboard%202.7%20Firmware%20Updater%20-%20Win.exe.zip',
+                 mac_url=CDN + 'Gigboard%20v2.7/MacOS%20Updater/HeadRush%20Gigboard%202.7%20Firmware%20Updater%20-%20Mac.zip'),
 }
 
 

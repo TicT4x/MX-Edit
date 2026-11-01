@@ -5,7 +5,7 @@
 
 - **MX5 Bridge**: a small add-on to the stock MX5 firmware 2.7. It gives the device's internal
   parameter tree, its rig database and its files to a computer over **USB-MIDI (SysEx)**.
-- **MX-Edit**: a desktop editor for Windows that uses the bridge. It works like the
+- **MX-Edit**: a desktop editor for Windows, macOS and Linux that uses the bridge. It works like the
   HeadRush web editor, but **live**: every change is heard on the device right away, and changes
   made on the device show up in the editor.
 
@@ -18,7 +18,8 @@
 ## Installation
 
 You need a HeadRush **MX5 on firmware 2.7** (Pedalboard: see
-[below](#headrush-pedalboard-beta)), its power supply, a USB cable and a Windows 10/11 PC. It takes about 15 minutes. There is also a [video guide on YouTube](https://youtu.be/6ivzolrPEZA?si=BKzsChsaO2G2xgYX).
+[below](#headrush-pedalboard-beta)), its power supply, a USB cable and a Windows 10/11 PC
+(Mac or Linux: see [macOS and Linux](#macos-and-linux)). It takes about 15 minutes. There is also a [video guide on YouTube](https://youtu.be/6ivzolrPEZA?si=BKzsChsaO2G2xgYX).
 More details and troubleshooting: [INSTALL.md](INSTALL.md).
 
 **0. Back up your rigs.** On the MX5, enable *USB transfer mode* (Global Settings) and copy the
@@ -66,6 +67,29 @@ button in the editor's left bar.
 > **Back to stock:** run the official HeadRush MX5 2.7 updater the same way. If the device no
 > longer starts, hold **footswitches 1 + 2** while switching it on (recovery mode).
 > ⚠️ Footswitches **2 + 3** at power-on is a **factory reset** and erases your rigs.
+
+### macOS and Linux
+
+MX-Edit and the patcher are also built for **macOS** (Apple Silicon and Intel) and **Linux**
+(x86-64). These builds are new and have **not been tested on a real Mac or a Linux PC with the
+device yet** – please [report](../../issues) how they work for you.
+
+- **Downloads** (from the same release): `MX-Edit_0.9_macOS-AppleSilicon.zip` /
+  `…_macOS-Intel.zip` / `…_Linux-x64.tar.gz`, and the patcher with the same endings
+  (`MX5Bridge_0.7_Patcher_…`).
+- **macOS:** unzip and start the apps. They are not signed by Apple, so macOS blocks them the
+  first time: open **System Settings › Privacy & Security** and click **Open Anyway** (older
+  macOS: right-click the app › *Open*). The patcher downloads the official **Mac** updater from
+  HeadRush and writes `MX5Bridge 0.7 Firmware Updater.app` into `Downloads/MX5Bridge_Patcher`.
+  Flash it like in step 3 (*Start firmware updater*); it may need the same *Open Anyway* step.
+  For the NAM mod, its installer needs SDL2 from [Homebrew](https://brew.sh): `brew install sdl2`
+  (Intel Macs: `brew install curl xz sdl2`).
+- **Linux:** unpack, then start `./MX-Edit` and `./MX5Bridge_Patcher`. **HeadRush has no firmware
+  updater for Linux**, so the patcher builds the **Windows** updater folder (`MX5Bridge_0.7_Updater`).
+  Flash it from a Windows PC, a Mac (run the patcher there) or a Windows virtual machine with the
+  MX5's USB device passed through. The editor itself works natively on Linux (ALSA MIDI, the port
+  shows up as *HeadRush MX5*). For the NAM mod the patcher runs the NAM mod's Linux installer,
+  which needs SDL2 (`sudo apt install libsdl2-2.0-0`).
 
 ### HeadRush Pedalboard (beta)
 
@@ -140,10 +164,11 @@ installer:
 1. It downloads the **official** HeadRush MX5 (or Pedalboard) 2.7 updater from inMusic's server
    (or uses a copy you already have).
 2. It adds the bridge files to that firmware **on your computer**.
-3. It writes a ready-to-run updater folder that uses HeadRush's own `FirmwareUpdater.exe`.
+3. It writes a ready-to-run updater that uses HeadRush's own updater program
+   (`FirmwareUpdater.exe` on Windows, the HeadRush updater app on macOS).
 
-The patcher is a single Windows program with a window (`MX5Bridge_0.7_Patcher.exe`). It needs
-neither Python nor Linux/WSL. It can also run the NAM mod's own installer for you, so you get both
+The patcher is a single program with a window (`MX5Bridge_0.7_Patcher.exe` on Windows, an app on
+macOS, a binary on Linux). It needs neither Python nor WSL. It can also run the NAM mod's own installer for you, so you get both
 (see [Installation](#installation)).
 
 ## Requirements
@@ -151,8 +176,8 @@ neither Python nor Linux/WSL. It can also run the NAM mod's own installer for yo
 | | |
 |---|---|
 | Device | HeadRush **MX5** with firmware **2.7**; HeadRush **Pedalboard** 2.7 as a beta (Gigboard: not supported) |
-| Computer | Windows 10/11. The editor uses Windows-only window code. The patcher's source version also runs on Linux/macOS (Python 3 only) |
-| Python | not needed for the `.exe` files. For the source versions: 3.9 or newer, editor with `mido`, `python-rtmidi`, `pillow` |
+| Computer | Windows 10/11; macOS 11+ and Linux x86-64 (glibc 2.35+, e.g. Ubuntu 22.04) as new, untested builds. Flashing needs Windows or macOS – HeadRush has no Linux updater |
+| Python | not needed for the ready-made programs. For the source versions: 3.9 or newer, editor with `mido`, `python-rtmidi`, `pillow` (Linux: also the `python3-tk` package) |
 
 ## Repository layout
 
@@ -173,7 +198,7 @@ regression test (`editor/werkzeuge/regressionstest.py`, 30 steps) that runs agai
 device. It is a hobby project: expect rough edges, and keep a backup of your rigs
 (*⋯ › Back up everything* in the editor).
 
-- Windows only (10/11) for now
+- Developed on Windows 10/11; the macOS and Linux builds are new and untested on real hardware
 - Made for the MX5. **HeadRush Pedalboard: beta** (patcher and MX-Edit 0.9.6 beta) – the bridge
   runs on it (confirmed by testers), the editor was built from their diagnosis logs and has not been
   run by me on a real Pedalboard. It works on *All Rigs* there (Pedalboard setlists hold songs, which

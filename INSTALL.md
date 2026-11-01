@@ -1,7 +1,7 @@
 # Installation
 
 You need about 15 minutes, a HeadRush **MX5 on firmware 2.7**, its power supply, a USB cable and
-a Windows 10/11 computer.
+a Windows 10/11 computer (or a Mac / Linux PC – see [macOS and Linux](#macos-and-linux)).
 
 > **HeadRush Pedalboard (beta):** the same steps work for the Pedalboard 2.7, with these
 > differences: download the patcher and MX-Edit from the newest **pre-release** on the
@@ -132,10 +132,12 @@ run on your system. Install [Python 3](https://www.python.org/downloads/) (3.9 o
 *Add python.exe to PATH*).
 
 - Patcher: download `MX5Bridge_0.7_Patcher.zip`, unzip it and double-click `Patch_Firmware.bat`
-  (the same window). `python patcher.py [updater]` is a console version without the NAM
-  installer step. No extra packages are needed, and it also runs on
-  Linux/macOS (Python 3 only). To build the `.exe` yourself from the
-  repository: `pip install pyinstaller pillow`, then `python firmware\tools\patcher_exe.py`.
+  (the same window; macOS/Linux: `python3 patcher_gui.py`). `python patcher.py [updater]` is a
+  console version without the NAM installer step; `--target mac|win` chooses the macOS app or the
+  Windows updater folder (default: the one for this computer, Windows on Linux). No extra packages
+  are needed (Linux: `python3-tk` for the window). To build the program yourself from the
+  repository: `pip install pyinstaller pillow`, then `python firmware\tools\patcher_exe.py`
+  (it builds for the system it runs on).
 - Editor: see below.
 
 #### Editor from source
@@ -146,8 +148,48 @@ Download `MX-Edit_0.9.zip`, unzip it and install the packages once:
 pip install mido python-rtmidi pillow
 ```
 
-Then double-click `MX5Editor_starten.bat` in the unzipped folder. To build the `.exe` yourself,
+Then double-click `MX5Editor_starten.bat` in the unzipped folder (macOS/Linux:
+`python3 mx5editor.py`; Linux also needs the `python3-tk` package). To build the program yourself,
 run `pip install pyinstaller` and `python werkzeuge\exe_bauen.py`.
+
+## macOS and Linux
+
+The release also has builds for **macOS** (`…_macOS-AppleSilicon.zip`, `…_macOS-Intel.zip`) and
+**Linux** (`…_Linux-x64.tar.gz`), made automatically on GitHub. They are new and have not been
+tested with a real device yet – please [report](../../issues) how they work.
+
+**macOS**
+
+1. Unzip `MX5Bridge_0.7_Patcher_macOS-….zip` and `MX-Edit_0.9_macOS-….zip` (Apple Silicon = M1 and
+   newer). The apps are not signed by Apple: the first start is blocked – open
+   **System Settings › Privacy & Security** and click **Open Anyway** (older macOS: right-click the
+   app › *Open*).
+2. Start the patcher and click **Build updater**. It downloads the official HeadRush **Mac** updater
+   and writes **`MX5Bridge 0.7 Firmware Updater.app`** (with NAM: `… + NAM.app`) into
+   `Downloads/MX5Bridge_Patcher/MX5Bridge_0.7_Updater`. The app is re-signed on your Mac (ad-hoc),
+   because the new firmware inside changes it.
+3. Flash it like on Windows (*Start firmware updater*, then *Install MX5Bridge 0.7*). macOS may ask
+   for *Open Anyway* once more.
+4. Start MX-Edit.
+
+NAM mod on a Mac: the NAM mod's installer needs SDL2 from [Homebrew](https://brew.sh) –
+`brew install sdl2` (Intel Macs: `brew install curl xz sdl2`). If it is missing, the patcher says so.
+
+**Linux**
+
+1. Unpack: `tar xzf MX-Edit_0.9_Linux-x64.tar.gz` and `tar xzf MX5Bridge_0.7_Patcher_Linux-x64.tar.gz`,
+   then start `./MX5Bridge_Patcher` and `./MX-Edit`.
+2. **HeadRush has no firmware updater for Linux.** The patcher builds the **Windows** updater folder
+   `MX5Bridge_0.7_Updater` (it downloads the official Windows updater for that). Flash it from a
+   Windows PC, from a Windows virtual machine with the MX5's USB device passed through (e.g.
+   VirtualBox/virt-manager USB filter for the device in update mode), or build the Mac version with
+   the patcher on a Mac.
+3. The editor works natively: the MX5 shows up as an ALSA MIDI port *HeadRush MX5*. If no port is
+   found, check that the ALSA sequencer is loaded (`ls /dev/snd/seq`, else `sudo modprobe snd-seq`).
+
+NAM mod on Linux: the patcher runs the NAM mod's Linux installer, which needs SDL2
+(`sudo apt install libsdl2-2.0-0`, Fedora: `sudo dnf install SDL2`). It produces `Update_nam.img`,
+which the patcher turns into the Windows updater folder with NAM and the bridge.
 
 ### Check the bridge without the editor (optional)
 

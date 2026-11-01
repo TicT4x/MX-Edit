@@ -4,7 +4,9 @@
 Aufruf (im Editor-Ordner oder von ueberall):  python werkzeuge\\exe_bauen.py
                                     Diagnose:  python werkzeuge\\exe_bauen.py diagnose
 Braucht:  pip install pyinstaller mido python-rtmidi pillow
-Ergebnis: <Editor-Ordner>\\exe\\MX-Edit.exe (Zwischendateien in exe\\build, werden geloescht).
+Ergebnis: <Editor-Ordner>\\exe\\MX-Edit.exe (Zwischendateien in exe\\build, werden geloescht);
+          unter macOS exe/MX-Edit.app, unter Linux exe/MX-Edit (eine Datei). PyInstaller baut nur fuer
+          das laufende System - Mac/Linux baut der Workflow .github/workflows/build.yml auf GitHub.
 
 Das Icon mxedit.ico (Drehregler, ui.app_icon - dieselbe Zeichnung wie das Logo der Titelleiste,
 jede Groesse 16-256 px eigens gezeichnet) wird hier neu erzeugt und in die EXE eingebettet;
@@ -18,11 +20,32 @@ OUT = os.path.join(ED, 'exe')
 ICON = os.path.join(ED, 'mxedit.ico')
 
 
+def bold_font(size):
+    """Fette Schrift fuer die Icons: Windows Segoe UI/Arial, macOS Helvetica/Arial, Linux DejaVu;
+    sonst Pillows eingebaute Schrift."""
+    from PIL import ImageFont
+    cands = [os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts', n) for n in ('segoeuib.ttf', 'arialbd.ttf')]
+    cands += ['/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/Library/Fonts/Arial Bold.ttf',
+              '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf']
+    for p in cands:
+        try:
+            return ImageFont.truetype(p, size)
+        except OSError:
+            pass
+    try:
+        return ImageFont.load_default(size)
+    except TypeError:
+        return ImageFont.load_default()
+
+
 def make_icon(path=ICON):
-    """Programm-Icon aus ui.app_icon (alle Groessen)."""
+    """Programm-Icon aus ui.app_icon (alle Groessen; .icns fuer macOS)."""
     sys.path.insert(0, ED)
-    import tkinter as tk
     import ui
+    if path.endswith('.icns'):   # ohne Tk-Fenster (der Linux-/Mac-Build laeuft ohne Bildschirm)
+        ui.app_icon(512).save(path, format='ICNS')
+        return
+    import tkinter as tk
     root = tk.Tk()
     root.withdraw()
     ui.setup(root, 1.0)
@@ -37,14 +60,7 @@ def make_text_icon(text, path):
     im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     d.rounded_rectangle((8, 8, S - 8, S - 8), radius=52, fill='#141519', outline='#1fc9a1', width=10)
-    font = None
-    for name in ('segoeuib.ttf', 'arialbd.ttf'):
-        try:
-            font = ImageFont.truetype(os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts', name), 104)
-            break
-        except OSError:
-            pass
-    font = font or ImageFont.load_default()
+    font = bold_font(104)
     box = d.textbbox((0, 0), text, font=font)
     w, h = box[2] - box[0], box[3] - box[1]
     d.text(((S - w) / 2 - box[0], (S - h) / 2 - box[1]), text, font=font, fill='#1fc9a1')
@@ -74,21 +90,30 @@ def build_diagnose():
 def main():
     if sys.argv[1:] == ['diagnose']:
         return build_diagnose()
-    make_icon()
     work = os.path.join(OUT, 'build')
+    os.makedirs(work, exist_ok=True)
+    mac = sys.platform == 'darwin'
+    if os.name == 'nt':
+        make_icon()
+    icon = ICON
+    if mac:   # macOS: .app (onedir) mit .icns; mxedit.ico liegt im Repo und kommt als Daten mit
+        icon = os.path.join(work, 'mxedit.icns')
+        make_icon(icon)
     sep = os.pathsep
-    cmd = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile', '--windowed',
-           '--name', 'MX-Edit', '--icon', ICON,
+    cmd = [sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--windowed',
+           '--name', 'MX-Edit', '--icon', icon,
            '--distpath', OUT, '--workpath', work, '--specpath', work,
            '--add-data', os.path.join(ED, 'catalog.json') + sep + '.',
            '--add-data', os.path.join(ED, 'modellseiten.json') + sep + '.',
            '--add-data', ICON + sep + '.',
            '--hidden-import', 'mido.backends.rtmidi',
-           os.path.join(ED, 'mx5editor.py')]
+           '--hidden-import', 'PIL._tkinter_finder']   # Linux: ImageTk findet Tk sonst nicht
+    cmd += ['--osx-bundle-identifier', 'com.tict4x.mxedit'] if mac else ['--onefile']
+    cmd.append(os.path.join(ED, 'mx5editor.py'))
     subprocess.run(cmd, check=True, cwd=ED)
     shutil.rmtree(work, ignore_errors=True)
-    exe = os.path.join(OUT, 'MX-Edit.exe')
-    print('Fertig:', exe, '%.1f MB' % (os.path.getsize(exe) / 1e6))
+    exe = os.path.join(OUT, 'MX-Edit' + ('.exe' if os.name == 'nt' else '.app' if mac else ''))
+    print('Fertig:', exe, '%.1f MB' % (os.path.getsize(exe) / 1e6) if os.path.isfile(exe) else '')
 
 
 if __name__ == '__main__':

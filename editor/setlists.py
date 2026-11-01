@@ -62,7 +62,7 @@ class RigRows(tk.Canvas):
         self.bind("<B1-Motion>", self._motion_drag)
         self.bind("<ButtonRelease-1>", self._up)
         self.bind("<Double-Button-1>", self._double)
-        self.bind("<Button-3>", self._rclick)
+        U.bind_right(self, self._rclick)
         self.bind("<Motion>", lambda e: self._set_hover(self.row_at(e.y)))
         self.bind("<Leave>", lambda e: self._set_hover(None))
 
@@ -94,7 +94,7 @@ class RigRows(tk.Canvas):
                 self.set_selection(set())
                 self.mgr.selected(self)
             return
-        ctrl, shift = bool(e.state & 0x0004), bool(e.state & 0x0001)
+        ctrl, shift = bool(e.state & U.MOD_MASK), bool(e.state & 0x0001)
         self._press = (i, e.x, e.y, ctrl or shift)
         if shift and self.anchor is not None:
             a, b = sorted((self.anchor, i))
@@ -374,7 +374,7 @@ class SetlistManager(tk.Frame):
         bar.pack(fill="x", padx=px(4), pady=(0, px(8)))
         U.Btn(bar, "Done", command=self.ed.close_setlists, kind="primary").pack(side="right")
         U.Btn(bar, "⋯", command=self.setlist_menu, kind="ghost", padx=8,
-              font=("Segoe UI", 13, "bold")).pack(side="right", padx=(0, px(4)))
+              font=(U.SANS, 13, "bold")).pack(side="right", padx=(0, px(4)))
         self.btn_undo = U.Btn(bar, "Undo", command=self.undo, kind="ghost", state="disabled")
         self.btn_undo.pack(side="right", padx=(0, px(2)))
         U.Btn(bar, "New …", command=self.new_setlist).pack(side="right", padx=(0, px(6)))
@@ -396,11 +396,11 @@ class SetlistManager(tk.Frame):
         for w in (self.src, self.tgt):
             w.bind("<Delete>", lambda e: self.remove_selected())
             w.bind("<BackSpace>", lambda e: self.remove_selected())
-            w.bind("<Control-z>", lambda e: self.undo())
-            w.bind("<Control-a>", lambda e, w=w: (w.set_selection(set(range(len(w.items)))), self.selected(w)))
+            w.bind("<%s-z>" % U.MOD, lambda e: self.undo())
+            w.bind("<%s-a>" % U.MOD, lambda e, w=w: (w.set_selection(set(range(len(w.items)))), self.selected(w)))
             w.bind("<Return>", lambda e, w=w: self.append_selected() if w is self.src else None)
-            w.bind("<Up>", lambda e, w=w: self.step_selection(w, -1, e.state & 0x0004))
-            w.bind("<Down>", lambda e, w=w: self.step_selection(w, 1, e.state & 0x0004))
+            w.bind("<Up>", lambda e, w=w: self.step_selection(w, -1, e.state & U.MOD_MASK))
+            w.bind("<Down>", lambda e, w=w: self.step_selection(w, 1, e.state & U.MOD_MASK))
 
     def _build_details(self, p):
         tk.Label(p, text="RIG", bg=PANEL, fg=MUTED, font=FONT_SMALL, anchor="w").pack(fill="x", padx=px(4),

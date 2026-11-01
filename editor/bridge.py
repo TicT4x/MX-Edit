@@ -57,7 +57,11 @@ class Bridge:
             if len(hits) != 1:
                 raise BridgeError("MX5-MIDI-Port nicht eindeutig gefunden: %s" % names)
             return hits[0]
-        return pick(mido.get_input_names()), pick(mido.get_output_names())
+        try:
+            ins, outs = mido.get_input_names(), mido.get_output_names()
+        except Exception as e:   # z. B. Linux ohne ALSA-Sequencer (snd-seq), fehlendes Backend
+            raise BridgeError("MIDI nicht verfuegbar: %s" % e)
+        return pick(ins), pick(outs)
 
     @classmethod
     def auto(cls):

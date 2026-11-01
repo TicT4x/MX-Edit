@@ -22,7 +22,7 @@ from ui import FONT_SMALL
 from ui import messagebox
 
 
-FONT_MONO = ("Consolas", 10)   # Liste mit Spalten (Platz, Name, Groesse)
+FONT_MONO = (U.MONO, 10)   # Liste mit Spalten (Platz, Name, Groesse)
 
 
 def size_text(n):

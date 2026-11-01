@@ -8,21 +8,32 @@ Usage:
                                            official .zip, the updater .exe (also one made by the
                                            NAM mod GUI), a folder with Update.img, or Update.img
     python patcher.py <input> --out <dir>  output folder (default: next to this script)
+    python patcher.py --target mac|win     build the macOS updater (.app) or the Windows updater
+                                           folder (default: mac on macOS, else win - HeadRush has
+                                           no Linux updater, on Linux flash from Windows or a VM)
 
 Reines Python 3 (Standardbibliothek); entpackt den 7z-Updater mit sevenzip.py (Rueckfall: tar.exe
 von Windows, 7z, bsdtar), schreibt das ext4-rootfs mit ext4.py (statt debugfs)
 und komprimiert mit xzblocks.py wie das Original. Was geaendert wird: bridgepatch.py."""
-import argparse, hashlib, json, lzma, os, shutil, subprocess, sys, tempfile, time, urllib.request, zipfile, zlib
+import argparse, hashlib, json, lzma, os, shutil, stat, subprocess, sys, tempfile, time, urllib.request, zipfile, zlib
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 # Download und Ausgabe neben das Skript bzw. die EXE (in der EXE ist HERE ein temporaerer
 # Entpackordner, der beim Beenden geloescht wird; mod/ und bin/ liest bridgepatch von dort)
 FROZEN = getattr(sys, 'frozen', False)
 BASE = os.path.dirname(os.path.abspath(sys.executable)) if FROZEN else HERE
+if FROZEN and sys.platform == 'darwin':   # .app: nicht ins Programmbuendel schreiben (das liegt oft schreibgeschuetzt)
+    BASE = os.path.join(os.path.expanduser('~/Downloads'), 'MX5Bridge_Patcher')
+    os.makedirs(BASE, exist_ok=True)
 import bridgepatch, ext4, fitpatch, sevenzip, xzblocks
 
 MODEL_KEYS = [m['key'] for m in bridgepatch.offered()]   # mx5 (+ pedalboard, gigboard in der Testausgabe)
 UPDATER_FILES = ('FirmwareUpdater.exe', 'libusb-1.0.dll', 'Background.png')
+# Ausgabe: unter macOS der offizielle Mac-Updater (.app) mit neuem Update.img, sonst der Windows-
+# Updater-Ordner (fuer Linux gibt es keinen HeadRush-Updater: dort bauen, unter Windows/macOS oder in
+# einer VM mit USB-Durchreichung flashen)
+TARGETS = ('win', 'mac')
+TARGET = 'mac' if sys.platform == 'darwin' else 'win'
 SIG7Z = b"7z\xbc\xaf\x27\x1c"
 
 
@@ -44,11 +55,13 @@ class Fail(Exception):
 
 
 # ---- Eingabe besorgen ----
-def download(dest, model):
-    say('Downloading the official HeadRush %s 2.7 updater from inMusic ...' % model['device'])
-    say('  ' + model['url'])
+def download(dest, model, target='win'):
+    url = model['mac_url'] if target == 'mac' else model['url']
+    say('Downloading the official HeadRush %s 2.7 %s updater from inMusic ...'
+        % (model['device'], 'macOS' if target == 'mac' else 'Windows'))
+    say('  ' + url)
     tmp = dest + '.part'
-    with urllib.request.urlopen(model['url'], timeout=60) as r, open(tmp, 'wb') as f:
+    with urllib.request.urlopen(url, timeout=60) as r, open(tmp, 'wb') as f:
         total = int(r.headers.get('Content-Length') or 0)
         got, last = 0, 0
         while True:
@@ -111,20 +124,67 @@ def extract_7z(archive, dest):
     raise Fail('Could not unpack the updater:\n  ' + '\n  '.join(why))
 
 
+def app_resources(app):
+    """Contents/Resources eines Mac-Updaters (.app), wenn dort ein Update.img liegt, sonst None."""
+    r = os.path.join(app, 'Contents', 'Resources')
+    return r if os.path.exists(os.path.join(r, 'Update.img')) else None
+
+
+def find_app(d):
+    """Erste .app mit Update.img in d (oder d selbst)."""
+    if d.lower().rstrip('/\\').endswith('.app') and app_resources(d):
+        return d
+    for n in sorted(os.listdir(d)):
+        p = os.path.join(d, n)
+        if n.lower().endswith('.app') and os.path.isdir(p) and app_resources(p):
+            return p
+    return None
+
+
+def extract_zip_modes(z, dest):
+    """Zip entpacken und dabei Unix-Rechte und symbolische Links behalten (zipfile setzt beides nicht;
+    der Mac-Updater braucht das x-Recht seines Programms)."""
+    for i in z.infolist():
+        mode = i.external_attr >> 16
+        target = os.path.join(dest, *i.filename.split('/'))
+        if not os.path.abspath(target).startswith(os.path.abspath(dest) + os.sep):
+            raise Fail('Unexpected path in the updater zip: %s' % i.filename)
+        if stat.S_ISLNK(mode) and hasattr(os, 'symlink'):
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            os.symlink(z.read(i).decode('utf-8'), target)
+            continue
+        z.extract(i, dest)
+        if mode and not i.is_dir() and os.name != 'nt':
+            os.chmod(target, stat.S_IMODE(mode))
+
+
 def unpack(src, work):
-    """Liefert den Ordner mit Update.img (und, wenn vorhanden, den Updater-Dateien)."""
+    """Liefert (Ordner mit Update.img und, wenn vorhanden, den Updater-Dateien; .app des Mac-
+    Updaters oder None)."""
     if os.path.isdir(src):
+        app = find_app(src)
+        if app:
+            return app_resources(app), app
         if not os.path.exists(os.path.join(src, 'Update.img')):
             raise Fail('No Update.img in folder %s' % src)
-        return src
+        return src, None
     low = src.lower()
     if low.endswith('.img'):
         d = os.path.join(work, 'img')
         os.makedirs(d)
         shutil.copy(src, os.path.join(d, 'Update.img'))
-        return d
+        return d, None
     if low.endswith('.zip'):
         with zipfile.ZipFile(src) as z:
+            if any('.app/' in n.lower() for n in z.namelist()):     # Mac-Updater
+                say('Unpacking %s ...' % os.path.basename(src))
+                d = os.path.join(work, 'mac')
+                os.makedirs(d)
+                extract_zip_modes(z, d)
+                app = find_app(d)
+                if not app:
+                    raise Fail('No updater app with Update.img in %s' % src)
+                return app_resources(app), app
             exes = [n for n in z.namelist() if n.lower().endswith('.exe')]
             if len(exes) != 1:
                 raise Fail('Expected exactly one .exe in %s, found %s' % (src, exes))
@@ -137,7 +197,7 @@ def unpack(src, work):
     os.makedirs(d)
     extract_7z(archive, d)
     os.remove(archive)
-    return d
+    return d, None
 
 
 # ---- Patchen ----
@@ -191,17 +251,18 @@ def patch(raw, nam_info=None, need_nam=False, device=None):
     return new, nam
 
 
-def config_json(nam, device='MX5', original=None):
+def config_json(nam, device='MX5', original=None, ascii=False):
     """Config.json des Updaters. original: die des offiziellen Updaters (Text) - dann bleibt alles
     ausser Titel und Startknopf wie bei HeadRush (beim Gigboard steht z. B. "HeadRush Gigboard "
-    mit Leerzeichen als deviceName; ob der Updater das Geraet daran erkennt, ist unbekannt)."""
+    mit Leerzeichen als deviceName; ob der Updater das Geraet daran erkennt, ist unbekannt).
+    ascii: Sonderzeichen als JSON-Escapes (Mac-Updater: dessen Original ist cp1252, nicht UTF-8)."""
     title = '%s %s%s' % (bridgepatch.label(device), bridgepatch.VERSION, ' + NAM' if nam else '')
     if original:
         try:
             cfg = json.loads(original)
             cfg['config']['appName'] = 'HeadRush %s v2.7 + %s (unofficial)' % (device, title)
             cfg['config']['startButtonText'] = 'Install %s' % title
-            return json.dumps(cfg, indent=4, ensure_ascii=False) + '\n'
+            return json.dumps(cfg, indent=4, ensure_ascii=ascii) + '\n'
         except (ValueError, KeyError, TypeError):
             pass
     cfg = {"config": {
@@ -217,11 +278,25 @@ def config_json(nam, device='MX5', original=None):
         "doNotSwitchOff": "Do not power off or disconnect the HeadRush %s" % device,
         "startButtonY": 0.75, "startButtonWidth": 0.6, "startButtonHeight": 0.07,
         "allowUpdateOnBattery": True, "forceUpdate": False}}
-    return json.dumps(cfg, indent=4, ensure_ascii=False) + '\n'
+    return json.dumps(cfg, indent=4, ensure_ascii=ascii) + '\n'
 
 
-def install_hint(out, nam, device='MX5'):
-    return ('To install:\n'
+def install_hint(out, nam, device='MX5', target='win', app=None):
+    title = '%s %s%s' % (bridgepatch.label(device), bridgepatch.VERSION, ' + NAM' if nam else '')
+    if target == 'mac':
+        return ('To install:\n'
+                '  1. Connect the %s to power and USB.\n'
+                '  2. On the %s: Global Settings > ... (more) > Firmware Update.\n'
+                '  3. Open "%s" in %s and click "Install %s".\n'
+                '     If macOS refuses to open it: right-click it > Open, or allow it under\n'
+                '     System Settings > Privacy & Security. Do not disconnect until it has finished.'
+                % (device, device, os.path.basename(app or 'the updater app'), out, title))
+    pre = ''
+    if sys.platform != 'win32':
+        pre = ('This is the Windows updater - HeadRush has no updater for Linux. Run it on a Windows PC\n'
+               'or in a Windows virtual machine with the USB device passed through (or build the macOS\n'
+               'updater with --target mac and flash from a Mac).\n')
+    return (pre + 'To install:\n'
             '  1. Connect the %s to power and USB.\n'
             '  2. On the %s: Global Settings > ... (more) > Firmware Update.\n'
             '  3. Run FirmwareUpdater.exe in %s and click "Install %s %s%s".\n'
@@ -252,32 +327,81 @@ def beta_note(model):
             'Please report what works and what doesn\u2019t on GitHub.' % (model['device'], model['recovery']))
 
 
-def updater_name(model):
+def updater_name(model, target='win'):
     """Dateiname des geladenen Original-Updaters neben Skript/EXE."""
-    return 'HeadRush_%s_2.7_Updater.zip' % model['device']
+    return 'HeadRush_%s_2.7_Updater%s.zip' % (model['device'], '_Mac' if target == 'mac' else '')
 
 
-def build(src=None, out=None, need_nam=False, out_parent=None, model=None):
+def official(model, target, work):
+    """Offiziellen Updater (geladen bzw. schon da) entpacken: (Ordner mit Update.img, .app oder None)."""
+    src = os.path.join(BASE, updater_name(model, target))
+    if os.path.exists(src):
+        say('Using the already downloaded %s' % os.path.basename(src))
+    else:
+        download(src, model, target)
+    return unpack(src, tempfile.mkdtemp(prefix='official_', dir=work))
+
+
+def sign_app(app):
+    """Ad-hoc signieren (wie die NAM-Mod): das neue Update.img macht die Signatur von inMusic
+    ungueltig, und macOS startet eine .app mit kaputter Signatur nicht. Geht nur unter macOS."""
+    if sys.platform != 'darwin' or not shutil.which('codesign'):
+        say('Note: the app can only be re-signed on macOS. On the Mac run once:\n'
+            '  codesign --force --deep --sign - "%s"' % os.path.basename(app))
+        return False
+    subprocess.run(['xattr', '-cr', app], capture_output=True)
+    r = subprocess.run(['codesign', '--force', '--deep', '--sign', '-', app], capture_output=True)
+    if r.returncode != 0:
+        raise Fail('Signing the updater app failed: %s' % (r.stderr or r.stdout).decode('utf-8', 'replace').strip())
+    say('Signed the updater app (ad-hoc).')
+    return True
+
+
+def read_text(path):
+    """Config.json lesen: Windows-Updater UTF-8, Mac-Updater cp1252."""
+    raw = open(path, 'rb').read()
+    try:
+        return raw.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        return raw.decode('cp1252', 'replace')
+
+
+def app_name(device, nam):
+    """Name des gebauten Mac-Updaters."""
+    return '%s %s%s Firmware Updater%s.app' % (bridgepatch.label(device), bridgepatch.VERSION,
+                                               '' if device == 'MX5' else ' ' + device, ' + NAM' if nam else '')
+
+
+LAST_APP = [None]     # .app des letzten Baus mit Ziel 'mac'
+
+
+def build(src=None, out=None, need_nam=False, out_parent=None, model=None, target=None):
     """Updater bauen. src: Eingabe (None = offiziellen Updater laden bzw. den schon geladenen
     nehmen), out: Ausgabeordner (None = neben Skript/EXE). need_nam: Eingabe muss die NAM-Mod
     enthalten (GUI: Haken NAM + eigene Datei). out_parent: Ordner, in dem der Ausgabeordner
     MX5Bridge_<v>[_<Geraet>][_NAM]_Updater angelegt wird (Standard neben Skript/EXE; beim MX5
     ohne Geraetenamen wie bisher). model: 'mx5'/'pedalboard'/'gigboard' - fuer den Download
     (Standard MX5) und als Pruefung einer eigenen Datei (None = aus der Datei erkennen).
-    Liefert (Ausgabeordner, nam, fehlende Dateien, Modell); Fehler als Fail/PatchError/Ext4Error."""
+    target: 'win' (Ordner mit FirmwareUpdater.exe) oder 'mac' (darin eine signierte .app), Standard
+    TARGET. Fehlen der Eingabe die Updater-Dateien des Ziels (z. B. Update_nam.img der NAM-Mod unter
+    Linux), kommen sie aus dem offiziellen Updater (Download).
+    Liefert (Ausgabeordner, nam, fehlende Dateien, Modell); Fehler als Fail/PatchError/Ext4Error.
+    Beim Ziel 'mac' steht der Pfad der .app danach in LAST_APP."""
+    target = target or TARGET
+    LAST_APP[0] = None
     want = bridgepatch.model(model) if model else None
     work = tempfile.mkdtemp(prefix='mx5bridge_')
     try:
         if not src:
             want = want or bridgepatch.model('mx5')
-            src = os.path.join(BASE, updater_name(want))
+            src = os.path.join(BASE, updater_name(want, target))
             if os.path.exists(src):
                 say('Using the already downloaded %s' % os.path.basename(src))
             else:
-                download(src, want)
+                download(src, want, target)
         if not os.path.exists(src):
             raise Fail('Not found: %s' % src)
-        folder = unpack(os.path.abspath(src), work)
+        folder, app = unpack(os.path.abspath(src), work)
         raw = open(os.path.join(folder, 'Update.img'), 'rb').read()
         if not fitpatch.verify(raw):
             raise Fail('Update.img is damaged (checksum mismatch)')
@@ -306,9 +430,32 @@ def build(src=None, out=None, need_nam=False, out_parent=None, model=None):
         out = out or os.path.join(out_parent or BASE, '%s_%s%s%s_Updater' % (bridgepatch.file_tag(found['device']), bridgepatch.VERSION, tag,
                                                                             '_NAM' if nam else ''))
         os.makedirs(out, exist_ok=True)
+        if target == 'mac':
+            if not app:   # Eingabe ohne Mac-Updater (Update.img, Windows-Updater): den offiziellen nehmen
+                folder, app = official(found, 'mac', work)
+            dest = os.path.join(out, app_name(found['device'], nam))
+            if os.path.exists(dest):
+                shutil.rmtree(dest)
+            say('Building %s ...' % os.path.basename(dest))
+            shutil.copytree(app, dest, symlinks=True)
+            res = app_resources(dest)
+            open(os.path.join(res, 'Update.img'), 'wb').write(new)
+            orig = os.path.join(res, 'Config.json')
+            orig = read_text(orig) if os.path.exists(orig) else None
+            open(os.path.join(res, 'Config.json'), 'w', encoding='ascii', newline='\n').write(
+                config_json(nam, found['device'], orig, ascii=True))
+            sign_app(dest)
+            LAST_APP[0] = dest
+            return out, nam, [], found
         open(os.path.join(out, 'Update.img'), 'wb').write(new)
         orig = os.path.join(folder, 'Config.json')
-        orig = open(orig, encoding='utf-8-sig').read() if os.path.exists(orig) else None
+        orig = read_text(orig) if os.path.exists(orig) else None
+        if not all(os.path.exists(os.path.join(folder, n)) for n in UPDATER_FILES):
+            try:   # z. B. Update.img oder Mac-Updater als Eingabe: Windows-Dateien aus dem offiziellen Updater
+                folder, _ = official(found, 'win', work)
+                orig = read_text(os.path.join(folder, 'Config.json'))
+            except (Fail, OSError) as e:
+                say('Could not get the Windows updater files: %s' % e)
         open(os.path.join(out, 'Config.json'), 'w', encoding='utf-8', newline='\n').write(config_json(nam, found['device'], orig))
         missing = []
         for name in UPDATER_FILES:
@@ -328,19 +475,22 @@ def main():
     ap.add_argument('input', nargs='?', help='official updater (.zip/.exe), NAM mod updater (.exe), folder or Update.img; '
                                              'omitted = download the official updater')
     ap.add_argument('--out', help='output folder (default: MX5Bridge_<version>_Updater next to this script)')
+    ap.add_argument('--target', choices=TARGETS, default=TARGET,
+                    help='updater to build: mac (.app, signed on macOS) or win (FirmwareUpdater.exe folder); '
+                         'default: %s on this computer' % TARGET)
     ap.add_argument('--model', choices=MODEL_KEYS, help='device to download the updater for (default mx5); with an '
                                                         'input file: refuse it if it is for another device')
     a = ap.parse_args()
     say('%s %s firmware patcher (unofficial - use at your own risk)\n' % (bridgepatch.BRAND, bridgepatch.VERSION))
     try:
-        out, nam, missing, found = build(a.input, a.out, model=a.model)
+        out, nam, missing, found = build(a.input, a.out, model=a.model, target=a.target)
     except (Fail, bridgepatch.PatchError, ext4.Ext4Error) as e:
         say('\nERROR: %s' % e)
         return 1
     say('\nDone: %s' % out)
     if missing:
         say('Copy these files from the official HeadRush updater into that folder: ' + ', '.join(missing))
-    say('\n' + install_hint('the folder above', nam, found['device']))
+    say('\n' + install_hint('the folder above', nam, found['device'], a.target, LAST_APP[0]))
     if risk_note(found):
         say('\n' + risk_note(found))
     return 0

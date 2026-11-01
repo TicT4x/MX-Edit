@@ -44,7 +44,7 @@ class TunerDialog(U.Overlay):
     def build(self):
         b = self.body
         b.configure(padx=px(6))
-        self.lbl_note = tk.Label(b, text="–", bg=PANEL, fg=MUTED, font=("Segoe UI", 64, "bold"))
+        self.lbl_note = tk.Label(b, text="–", bg=PANEL, fg=MUTED, font=(U.SANS, 64, "bold"))
         self.lbl_note.pack(pady=(px(4), 0))
         self.lbl_cents = tk.Label(b, text="", bg=PANEL, fg=MUTED, font=FONT_BOLD)
         self.lbl_cents.pack()
